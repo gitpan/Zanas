@@ -296,13 +296,20 @@ EOH
 
 						}
 
-						if (window.event.keyCode == 13) {
-							
-							var children = scrollable_rows [scrollable_table_row].cells [scrollable_table_row_cell].getElementsByTagName ('a');
-							if (children != null) document.location.href = children [0].href + '&_salt=@{[rand]}';
+						if (window.event.keyCode == 32) {
+
+							var children = scrollable_rows [scrollable_table_row].cells [scrollable_table_row_cell].getElementsByTagName ('input');
+							if (children != null && children.length > 0) children [0].checked = !children [0].checked;
 							
 						}
 						
+						if (window.event.keyCode == 13) {
+							
+							var children = scrollable_rows [scrollable_table_row].cells [scrollable_table_row_cell].getElementsByTagName ('a');
+							if (children != null && children.length > 0) document.location.href = children [0].href + '&_salt=@{[rand]}';
+							
+						}
+
 					}
 
 					@{[ map {&{"MSIE_5_handle_hotkey_$$_{type}"} ($_)} @scan2names ]}				
@@ -323,6 +330,17 @@ EOH
 		</html>
 EOH
 	
+}
+
+################################################################################
+
+sub MSIE_5_draw_form_field_button {
+	my ($options, $data) = @_;
+	my $s = $$data{$$options{name}};
+	$s ||= $$options{value};
+	$s =~ s/\"/\&quot\;/gsm; #"
+	my $onclick = $$options{onclick} || '';
+	return qq {<input type="button" name="_$$options{name}" value="$s" onClick="$onclick">};
 }
 
 ################################################################################
@@ -396,11 +414,30 @@ EOH
 
 ################################################################################
 
-sub MSIE_5_draw_text_cell {
+sub MSIE_5_draw_checkbox_cell {
 
 	my ($data) = @_;
 	
 	return '' if $data -> {off};	
+
+	my $checked = $data -> {checked} ? 'checked' : '';
+
+	$data -> {attributes} ||= {};
+	$data -> {attributes} -> {class} ||= 'txt4';
+
+	my $attributes = join ' ', map {"$_='" . $data -> {attributes} -> {$_} . "'"} keys %{$data -> {attributes}};
+
+	return qq {<td $attributes><input type=checkbox name=$$data{name} $checked value=1></td>};
+
+}
+
+################################################################################
+
+sub MSIE_5_draw_text_cell {
+
+	my ($data) = @_;
+	
+	return '' if $data -> {off};
 	
 	$data -> {max_len} ||= $conf -> {max_len};
 	$data -> {max_len} ||= 30;
@@ -485,16 +522,42 @@ sub MSIE_5_draw_table {
 		}
 	}
 	
+	$options -> {type}   ||= $_REQUEST{type};
+	$options -> {action} ||= 'add';
+	$options -> {name}   ||= 'form';
+	
+	my $hiddens = '';
+	
+	foreach my $key (keys %_REQUEST) {
+		next if $key =~ /^_/ or $key =~/^(type|action|sid)$/;
+		$hiddens .= qq {<input type=hidden name=$key value="$_REQUEST{$key}">};
+	}
+
 	return <<EOH
+		
+		@{[ $options -> {js_ok_escape} ? MSIE_5_js_ok_escape () : '' ]}
+		
 		<table cellspacing=0 cellpadding=0 width="100%"><tr><td class=bgr8>
-			<table cellspacing=1 cellpadding=5 width="100%" id="scrollable_table">
-				<thead>
-					$ths
-				</thead>
-				<tbody>
-					$trs
-				</tbody>
-			</table>
+		
+			<form name=$$options{name} action=/ method=post enctype=multipart/form-data target=invisible>
+			
+				<input type=hidden name=type value=$$options{type}> 
+				<input type=hidden name=action value=$$options{action}> 
+				<input type=hidden name=sid value=$_REQUEST{sid}>
+				$hiddens
+		
+				<table cellspacing=1 cellpadding=5 width="100%" id="scrollable_table">
+					<thead>
+						$ths
+					</thead>
+					<tbody>
+						$trs
+					</tbody>
+				</table>
+				$$options{toolbar}
+			
+			</form>
+			
 		</table>
 EOH
 
@@ -525,8 +588,10 @@ sub MSIE_5_draw_path {
 		$id_param = $item -> {id_param};
 		$id_param ||= $options -> {id_param};
 		
+		$item -> {cgi_tail} ||= $options -> {cgi_tail};
+
 		$path .= <<EOH;
-			<a class=lnk1 href="/?type=$$item{type}&$id_param=$$item{id}&sid=$_REQUEST{sid}">$name</a>
+			<a class=lnk1 href="/?type=$$item{type}&$id_param=$$item{id}&sid=$_REQUEST{sid}&$$item{cgi_tail}">$name</a>
 EOH
 	
 	}
@@ -653,9 +718,19 @@ EOH
 sub MSIE_5_draw_toolbar_input_text {
 
 	my ($options) = @_;
+
+	my $value = $options -> {value};
+	$value ||= $_REQUEST{$$options{name}};
+	
+	my $hiddens = '';
+	
+	foreach my $key (keys %_REQUEST) {
+		next if $key eq $options -> {name} or $key =~ /^_/;
+		$hiddens .= qq {<input type=hidden name=$key value="$_REQUEST{$key}">};
+	}
 		
 	return <<EOH
-		<td nowrap>$$options{label}: <input type=text name=$$options{name} value="$_REQUEST{$$options{name}}" onFocus="scrollable_table_is_blocked = true; q_is_focused = true" onBlur="scrollable_table_is_blocked = false; q_is_focused = false"><input type=hidden name=search value=1><input type=hidden name=type value="$_REQUEST{type}"></td>
+		<td nowrap>$$options{label}: <input type=text name=$$options{name} value="$value" onFocus="scrollable_table_is_blocked = true; q_is_focused = true" onBlur="scrollable_table_is_blocked = false; q_is_focused = false">$hiddens</td>
 		<td><img height=15  hspace=4 src="/i/toolbars/razd1.gif" width=2 border=0></td>
 EOH
 
@@ -753,6 +828,9 @@ sub MSIE_5_draw_form {
 	my $id = $options -> {id};
 	$id ||= $_REQUEST{id};
 
+	my $name = $options -> {name};
+	$name ||= 'form';
+
 	my $trs = '';
 	my $n = 0;	
 	
@@ -765,8 +843,10 @@ sub MSIE_5_draw_form {
 		
 		my $html = &{"draw_form_field_$type"} ($field, $data);
 	
-		my ($c1, $c2) = $n++ % 2 ? (5, 4) : (4, 0);
+#		my ($c1, $c2) = $n++ % 2 ? (5, 4) : (4, 0);
 		
+		my ($c1, $c2) = (5, 4);
+
 		MSIE_5_register_hotkey ($field, 'focus', '_' . $field -> {name});	
 
 		$field -> {label} .= '&nbsp;*' if $field -> {mandatory};
@@ -794,7 +874,7 @@ $path<table cellspacing=1 cellpadding=5 width="100%">
 
 			@{[ MSIE_5_js_ok_escape () ]}
 			
-			<form name=form action=/ method=post enctype=multipart/form-data target=invisible>
+			<form name=$name action=/ method=post enctype=multipart/form-data target=invisible>
 				<input type=hidden name=type value=$type> 
 				<input type=hidden name=id value=$id> 
 				<input type=hidden name=action value=$action> 
@@ -835,10 +915,14 @@ sub MSIE_5_draw_form_field_string {
 	
 	$options -> {max_len} ||= $conf -> {max_len};	
 	$options -> {max_len} ||= $options -> {size};
-	$options -> {max_len} ||= 30;
+	$options -> {max_len} ||= 30;		
 	
 	my $s = $$data{$$options{name}};
-	$s =~ s/\"/\&quot\;/gsm; #"
+	
+	my $s = $options -> {value};
+	$s ||= $$data{$$options{name}};
+	$s =~ s/\"/\&quot\;/gsm; #";
+	
 	my $size = $options -> {size} ? "size=$$options{size} maxlength=$$options{size}" : "size=120";	
 	return qq {<input type="text" maxlength="$$options{max_len}" name="_$$options{name}" value="$s" $size onKeyPress="if (window.event.keyCode != 27) is_dirty=true">};
 }
@@ -866,7 +950,14 @@ sub MSIE_5_draw_form_field_text {
 	my ($options, $data) = @_;
 	my $s = $$data{$$options{name}};
 	$s =~ s/\"/\&quot\;/gsm; #"
-	return qq {<textarea rows=25 cols=120 name="_$$options{name}" onKeyPress="if (window.event.keyCode != 27) is_dirty=true">$s</textarea>};
+	
+	my $cols = $options -> {cols};
+	$cols ||= 60;
+	
+	my $rows = $options -> {rows};
+	$rows ||= 25;
+
+	return qq {<textarea rows=$rows cols=$cols name="_$$options{name}" onKeyPress="if (window.event.keyCode != 27) is_dirty=true">$s</textarea>};
 }
 
 ################################################################################
@@ -941,7 +1032,7 @@ sub MSIE_5_draw_form_field_select {
 	
 	my $html = '';
 	
-	unshift @{$options -> {values}}, {id => 0, label => $options -> {empty}};# if exists $options -> {empty};
+	unshift @{$options -> {values}}, {id => 0, label => $options -> {empty}} if exists $options -> {empty};
 
 	foreach my $value (@{$options -> {values}}) {
 		my $selected = $data -> {$options -> {name}} == $value -> {id} ? 'selected' : '';
@@ -979,9 +1070,12 @@ sub MSIE_5_draw_ok_esc_toolbar {
 		
 	my $esc = $options -> {esc};
 	$esc ||= "/?type=$_REQUEST{type}";
+
+	my $name = $options -> {name};
+	$name ||= 'form';
 	
 	draw_centered_toolbar ($options, [
-		{icon => 'ok',     label => 'применить', href => '#', onclick => 'document.form.submit()'},
+		{icon => 'ok',     label => 'применить', href => '#', onclick => 'document.$name.submit()'},
 		{icon => 'cancel', label => 'вернуться', href => "$esc&sid=$_REQUEST{sid}", id => 'esc'},
 	])
 	

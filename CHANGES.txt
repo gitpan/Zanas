@@ -1,3 +1,11 @@
+	- added draw_form_field_button sub (by hekima)
+	- added support for arbitary value in draw_toolbar_input_text sub (by hekima)
+	- optional rows and cols numbers in draw_form_field_text sub (by hekima)
+	- optional form name in draw_ok_esc_toolbar and draw_form subs (by hekima)
+	- js fix for scrollable table navigation
+	- draw_toolbar_input_text refactored for parameter stickness
+	- added cgi_tail option in sql_select_path and sql_draw_path subs
+
 0.59: 03.11.03 12:28
 	- added support for keepalive
 	- size and max_length attributes separated in draw_form_field_string

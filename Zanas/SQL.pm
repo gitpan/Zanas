@@ -61,6 +61,8 @@ sub sql_select_all_cnt {
 	
 #	$sql =~ s{SELECT}{SELECT SQL_CALC_FOUND_ROWS}i;
 	
+#print STDERR $sql;
+	
 	my $st = $db -> prepare ($sql);
 	$st -> execute (@params);
 	my $result = $st -> fetchall_arrayref ({});	
@@ -180,6 +182,7 @@ sub sql_select_path {
 
 	while ($parent) {	
 		my $r = sql_select_hash ("SELECT id, parent, $$options{name} as name, '$$options{type}' as type, '$$options{id_param}' as id_param FROM $table_name WHERE id = ?", $parent);
+		$r -> {cgi_tail} = $options -> {cgi_tail},
 		unshift @path, $r;		
 		$parent = $r -> {parent};	
 	}
@@ -189,7 +192,8 @@ sub sql_select_path {
 			id => 0, 
 			parent => 0, 
 			name => $options -> {root}, 
-			id_param => $options -> {id_param}
+			id_param => $options -> {id_param},
+			cgi_tail => $options -> {cgi_tail},
 		};
 	}
 
@@ -211,13 +215,7 @@ sub sql_do_update {
 	my $sql = join ', ', map {"$_ = ?"} @$field_list;
 	$stay_fake or $sql .= ', fake = 0';
 	$sql = "UPDATE $table_name SET $sql WHERE id = ?";	
-
-print STDERR Dumper (\%_REQUEST);
-
 	my @params = @_REQUEST {(map {"_$_"} @$field_list), 'id'};	
-
-print STDERR Dumper (\@params);
-
 	sql_do ($sql, @params);
 	
 }
