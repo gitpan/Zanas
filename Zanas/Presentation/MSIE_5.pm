@@ -896,7 +896,8 @@ EOH
 		foreach my $callback (@tr_callbacks) {
 #			$trs .= '<tr style="position:relative;left:0px;top:0px;z-index:1;">';
 			our $_FLAG_ADD_LAST_QUERY_STRING = 1;
-			our @__types = ();
+			our @__types = (@__global_types);
+			push @__types, BREAK if @__types > 0;
 			my $tr = &$callback ();
 			undef $_FLAG_ADD_LAST_QUERY_STRING;
 			
@@ -917,6 +918,8 @@ EOH
 		}
 		$trs .= '</thead>' if $n == @$list && !$i -> {id};
 	}
+	
+	@__global_types = ();
 	
 	$options -> {type}   ||= $_REQUEST{type};
 	$options -> {action} ||= 'add';
@@ -1159,6 +1162,10 @@ sub draw_toolbar_button {
 		$ket = ']</b>';
 	}
 	
+	my $vert_line = {label => $options -> {label}, href => $options -> {href}};
+	$vert_line -> {label} =~ s{[\[\]]}{}g;
+	push @__global_types, $vert_line;
+	
 	return <<EOH
 		<td nowrap>&nbsp;<a class=lnk0 href="$$options{href}" id="$options" target="$$options{target}">${bra}$$options{label}${ket}</b></a></td>
 		<td><img height=15 hspace=4 src="/i/toolbars/razd1.gif" width=2 border=0></td>
@@ -1261,7 +1268,16 @@ sub draw_row_button {
 
 	my ($options) = @_;	
 	
-	return '<td class=bgr0 valign=top nowrap width="1%">&nbsp;' if $options -> {off} || $_REQUEST {lpt};	
+	if ($options -> {off} || $_REQUEST {lpt}) {
+	
+		if ($conf -> {core_hide_row_buttons} == 2 || $preconf -> {core_hide_row_buttons} == 2) {
+			return '';
+		}
+		else {
+			return '<td class=bgr0 valign=top nowrap width="1%">&nbsp;' if $options -> {off} || $_REQUEST {lpt};
+		}
+	
+	}
 	
 	check_href  ($options);
 

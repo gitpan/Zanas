@@ -1,3 +1,8 @@
+0.9971:
+
+	- draw_row_button fixed for the case where $conf -> {core_hide_row_buttons} == 2 and off is true;
+	- many temporalization-related fixes;
+
 0.9970:
 	
 	- Arial 10pt for tables;

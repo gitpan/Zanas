@@ -126,6 +126,12 @@ sub sql_temporality_callback {
 			TYPE_NAME  => 'int', 
 		};
 
+		$log_def -> {columns} -> {__is_actual} = {
+			TYPE_NAME  => 'tinyint', 
+			NULLABLE => 0,
+			COLUMN_DEF => 0,
+		};
+
 		$params {tables} -> {'__log_' . $name} = $log_def;			
 
 	}

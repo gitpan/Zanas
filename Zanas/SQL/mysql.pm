@@ -53,6 +53,7 @@ sub sql_do {
 	if ($conf -> {'db_temporality'} && $_REQUEST {_id_log}) {
 			
 		my $insert_sql = '';
+		my $update_sql = '';
 
 		if ($sql =~ /\s*DELETE\s+FROM\s*(\w+).*?(WHERE.*)/i && $1 ne 'log') {
 		
@@ -60,10 +61,14 @@ sub sql_do {
 
 			my $select_sql = "SELECT id FROM $1 $2";
 			my $param_number = $select_sql =~ y/?/?/;
-			splice (@params, 0, @params - $param_number);
-			my $ids = sql_select_ids ($select_sql, @params);
 
-			$insert_sql = "INSERT INTO __log_$1 ($cols, __dt, __op, __id_log) SELECT $cols, NOW() AS __dt, 3 AS __op, $_REQUEST{_id_log} AS __id_log FROM $1 WHERE $1.id IN ($ids)";
+			my @copy_params = (@params);
+			splice (@copy_params, 0, @params - $param_number);
+
+			$ids = sql_select_ids ($select_sql, @copy_params);
+
+			$update_sql = "UPDATE __log_$1 SET __is_actual = 0 WHERE id IN ($ids) AND __is_actual = 1";
+			$insert_sql = "INSERT INTO __log_$1 ($cols, __dt, __op, __id_log, __is_actual) SELECT $cols, NOW() AS __dt, 3 AS __op, $_REQUEST{_id_log} AS __id_log, 1 AS __is_actual FROM $1 WHERE $1.id IN ($ids)";
 			
 		}
 		elsif ($sql =~ /\s*UPDATE\s*(\w+).*?(WHERE.*)/i && $1 ne 'log') {
@@ -72,13 +77,14 @@ sub sql_do {
 
 			my $select_sql = "SELECT id FROM $1 $2";
 			my $param_number = $select_sql =~ y/?/?/;
-			splice (@params, 0, @params - $param_number);
-			$ids = sql_select_ids ($select_sql, @params);
+
+			my @copy_params = (@params);
+			splice (@copy_params, 0, @params - $param_number);
+			$ids = sql_select_ids ($select_sql, @copy_params);
 
 		}
 		
-#print STDERR "sql_do: \$insert_sql = $insert_sql\n";
-
+		$db -> do ($update_sql) if $update_sql;
 		$db -> do ($insert_sql) if $insert_sql;
 
 	}	
@@ -90,22 +96,25 @@ sub sql_do {
 	if ($conf -> {'db_temporality'} && $_REQUEST {_id_log}) {
 			
 		my $insert_sql = '';
+		my $update_sql = '';
 		
 		if ($sql =~ /\s*UPDATE\s*(\w+).*?(WHERE.*)/i && $1 ne 'log') {
 
-			$insert_sql = "INSERT INTO __log_$1 ($cols, __dt, __op, __id_log) SELECT $cols, NOW() AS __dt, 1 AS __op, $_REQUEST{_id_log} AS __id_log FROM $1 WHERE $1.id IN ($ids)";
+			my $cols = join ', ', keys %{$model_update -> get_columns ($1)};
+			$update_sql = "UPDATE __log_$1 SET __is_actual = 0 WHERE id IN ($ids) AND __is_actual = 1";
+			$insert_sql = "INSERT INTO __log_$1 ($cols, __dt, __op, __id_log, __is_actual) SELECT $cols, NOW() AS __dt, 1 AS __op, $_REQUEST{_id_log} AS __id_log, 1 AS __is_actual FROM $1 WHERE $1.id IN ($ids)";
 
 		}
 		elsif ($sql =~ /\s*INSERT\s+INTO\s*(\w+)/i && $1 ne 'log') {
 
 			my $cols = join ', ', keys %{$model_update -> get_columns ($1)};
 			our $__last_insert_id = sql_last_insert_id ();
-			$insert_sql = "INSERT INTO __log_$1 ($cols, __dt, __op, __id_log) SELECT $cols, NOW() AS __dt, 0 AS __op, $_REQUEST{_id_log} AS __id_log FROM $1 WHERE $1.id = $__last_insert_id";
+			$update_sql = "UPDATE __log_$1 SET __is_actual = 0 WHERE id = $__last_insert_id AND __is_actual = 1";
+			$insert_sql = "INSERT INTO __log_$1 ($cols, __dt, __op, __id_log, __is_actual) SELECT $cols, NOW() AS __dt, 0 AS __op, $_REQUEST{_id_log} AS __id_log, 1 AS __is_actual FROM $1 WHERE $1.id = $__last_insert_id";
 
 		}
 
-#print STDERR "sql_do: \$insert_sql = $insert_sql\n";
-
+		$db -> do ($update_sql) if $update_sql;
 		$db -> do ($insert_sql) if $insert_sql;
 
 	}	
@@ -321,6 +330,7 @@ sub sql_do_update {
 	$sql = "UPDATE $table_name SET $sql WHERE id = ?";	
 	my @params = @_REQUEST {(map {"_$_"} @$field_list)};	
 	push @params, $options -> {id};
+
 	sql_do ($sql, @params);
 	
 }
