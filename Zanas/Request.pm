@@ -1,13 +1,21 @@
 package Zanas::Request;
 require Zanas::Request::Upload;
 
+use Data::Dumper;
+
 ################################################################################
 
 sub new {
+
 	my $proto = shift;
 	my $class = ref($proto) || $proto;
+	
+	my ($preconf, $conf) = @_;
 
-	my $self  = {};
+	my $self  = {
+		preconf => $preconf,
+		conf => $conf,
+	};
 	$self -> {Q} = new CGI;
 	
 #	if ($ENV{PATH_TRANSLATED} =~ /$ENV{DOCUMENT_ROOT}\/+index\.html/) {
@@ -42,8 +50,13 @@ sub internal_redirect {
 	
 	unless ($url =~ /^http:\/\//) {
 		$url =~ s{^/}{};
-		$url = "http://$ENV{HTTP_HOST}/$url" ;
+		$url = "http://$ENV{HTTP_HOST}/$url";
 	}
+	
+#	my $http_host = $ENV {HTTP_X_FORWARDED_HOST} || $self -> {preconf} -> {http_host};
+#	if ($http_host) {
+#		substr ($url, index ($url, $ENV{HTTP_HOST}), length ($ENV{HTTP_HOST})) = $http_host;
+#	}
 
 	print $q -> redirect (-uri => $url);
 	

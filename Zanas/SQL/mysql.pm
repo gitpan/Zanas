@@ -272,7 +272,7 @@ sub sql_do_insert {
 sub sql_do_delete {
 
 	my ($table_name, $options) = @_;
-	
+		
 	if (ref $options -> {file_path_columns} eq ARRAY) {
 		
 		map {sql_delete_file ({table => $table_name, path_column => $_})} @{$options -> {file_path_columns}}
@@ -335,7 +335,7 @@ sub sql_upload_file {
 	my ($options) = @_;
 
 	my $uploaded = upload_file ($options) or return;
-	
+		
 	sql_delete_file ($options);
 	
 	my (@fields, @params) = ();

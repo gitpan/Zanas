@@ -384,7 +384,7 @@ EOF
 				</script>
 
 				<script for="body" event="onkeydown">
-					if (window.event.keyCode == 88 && window.event.altKey) document.location.href = '$_REQUEST{__uri}?_salt=@{[rand]}';
+					if (window.event.keyCode == 88 && window.event.altKey) document.location.href = '$_REQUEST{__uri}?type=_logout&sid=$_REQUEST{sid}&_salt=@{[rand]}';
 					handle_basic_navigation_keys ();
 					@{[ map {&{"handle_hotkey_$$_{type}"} ($_)} @scan2names ]}
 				</script>						
@@ -403,7 +403,7 @@ EOHELP
 					$menu
 					$body
 				</div>
-				<iframe name=invisible _src="${root}0.html" width=0 height=0>
+				<iframe name=invisible src="${root}0.html" width=0 height=0>
 				</iframe>
 			</body>
 		</html>
@@ -2037,7 +2037,7 @@ EOH
 
 	$top_banner = interpolate ($conf -> {top_banner});
 		
-	my $exit_url = $conf -> {exit_url} || "$_REQUEST{__uri}?sid=0";	
+	my $exit_url = $conf -> {exit_url} || "$_REQUEST{__uri}?type=_logout&sid=$_REQUEST{sid}";
 	
 	return <<EOH;
 

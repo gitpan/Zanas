@@ -1,3 +1,23 @@
+0.9958:
+
+	- improved version naming :-);
+	- 
+
+0.9957:
+
+	- handler fixed for missing $ENV {PATH_INFO} (mod_perl w/o libapreq case);
+	- fixed a small DHTML bug with _src of 'invisible';
+	- new type: '_logout'. Killing sessions;
+	- upload_file and Zanas::Upload are fixed for the case where no file is sent and use_cgi is on;
+
+0.9956:
+	
+	- fixed a bug in public_handler introduced in 0.9956;
+	
+0.9955:
+	
+	- fixed a bug in redirect/http introduced in 0.9954;
+
 0.9954:
 
 	- Zanas::Server introduced;

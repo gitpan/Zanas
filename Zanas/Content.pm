@@ -8,6 +8,78 @@ use Zanas::SQL;
 
 ################################################################################
 
+sub reset_profiling {
+
+	ref $preconf -> {core_debug_profiling} eq ARRAY or return;
+	
+	foreach my $sub_name (@{$preconf -> {core_debug_profiling}}) {
+	
+	
+print STDERR "reset_profiling: \$sub_name = $sub_name\n";
+
+	
+	}
+	
+}
+
+################################################################################
+
+sub require_fresh {
+
+	my ($module_name, $fatal) = @_;	
+
+	if ($conf -> {core_spy_modules} || $preconf -> {core_spy_modules}) {
+		
+		my $file_name = $module_name;
+
+		$file_name =~ s{::}{\/}g;
+
+		my $inc_key = $file_name . '.pm';
+
+		$file_name =~ s{^(.+?)\/}{\/};
+		$file_name = $PACKAGE_ROOT . $file_name . '.pm';
+
+		-f $file_name or return "File not found: $file_name\n";
+		
+#		fix_module_for_role ($file_name) if $conf -> {core_fix_modules} and $module_name =~ /Content|Presentation/;
+
+		my ($dev, $ino, $mode, $nlink, $uid, $gid, $rdev, $size, $atime, $last_modified, $ctime, $blksize, $blocks) = stat ($file_name);
+
+		my $last_load = $INC_FRESH {$module_name} + 0;
+
+		my $need_refresh = $last_load < $last_modified;
+
+		$need_refresh or return;
+
+		delete $INC {$inc_key};
+
+		eval "require $module_name";
+
+		reset_profiling ();
+
+	}	
+	
+	else {
+				
+		eval "require $module_name";
+
+		reset_profiling ();
+
+	}
+
+	$INC_FRESH {$module_name} = time;
+
+        if ($@) {
+		$_REQUEST {error} = $@;
+		print STDERR "require_fresh: error load module $module_name: $@\n";
+        }	
+        
+        return $@;
+	
+}
+
+################################################################################
+
 sub add_totals {
 
 	my ($ar, $options) = @_;	
@@ -36,8 +108,9 @@ sub add_totals {
 ################################################################################
 
 sub call_for_role {
+
 	my $sub_name = shift;
-	my $time = $preconf -> {core_debug_profiling} ? time : undef;
+	my $time = $preconf -> {core_debug_profiling} == 1 ? time : undef;
 	my $role = $_USER ? $_USER -> {role} : '';	
 	my $full_sub_name = $sub_name . '_for_' . $role;
 	my $name_to_call = 
@@ -47,7 +120,7 @@ sub call_for_role {
 	
 	if ($name_to_call) {
 		my $result = &$name_to_call (@_);
-		print STDERR "Profiling [$$] " . 1000 * (time - $time) . " ms $name_to_call\n" if $preconf -> {core_debug_profiling};
+		print STDERR "Profiling [$$] " . 1000 * (time - $time) . " ms $name_to_call\n" if $preconf -> {core_debug_profiling} == 1;
 		return $result;
 	}
 	else {
@@ -198,8 +271,12 @@ sub redirect {
 	
 	$options ||= {};
 	$options -> {kind} ||= 'internal';
-
-#print STDERR "redirect ($url): " . Dumper ($options);
+	
+#	$url =~ m{^http://} or $url = 'http://' . $ENV{HTTP_HOST} . $url;
+#	my $http_host = $ENV {HTTP_X_FORWARDED_HOST} || $preconf -> {http_host};
+#	if ($http_host) {
+#		substr ($url, index ($url, $ENV{HTTP_HOST}), length ($ENV{HTTP_HOST})) = $http_host;
+#	}
 	
 	if ($options -> {kind} eq 'internal') {
 		$r -> internal_redirect ($url);
@@ -208,11 +285,14 @@ sub redirect {
 	}
 
 	if ($options -> {kind} eq 'http') {		
+	
 		$r -> status ($options -> {status} || 302);
-		$r -> header_out ('Location' => 'http://' . $ENV{HTTP_HOST} . $url);
+			
+		$r -> header_out ('Location' => $url);
 		$r -> send_http_header;
 		$_REQUEST {__response_sent} = 1;
 		return;
+		
 	}
 
 	if ($options -> {kind} eq 'js') {
@@ -264,7 +344,7 @@ sub delete_file {
 
 sub select__static_files {
 
-	$ENV{PATH_INFO} =~ /\w+\.\w+/ or $r -> filename =~ /\w+\.\w+/;
+	$ENV{PATH_INFO} =~ /\w+\.\w+/ or $r -> filename =~ /\w+\.\w+/ or $ENV {REQUEST_URI} =~ /\w+\.\w+/;
 	
 	my $filename = $&;
 	
@@ -342,7 +422,7 @@ sub upload_file {
 	
 	my $upload = $apr -> upload ('_' . $options -> {name});
 	
-	return undef unless ($upload and $upload -> size);
+	return undef unless ($upload and $upload -> size > 0);
 	
 	my $fh = $upload -> fh;
 	
@@ -421,11 +501,48 @@ sub set_cookie {
 
 ################################################################################
 
+sub select__logout {
+	sql_do ('DELETE FROM sessions WHERE id = ?', $_REQUEST {sid});	
+	redirect ('/?type=logon', {kind => 'http'});
+}
+
+################################################################################
+
+sub get_version_name {
+
+	unless ($Zanas::VERSION_NAME) {
+
+		my @z = grep {/\d/} split /(\d)/, $Zanas::VERSION;
+
+		my $word = '';
+		my @c = qw(b d f g k l m n p q r s t v x z);
+		my @v = qw(a e i o u);
+		my $n = $Zanas::VERSION * 10000;
+		$n = ($n * 1973 + 112) % 11111;
+		$word .= uc $c [$n % @c];
+		$n = ($n * 1973 + 112) % 11111;
+		$word .= $v [$n % @v];
+		$n = ($n * 1973 + 112) % 11111;
+		$word .= $c [$n % @c];
+		$n = ($n * 1973 + 112) % 11111;
+		$word .= $v [$n % @v];
+		$n = ($n * 1973 + 112) % 11111;
+		$word .= $c [$n % @c];
+		
+		$Zanas::VERSION_NAME = $word;
+
+	}
+		
+	return $Zanas::VERSION_NAME;
+
+}
+
+################################################################################
+
 sub select__info {
 	
 	my $os_name = $^O;
-	if ($^O eq 'MSWin32') {
-		
+	if ($^O eq 'MSWin32') {		
 		eval {
 			require Win32;
 			my ($string, $major, $minor, $build, $id) = Win32::GetOSVersion ();
@@ -441,24 +558,18 @@ sub select__info {
 				"Unknown ($id . $major . $minor)"
 			) . $string . " Build $build"
 		};	
+	} else {
+		eval {
+			require POSIX;
+			my ($sysname, $nodename, $release, $version, $machine) = POSIX::uname();
+			my $imm = $id . $major . $minor;
+			$os_name = "$sysname $release [$machine]";
+		};	
 	}
 		
 	my @z = grep {/\d/} split /(\d)/, $Zanas::VERSION;
 	
-	my $word = '';
-	my @c = qw(b d f g k l m n p q r s t v x z);
-	my @v = qw(a e i o u);
-	my $n = $Zanas::VERSION * 10000;
-	$n = ($n * 1973 + 112) % 11111;
-	$word .= uc $c [$n % @c];
-	$n = ($n * 1973 + 112) % 11111;
-	$word .= $v [$n % @v];
-	$n = ($n * 1973 + 112) % 11111;
-	$word .= $c [$n % @c];
-	$n = ($n * 1973 + 112) % 11111;
-	$word .= $v [$n % @v];
-	$n = ($n * 1973 + 112) % 11111;
-	$word .= $c [$n % @c];
+	my $word = get_version_name ();
 
 	return [
 	

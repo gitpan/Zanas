@@ -27,6 +27,11 @@ sub fill_in_i18n {
 
 sub get_request {
 
+	my $http_host = $ENV {HTTP_X_FORWARDED_HOST} || $self -> {preconf} -> {http_host};
+	if ($http_host) {
+		$ENV {HTTP_HOST} = $ENV {HTTP_X_FORWARDED_HOST};
+	}
+
 	if ($connection) {
 		our $r   = new Zanas::InternalRequest ($connection, $request);
 		our $apr = $r;
@@ -35,7 +40,7 @@ sub get_request {
 
 	our $use_cgi = $ENV {SCRIPT_NAME} =~ m{index\.pl} || $ENV {GATEWAY_INTERFACE} =~ m{^CGI/} || $conf -> {use_cgi} || $preconf -> {use_cgi} || !$INC{'Apache/Request.pm'};
 
-	our $r   = $use_cgi ? new Zanas::Request () : $_[0];
+	our $r   = $use_cgi ? new Zanas::Request ($preconf, $conf) : $_[0];
 	our $apr = $use_cgi ? $r : Apache::Request -> new ($r);
 
 }
@@ -46,7 +51,7 @@ sub get_request {
 sub handler {
 
 	our $_PACKAGE = __PACKAGE__ . '::';
-	
+		
 	get_request (@_);
 
 	my $parms = $apr -> parms;
@@ -126,9 +131,10 @@ sub handler {
 		Print                    => 'Imprimer',
 		F1                       => 'F1: Aide',
 		Select                   => 'Sélection',
-   	});
-
-	$_REQUEST {type} = '_static_files' if (($ENV{PATH_INFO} =~ /\w\.\w/ && $ENV{PATH_INFO} ne '/index.html') || $r -> filename =~ /\w\.\w/);
+   	});   	
+   	
+   	my $path_info = $ENV{PATH_INFO} || $ENV{REQUEST_URI};
+	$_REQUEST {type} = '_static_files' if (($path_info =~ /\w\.\w/ && $path_info ne '/index.html') || $r -> filename =~ /\w\.\w/);
 
 	$conf -> {include_js}  ||= ['js'];
    	
@@ -366,7 +372,7 @@ sub pub_handler {
 
 	our $_PACKAGE = __PACKAGE__ . '::';
 	
-	get_request ();
+	get_request (@_);
 	
 	if (ref $apr eq 'Apache::Request') {
 		require Apache::Cookie;
@@ -386,9 +392,7 @@ sub pub_handler {
 	$_REQUEST {__uri_chomped} = $_REQUEST {__uri};
 	$_REQUEST {__uri_chomped} =~ s{/+$}{};
 	
-print STDERR "\$_REQUEST{__uri_chomped} = $_REQUEST{__uri_chomped}\n";
-
-	our %_COOKIES = $apr eq 'Apache::Request' ? Apache::Cookie -> fetch : CGI::Cookie -> fetch;
+	our %_COOKIES = ref $apr eq 'Apache::Request' ? Apache::Cookie -> fetch : CGI::Cookie -> fetch;
 	my $c = $_COOKIES {psid};
 	$_REQUEST {sid} = $c -> value if $c;
 	

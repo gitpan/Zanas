@@ -13,251 +13,85 @@ use Zanas::InternalRequest;
 
 ################################################################################
 
-sub require_fresh {
-
-	my ($module_name, $fatal) = @_;	
-
-	if ($conf -> {core_spy_modules} || $preconf -> {core_spy_modules}) {
-		
-		my $file_name = $module_name;
-
-		$file_name =~ s{::}{\/}g;
-
-		my $inc_key = $file_name . '.pm';
-
-		$file_name =~ s{^(.+?)\/}{\/};
-		$file_name = $PACKAGE_ROOT . $file_name . '.pm';
-
-		-f $file_name or return "File not found: $file_name\n";
-		
-#		fix_module_for_role ($file_name) if $conf -> {core_fix_modules} and $module_name =~ /Content|Presentation/;
-
-		my ($dev, $ino, $mode, $nlink, $uid, $gid, $rdev, $size, $atime, $last_modified, $ctime, $blksize, $blocks) = stat ($file_name);
-
-		my $last_load = $INC_FRESH {$module_name} + 0;
-
-		my $need_refresh = $last_load < $last_modified;
-
-		$need_refresh or return;
-
-		delete $INC {$inc_key};
-
-		eval "require $module_name";
-
-	}	
-	
-	else {
-				
-		eval "require $module_name";
-
-	}
-
-	$INC_FRESH {$module_name} = time;
-
-        if ($@) {
-		$_REQUEST {error} = $@;
-		print STDERR "require_fresh: error load module $module_name: $@\n";
-        }	
-        
-        return $@;
-	
-}
-
-################################################################################
-
 BEGIN {	
 
-#	return if $Apache::Server::Starting && !$Apache::Server::ReStarting;
+	$Zanas::VERSION = '0.9958';
 
-#print STDERR "\$Apache::Server::Starting = $Apache::Server::Starting\n";
-#print STDERR "\$Apache::Server::ReStarting = $Apache::Server::ReStarting\n";
+	$| = 1;
 
-$| = 1;
-$SIG {__DIE__} = \&Carp::confess;
+	$SIG {__DIE__} = \&Carp::confess;
 
-print STDERR "\nZanas.pm: loading ("  . __PACKAGE__ .  ")...";
+	get_version_name ();
 
-	if ($ENV {GATEWAY_INTERFACE} =~ m{^CGI/} || $conf -> {use_cgi} || $preconf -> {use_cgi}) {
- 		eval 'require CGI';
-	} else {
-		eval 'require Apache::Request';
-		if ($@) {
+	print STDERR "\nZanas $Zanas::VERSION [$Zanas::VERSION_NAME]: loading ("  . __PACKAGE__ .  ")...";
+
+		if ($ENV {GATEWAY_INTERFACE} =~ m{^CGI/} || $conf -> {use_cgi} || $preconf -> {use_cgi}) {
 			eval 'require CGI';
-			eval 'require Zanas::Request';
+		} else {
+			eval 'require Apache::Request';
+			if ($@) {
+				eval 'require CGI';
+				eval 'require Zanas::Request';
+			};
+		}
+
+		$INC {'Apache/Request.pm'} or eval 'require Zanas::Request';
+
+		our $STATIC_ROOT = __FILE__;
+		$STATIC_ROOT =~ s{\.pm}{/static/};
+
+		eval 'require Compress::Zlib';
+		if ($@) {
+			delete $conf -> {core_gzip};
+			delete $preconf -> {core_gzip};
 		};
-	}
 
-	$INC {'Apache/Request.pm'} or eval 'require Zanas::Request';
+		our %INC_FRESH = ();	
+		while (my ($name, $path) = each %INC) {
+			delete $INC {$name} if $name =~ m{Zanas[\./]}; 
+		}
 
-	our $STATIC_ROOT = __FILE__;
-	$STATIC_ROOT =~ s{\.pm}{/static/};
-	
-	eval 'require Compress::Zlib';
+		our $PACKAGE_ROOT = $INC {__PACKAGE__ . '/Config.pm'};
+		$PACKAGE_ROOT ||= '';
+		$PACKAGE_ROOT =~ s{\/Config\.pm}{};
 
-	if ($@) {
-		delete $conf -> {core_gzip};
-		delete $preconf -> {core_gzip};
-	};
+		$conf = {%$conf, %$preconf};
+		if ($conf -> {core_load_modules}) {
 
-	our %INC_FRESH = ();
-	
-	while (my ($name, $path) = each %INC) {
+			opendir (DIR, "$PACKAGE_ROOT/Content") || die "can't opendir $PACKAGE_ROOT/Content: $!";
+			my @files = grep {/\.pm$/} map { "Content/$_" } readdir(DIR);
+			closedir DIR;	
 
-		delete $INC {$name} if $name =~ m{Zanas[\./]}; 
+			opendir (DIR, "$PACKAGE_ROOT/Presentation") || die "can't opendir $PACKAGE_ROOT/Presentation: $!";
+			push @files, grep {/\.pm$/} map { "Presentation/$_" } readdir(DIR);
+			closedir DIR;	
 
-	}
-
-	our $PACKAGE_ROOT = $INC {__PACKAGE__ . '/Config.pm'};
-	
-	$PACKAGE_ROOT ||= '';
-
-	$PACKAGE_ROOT =~ s{\/Config\.pm}{};
-		
-	$conf = {%$conf, %$preconf};
-
-	if ($conf -> {core_load_modules}) {
-
-		opendir (DIR, "$PACKAGE_ROOT/Content") || die "can't opendir $PACKAGE_ROOT/Content: $!";
-		my @files = grep {/\.pm$/} map { "Content/$_" } readdir(DIR);
-		closedir DIR;	
-
-		opendir (DIR, "$PACKAGE_ROOT/Presentation") || die "can't opendir $PACKAGE_ROOT/Presentation: $!";
-		push @files, grep {/\.pm$/} map { "Presentation/$_" } readdir(DIR);
-		closedir DIR;	
-
-		foreach my $file (@files) {
-
-			$file =~ s{\.pm$}{};
-			$file =~ s{\/}{\:\:};
-
-			require_fresh (__PACKAGE__ . "::$file");
+			foreach my $file (@files) {
+				$file =~ s{\.pm$}{};
+				$file =~ s{\/}{\:\:};
+				require_fresh (__PACKAGE__ . "::$file");
+			}
 
 		}
-	
-	}
 
-#print STDERR Dumper ($conf);
+		if ($conf -> {db_dsn}) {
 
-	if ($conf -> {db_dsn}) {
-		eval {
-			Apache -> push_handlers (
-				PerlChildInitHandler => \&sql_reconnect,
-				PerlChildExitHandler => \&sql_disconnect,
-			)			
-		};
+			eval {
+				Apache -> push_handlers (
+					PerlChildInitHandler => \&sql_reconnect,
+					PerlChildExitHandler => \&sql_disconnect,
+				)
+			};
 
-#print STDERR "push_handlers: ''\n";
+		}
 
-	}
-	
-	if ($conf -> {db_dsn} && $conf -> {db_dsn} =~ /\:mysql\:/) {
-		
-		sql_reconnect ();
-		
-		$model_update -> assert (
+	print STDERR "\rZanas $Zanas::VERSION [$Zanas::VERSION_NAME]: loading ("  . __PACKAGE__ .  ") ok.\n";
 
-			tables => {		
-
-				sessions => {
-				
-					columns => {
-
-						id      => {TYPE_NAME  => 'bigint', _PK    => 1},
-						id_user => {TYPE_NAME  => 'int'},
-						id_role => {TYPE_NAME  => 'int'},
-						ts      => {TYPE_NAME  => 'timestamp'},
-					}
-
-				},
-
-			},
-
-		);
-		
-		$conf -> {core_cache_html} and $model_update -> assert (
-
-			tables => {		
-
-				cache_html => {
-				
-					columns => {
-						uri     => {TYPE_NAME  => 'varchar', COLUMN_SIZE  => 255, _PK    => 1},
-#						html    => {TYPE_NAME  => 'longtext'},
-#						gzipped => {TYPE_NAME  => 'longtext'},
-						ts      => {TYPE_NAME  => 'timestamp'},
-					}
-
-				},
-
-			},
-
-		);		
-
-		$model_update -> assert (
-
-			default_columns => {
-				id   => {TYPE_NAME  => 'int', _EXTRA => 'auto_increment', _PK => 1},
-				fake => {TYPE_NAME  => 'bigint', COLUMN_DEF => 0, NULLABLE => 0},
-			},	
-
-			tables => {		
-
-				roles => {
-
-					columns => {
-						name  => {TYPE_NAME    => 'varchar', COLUMN_SIZE  => 255},
-						label => {TYPE_NAME    => 'varchar', COLUMN_SIZE  => 255},
-					},
-
-				},
-
-				users => {
-
-					columns => {
-						name =>     {TYPE_NAME => 'varchar', COLUMN_SIZE => 255},
-						login =>    {TYPE_NAME => 'varchar', COLUMN_SIZE => 255},
-						label =>    {TYPE_NAME => 'varchar', COLUMN_SIZE => 255},
-						password => {TYPE_NAME => 'varchar', COLUMN_SIZE => 255},
-						id_role =>  {TYPE_NAME => 'int'},
-					}
-
-				},
-
-				log => {
-
-					columns => {
-						id_user =>   {TYPE_NAME => 'int'},
-						id_object => {TYPE_NAME => 'int'},
-						ip =>        {TYPE_NAME => 'varchar', COLUMN_SIZE => 15},
-						ip_fw =>     {TYPE_NAME => 'varchar', COLUMN_SIZE => 15},
-						type =>      {TYPE_NAME => 'varchar', COLUMN_SIZE => 255},
-						action =>    {TYPE_NAME => 'varchar', COLUMN_SIZE => 255},
-						error =>     {TYPE_NAME => 'varchar', COLUMN_SIZE => 255},
-						params =>    {TYPE_NAME => 'text'},
-						dt =>        {TYPE_NAME => 'timestamp'},
-					}
-
-				},
-
-			},
-
-		);
-		
-		$db -> disconnect;
-		
-		undef $db;
-		
-	}
-		
-print STDERR "\rZanas.pm: loading ("  . __PACKAGE__ .  ") ok.\n";
-		
 }
 
+1;
+
 ################################################################################
-
-package Zanas;
-
-$VERSION = '0.9954';
 
 =head1 NAME
 

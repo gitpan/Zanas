@@ -290,7 +290,7 @@ sub sql_do_update {
 	
 	foreach my $lob_field (@{$options -> {lobs}}) {
 	
-print STDERR "Going to write a LOB in ${table_name}.${lob_field}, id = $$options{id}...\n";
+#print STDERR "Going to write a LOB in ${table_name}.${lob_field}, id = $$options{id}...\n";
 	
 #		$db -> {AutoCommit} = 0;
 	
@@ -307,7 +307,7 @@ print STDERR "Going to write a LOB in ${table_name}.${lob_field}, id = $$options
 		
 			my @args = ($lob_locator, $value);
 
-print STDERR Dumper (\@args);
+#print STDERR Dumper (\@args);
 		
 			$db -> ora_lob_append (@args);
 		}

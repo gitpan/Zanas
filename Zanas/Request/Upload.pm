@@ -12,7 +12,9 @@ sub new {
 	$self -> {Param} = $_ [1];
 	$self -> {FH} = $self -> {Q} -> upload ($self -> {Param});
 	$self -> {FN} = $self -> {Q} -> param ($self -> {Param});
-	$self -> {Type} = $self -> {Q} -> uploadInfo ($self -> {FN}) -> {'Content-Type'};
+	
+	eval { $self -> {Type} = $self -> {Q} -> uploadInfo ($self -> {FN}) -> {'Content-Type'}; };
+	
 	my $current_position = tell ($self -> {FH});
 	seek ($self -> {FH},0,2);
 	$self -> {Size} = tell ($self -> {FH});
