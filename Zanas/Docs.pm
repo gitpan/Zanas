@@ -450,8 +450,20 @@ our $charset = {
 
 	{
 		name     => 'additional_buttons',
-		label_en => "Additional buttons definitions",
-		label_ru => "Описания дополнительных кнопок",
+		label_en => "Additional buttons definitions (between ok and cancel)",
+		label_ru => "Описания дополнительных кнопок (между ok и cancel)",
+	},
+
+	{
+		name     => 'left_buttons',
+		label_en => "Additional buttons definitions (before ok)",
+		label_ru => "Описания дополнительных кнопок (до ok)",
+	},
+
+	{
+		name     => 'right_buttons',
+		label_en => "Additional buttons definitions (after cancel)",
+		label_ru => "Описания дополнительных кнопок (после cancel)",
 	},
 
 	{
@@ -507,6 +519,50 @@ our $charset = {
 ################################################################################
 
 @subs = (
+
+					#######################################
+
+	{
+		name     => 'sql_is_temporal_table',
+		label_en => 'Returns 1 if 1st argument is the name of a temporal table.',
+		label_ru => 'Определяет является ли 1-й аргумент именем темпоральной таблицы.',
+	},
+
+					#######################################
+
+	{
+		name     => 'esc_href',
+		label_en => '$_REQUEST {__last_query_string} decoded.',
+		label_ru => 'Расшифрованное значение $_REQUEST {__last_query_string}, используемое в качестве ссылки с cancel при $conf -> {core_auto_esc}.',
+		see_also => [qw(b64u_decode)],
+	},
+
+					#######################################
+
+	{
+		name     => 'fill_in',
+		label_en => 'Initializes internal vocabularies: i18n and button presets.',
+		label_ru => 'Начальное заполнение i18n и словаря кнопок',
+		see_also => [qw(fill_in_button_presets)],
+	},
+
+					#######################################
+
+	{
+		name     => 'fill_in_button_presets',
+		label_en => 'Initializes internal vocabulary of button presets.',
+		label_ru => 'Начальное заполнение словаря кнопок',
+		see_also => [qw(fill_in)],
+	},
+	
+					#######################################
+
+	{
+		name     => 'js_set_select_option',
+		label_en => 'Generates the js href for setting (adding?) a SELECT option in parent window. For internal use.',
+		label_ru => 'Генерирует js-ссылку, выбирающую (и, возможно, добавляющую) нужную опцию в текущем SELECTе родительского окна. Для внутреннего использования.',
+#		see_also => [qw(fill_in)],
+	},
 
 					#######################################
 
@@ -640,19 +696,17 @@ EO
 					#######################################
 					
 	{
-		name     => 'log_action',
-		syn      => <<EO,		
-	log_action (
-		1,		#id_user
-		'logon'		#type
-		'execute'	#action
-		'bad_password'	#error
-		0		#id
-	)
-EO
-		label_en => 'Internal sub logging the curren action',
-		label_ru => 'Внутренняя процедура, протоколирующая текщее действие',
-#		see_also => [qw(draw_form draw_table)],
+		name     => 'log_action_start',
+		label_en => 'Internal logging sub invoked before the current action',
+		label_ru => 'Внутренняя протоколирующая процедура, вызываемая до текщего действия',
+	},
+
+					#######################################
+					
+	{
+		name     => 'log_action_finish',
+		label_en => 'Internal logging sub invoked after the current action',
+		label_ru => 'Внутренняя протоколирующая процедура, вызываемая после текщего действия',
 	},
 
 					#######################################
@@ -1001,7 +1055,7 @@ EO
 					#######################################
 	{
 		name     => 'fill_in_i18n',
-#		options  => [qw(js_ok_escape)],
+#		options  => [qw(lang)],
 		syn      => <<EO,
    	fill_in_i18n ('ENG', {
    		_charset                 => 'windows-1252',
@@ -1692,7 +1746,7 @@ EO
 
 	{
 		name     => 'draw_back_next_toolbar',
-		options  => [qw(additional_buttons back type)],
+		options  => [qw(additional_buttons left_buttons right_buttons back type)],
 		label_en => 'Draws toolbar with Back and Next buttons. Used in wizards',
 		label_ru => 'Отрисовывает панель с кнопками "назад" и "далее". Применяется для пошаговых "мастеров".',
 		see_also => [qw(draw_centered_toolbar)]
@@ -1702,7 +1756,7 @@ EO
 
 	{
 		name     => 'draw_close_toolbar',
-		options  => [qw(additional_buttons)],
+		options  => [qw(additional_buttons left_buttons right_buttons)],
 		label_en => 'Draws toolbar with a close button. Used in popup windows.',
 		label_ru => 'Отрисовывает панель с кнопкой "закрыть". Применяется для всплывающих окон.',
 		see_also => [qw(draw_centered_toolbar)]
@@ -1712,7 +1766,7 @@ EO
 
 	{
 		name     => 'draw_esc_toolbar',
-		options  => [qw(esc/?type=$_REQUEST{type} additional_buttons href/esc(?type=$_REQUEST{type}))],
+		options  => [qw(esc/?type=$_REQUEST{type} additional_buttons left_buttons right_buttons href/esc(?type=$_REQUEST{type}))],
 		label_en => 'Draws toolbar with an escape button.',
 		label_ru => 'Отрисовывает панель с кнопкой "выход"',
 		see_also => [qw(draw_centered_toolbar)]
@@ -1722,7 +1776,7 @@ EO
 
 	{
 		name     => 'draw_ok_esc_toolbar',
-		options  => [qw(name esc/?type=$_REQUEST{type} additional_buttons label_ok/применить label_cancel/вернуться href/esc(?type=$_REQUEST{type}))],
+		options  => [qw(name esc/?type=$_REQUEST{type} additional_buttons left_buttons right_buttons label_ok/применить label_cancel/вернуться href/esc(?type=$_REQUEST{type}))],
 		label_en => 'Draws toolbar with an escape button.',
 		label_ru => 'Отрисовывает панель с кнопкой "выход"',
 		see_also => [qw(draw_centered_toolbar)]
@@ -1776,12 +1830,32 @@ EO
 	draw_form ({
 			name => 'form1',
 			esc  => '/?type=loosers&parent=13',
-			additional_buttons => [
+
+			left_buttons => [
 				{
-					label => 'Disable it',
+					preset => 'prev',
 					href  => "/?type=users&action=disable&id=$$data{id}"
 				}
 			],
+
+			additional_buttons => [
+				{
+					label  => 'Disable it',
+					href   => "/?type=users&action=disable&id=$$data{id}"
+					hotkey => {
+						code => F11,
+						ctrl => 1,
+					}
+				}
+			],
+			
+			right_buttons => [
+				{
+					preset => 'next',
+					href  => "/?type=users&action=disable&id=$$data{id}"
+				}
+			],
+			
 		}, 
 		
 		\$data
@@ -2016,6 +2090,38 @@ EO
 					#######################################
 
 	{
+		name     => 'draw_toolbar_input_datetime',
+		options  => [qw(name label value size no_time format onClose attributes no_read_only no_clear_button)],
+		syn      => <<EO,	
+	draw_toolbar_input_datetime ({
+		label  => 'С какой даты',
+		name   => 'dt_from',
+	}),
+EO
+		label_en => 'Draws the datetime input (usually, for quick filter).',
+		label_ru => 'Отрисовывает календарик со временем на панели над таблицей (обычно для быстрого фильтра).',
+		see_also => [qw(draw_toolbar draw_toolbar_input_date)]
+	},
+
+					#######################################
+
+	{
+		name     => 'draw_toolbar_input_date',
+		options  => [qw(name label value size format onClose attributes no_read_only no_clear_button)],
+		syn      => <<EO,	
+	draw_toolbar_input_datetime ({
+		label  => 'С какой даты',
+		name   => 'dt_from',
+	}),
+EO
+		label_en => 'Draws the datetime input (usually, for quick filter).',
+		label_ru => 'Отрисовывает календарик для выбора даты на панели над таблицей (обычно для быстрого фильтра).',
+		see_also => [qw(draw_toolbar draw_toolbar_input_datetime)]
+	},
+
+					#######################################
+
+	{
 		name     => 'draw_toolbar_input_select',
 		options  => [qw(name values value empty max_len)],
 		syn      => <<EO,	
@@ -2195,6 +2301,38 @@ EO
 		label_en => 'Draws the series of text cells with common options.',
 		label_ru => 'Отрисовывает последовательность текстовых клеток с общими опциями.',
 		see_also => [qw(draw_table draw_text_cell)]
+	},
+
+					#######################################
+					
+	{
+		name     => 'draw_cells',
+		syn      => <<EO,	
+	draw_cells ({href => "/?type=foo&action=bar"}, [
+			{						# checkbox
+				type => 'checkbox',
+				name => "foo_$$i{id}",
+			},
+			'foo',						# text
+			'bar',						# text
+			{						# text
+				label   => "100000000",
+				picture => '\$ ### ### ###',
+			},
+			{						# input
+				type => 'input',
+				name => "price_$$i{id}",
+				size => 6,
+			},
+			{						# button
+				icon => 'edit',
+				href => {"/?type=foo&id=$$i{id}"},
+			},
+		])
+EO
+		label_en => 'Draws the series of cells of different types.',
+		label_ru => 'Отрисовывает последовательность текстовых клеток, кнопок или полей ввода',
+		see_also => [qw(draw_table draw_text_cells draw_row_buttons draw_checkbox_cell draw_input_cell)]
 	},
 
 					#######################################
@@ -2600,6 +2738,18 @@ EO
 our @conf = (
 
 	{
+		name     => '_charset',
+		label_en => "Default charset for public sites (pub_handler)",
+		label_ru => "Кодировка по умолчанию для публичных сайтов (pub_handler)",
+	},
+
+	{
+		name     => 'lang',
+		label_en => "Default language name according to NISO Z39.53",
+		label_ru => "Название языка по умолчанию в соответствии с NISO Z39.53",
+	},
+
+	{
 		name => 'page_title',
 		label_en => 'HTML page title',
 		label_ru => 'Содержимое тега TITLE результирующей HTML-страницы',
@@ -2686,6 +2836,12 @@ our @conf = (
 	},
 
 	{
+		name => 'button_presets',
+		label_en => 'standard buttons dictionary',
+		label_ru => 'Словарь стандартных кнопок',
+	},
+
+	{
 		name => 'size',
 		label_en => 'Default value for input sizes',
 		label_ru => 'Значение по умолчанию для размера полей ввода',
@@ -2722,6 +2878,24 @@ our @conf = (
 	},
 
 	{
+		name => 'core_auto_edit',
+		label_en => 'If true, "edit" button appears on ok_esc toolbar by default when $_REQUEST{__read_only} is on.',
+		label_ru => 'Если истина, то на панели при форме редактирования при установленном $_REQUEST{__read_only} появляется кнопка "edit".',
+	},
+
+	{
+		name => 'core_no_auth_toolbar',
+		label_en => 'If true, the auth toolbar is hidden.',
+		label_ru => 'Если истина, то панель авторизации не показывается.',
+	},
+
+	{
+		name => 'core_hide_row_buttons',
+		label_en => 'If 2, row buttons are hidden. If 1, row buttons are empty tds. If -1, no popup menus are shown.',
+		label_ru => 'Если 2, то построчные кнопки не показываются. Если 1, то построчные показываются как пустые клетки. Если -1, то не показываются контекстные меню.',
+	},
+
+	{
 		name => 'core_spy_modules',
 		label_en => 'If true then application *.pm modules are checked for freshness for each request and is reloaded as needed.',
 		label_ru => 'Если истина, то для *.pm-модулей отслеживается дата изменения и при необходимости производится подгрузка свежих версий.',
@@ -2754,10 +2928,22 @@ our @conf = (
 		see_also => [qw(db_dsn db_user)],
 	},
 
+	{
+		name => 'db_temporality',
+		label_en => 'List of temporal tables or 1 if all tables are meant to be temporal.',
+		label_ru => 'Список темпоральных таблиц или 1, если все таблицы темпоральные.',
+	},
+
 
 );
 
 our @preconf = (
+
+	{
+		name => 'core_hide_row_buttons',
+		label_en => 'If 2, row buttons are hidden. If 1, row buttons are empty tds. If -1, no popup menus are shown.',
+		label_ru => 'Если 2, то построчные кнопки не показываются. Если 1, то построчные показываются как пустые клетки. Если -1, то не показываются контекстные меню.',
+	},
 
 	{
 		name => 'use_cgi',
@@ -3285,7 +3471,7 @@ EOF
 	my @subs_in_zanas = subs_in 'Zanas';
 	my %imported_subs = map {$_ => 1} ('OK', map {subs_in $_} qw(Data::Dumper URI::Escape HTTP::Date MIME::Base64 Time::HiRes));
 	my %documented_subs = map {$_ -> {name} => 1} @subs;
-	my @undocumented_subs = grep {!exists $imported_subs {$_} && !exists $documented_subs {$_}} @subs_in_zanas;
+	my @undocumented_subs = grep {!exists $imported_subs {$_} && !exists $documented_subs {$_} && !/__/} @subs_in_zanas;
 
 	print STDERR join '', map {"Warning! undocumented sub '$_'\n"} @undocumented_subs;
 		

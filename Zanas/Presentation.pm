@@ -161,7 +161,9 @@ sub check_href {
 		$options -> {href} .= "&__last_query_string=$esc_query_string";
 		
 	}		
-
+	
+	$options -> {href} =~ s/\&+/\&/g;
+	
 
 }
 

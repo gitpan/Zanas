@@ -55,7 +55,7 @@ sub sql_do {
 		my $insert_sql = '';
 		my $update_sql = '';
 
-		if ($sql =~ /\s*DELETE\s+FROM\s*(\w+).*?(WHERE.*)/i && $1 ne 'log') {
+		if ($sql =~ /\s*DELETE\s+FROM\s*(\w+).*?(WHERE.*)/i && $1 ne 'log' && sql_is_temporal_table ($1)) {
 		
 			my $cols = join ', ', keys %{$model_update -> get_columns ($1)};
 
@@ -71,7 +71,7 @@ sub sql_do {
 			$insert_sql = "INSERT INTO __log_$1 ($cols, __dt, __op, __id_log, __is_actual) SELECT $cols, NOW() AS __dt, 3 AS __op, $_REQUEST{_id_log} AS __id_log, 1 AS __is_actual FROM $1 WHERE $1.id IN ($ids)";
 			
 		}
-		elsif ($sql =~ /\s*UPDATE\s*(\w+).*?(WHERE.*)/i && $1 ne 'log') {
+		elsif ($sql =~ /\s*UPDATE\s*(\w+).*?(WHERE.*)/i && $1 ne 'log' && sql_is_temporal_table ($1)) {
 		
 			my $cols = join ', ', keys %{$model_update -> get_columns ($1)};
 
@@ -98,14 +98,14 @@ sub sql_do {
 		my $insert_sql = '';
 		my $update_sql = '';
 		
-		if ($sql =~ /\s*UPDATE\s*(\w+).*?(WHERE.*)/i && $1 ne 'log') {
+		if ($sql =~ /\s*UPDATE\s*(\w+).*?(WHERE.*)/i && $1 ne 'log' && sql_is_temporal_table ($1)) {
 
 			my $cols = join ', ', keys %{$model_update -> get_columns ($1)};
 			$update_sql = "UPDATE __log_$1 SET __is_actual = 0 WHERE id IN ($ids) AND __is_actual = 1";
 			$insert_sql = "INSERT INTO __log_$1 ($cols, __dt, __op, __id_log, __is_actual) SELECT $cols, NOW() AS __dt, 1 AS __op, $_REQUEST{_id_log} AS __id_log, 1 AS __is_actual FROM $1 WHERE $1.id IN ($ids)";
 
 		}
-		elsif ($sql =~ /\s*INSERT\s+INTO\s*(\w+)/i && $1 ne 'log') {
+		elsif ($sql =~ /\s*INSERT\s+INTO\s*(\w+)/i && $1 ne 'log' && sql_is_temporal_table ($1)) {
 
 			my $cols = join ', ', keys %{$model_update -> get_columns ($1)};
 			our $__last_insert_id = sql_last_insert_id ();

@@ -64,7 +64,7 @@ sub require_fresh {
 	$file_name =~ s{^(.+?)\/}{\/};
 	
 	my $found = 0;
-	foreach my $path (@$PACKAGE_ROOT) {
+	foreach my $path (reverse (@$PACKAGE_ROOT)) {
 		my $local_file_name = $path . $file_name . '.pm';
 		-f $local_file_name or next;
 		$file_name = $local_file_name;
@@ -100,7 +100,9 @@ sub require_fresh {
 			open (S, $file_name);
 			my $src = join '', (<S>);
 			close (S);
-			$src =~ s{$_OLD_PACKAGE}{$_NEW_PACKAGE}g;
+#			$src =~ s{$_OLD_PACKAGE}{$_NEW_PACKAGE}g;
+			$src =~ s{package\s+$_OLD_PACKAGE}{package $_NEW_PACKAGE}g;
+			$src =~ s{$_OLD_PACKAGE\:\:}{$_NEW_PACKAGE\:\:}g;
 
 #print STDERR "require_fresh: \$src = $src\n";
 
@@ -353,6 +355,7 @@ sub redirect {
 
 		my $target = $options -> {target} ? "'$$options{target}'" : "(window.name == 'invisible' ? '_parent' : '_self')";
 
+#		out_html ({}, qq {<body onLoad="document.location.href = '$url&_salt=' + Math.random ()"></body>});
 		out_html ({}, qq {<body onLoad="$$options{before}; window.open ('$url&_salt=' + Math.random (), $target)"></body>});
 		$_REQUEST {__response_sent} = 1;
 		return;
@@ -440,14 +443,16 @@ sub select__static_files {
 sub download_file {
 
 	my ($options) = @_;
-	
-	$options -> {type} ||= 'application/octet-stream';
-	
+		
 	$r -> status (200);
 
 	$options -> {file_name} =~ s{.*\\}{};
-	
-	$options -> {type} .= '; charset=' . $options -> {charset} if $options -> {charset};
+		
+	my $type = 
+		$options -> {charset} ? '; charset=' . $options -> {charset} :
+		$options -> {'ty' . "pe"};
+
+	$type ||= 'application/octet-stream';
 
 	my $path = $r -> document_root . $options -> {path};
 	
@@ -461,7 +466,7 @@ sub download_file {
 		$content_length -= $start;
 	}
 
-	$r -> content_type ($options -> {type});
+	$r -> content_type ($type);
 	$options -> {no_force_download} or $r -> header_out ('Content-Disposition' => "attachment;filename=" . $options -> {file_name}); 
 	$r -> header_out ('Content-Length' => $content_length);
 	$r -> header_out ('Accept-Ranges' => 'bytes');
@@ -566,7 +571,7 @@ sub set_cookie {
 
 sub select__logout {
 	sql_do ('DELETE FROM sessions WHERE id = ?', $_REQUEST {sid});	
-	redirect ('/?type=logon', {kind => 'http'});
+	redirect ('/?type=logon', {kind => 'js', label => $i18n -> {session_terminated}});
 }
 
 ################################################################################
@@ -785,6 +790,7 @@ sub fill_in {
 		no                       => 'Нет', 
 		confirm_open_vocabulary  => 'Открыть окно редактирования справочника?',
 		confirm_close_vocabulary => 'Вы выбрали',
+		session_terminated       => 'Сессия завершена',
    	});
    	
    	fill_in_i18n ('ENG', {
@@ -810,6 +816,7 @@ sub fill_in {
 		no                       => 'No', 
 		confirm_open_vocabulary  => 'Open the vocabulary window?',
 		confirm_close_vocabulary => 'Your choice is',
+		session_terminated       => 'Logged off',
    	});
 	
    	fill_in_i18n ('FRE', {
@@ -835,6 +842,7 @@ sub fill_in {
 		no                       => 'Non', 
 		confirm_open_vocabulary  => 'Ouvrir le vocabulaire?',
 		confirm_close_vocabulary => 'Vous avez choisi',
+		session_terminated       => 'Dйconnetcй',
    	});   	
 
 }

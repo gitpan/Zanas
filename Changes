@@ -1,3 +1,21 @@
+5.1.12:
+
+	- button_preset 'cancel' fixed;
+	- added id attribute to trs in draw_table;
+	- draw_row_buttons fixed for broken HTML (</td>);
+	- $_REQUEST {__core_show_icons} introduced;
+	- meta http-equiv=Content-Type is back;
+	- alert when logging off;
+	- lpt & exit buttons are moved off the auth toolbar;
+	- documentation fixes;
+	- $conf -> {db_temporality} can be an array, sql_is_temporal_table sub introduced;
+
+0.9980:
+
+	- package fixing adjusted in require_fresh (by pashka);
+	- calendar js & css are included only once;
+	- draw_toolbar_input_datetime & draw_toolbar_input_date introduced;
+
 0.9979:
 
 	- stripping __last_query_string off {href};

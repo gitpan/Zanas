@@ -629,12 +629,18 @@ a.tabs, a.tabs:link, a.tabs:active, a.tabs:visited, a.tabs:hover {
 	FONT-SIZE: 11px; 
 	COLOR: #000000; 
 	FONT-FAMILY: Verdana; 
-	background-color: #EBFFFA;
+/*	
+	background-color: #EBFFFA;	
+*/
+	background-color: #efefef
 }
 .form-active-inputs {
 	FONT-SIZE: 11px; 
 	FONT-FAMILY: Verdana; 
-	background-color: #EBFFFA;
+/*	
+	background-color: #EBFFFA;	
+*/
+	background-color: #efefef
 }
 
 

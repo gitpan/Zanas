@@ -15,7 +15,8 @@ use constant OK => 200;
 
 BEGIN {	
 
-	$Zanas::VERSION = '0.9979';
+	$Zanas::VERSION = '5.1.12';
+	$Zanas::VERSION_NAME = 'Mozhaysky';
 	
 	eval {
 		require Storable;
@@ -90,7 +91,7 @@ BEGIN {
 	$conf = {%$conf, %$preconf};
 	if ($conf -> {core_load_modules}) {
 	
-		foreach my $path (@$PACKAGE_ROOT) {
+		foreach my $path (reverse (@$PACKAGE_ROOT)) {
 
 			opendir (DIR, "$path/Content") || die "can't opendir $PACKAGE_ROOT/Content: $!";
 			my @files = grep {/\.pm$/} map { "Content/$_" } readdir(DIR);

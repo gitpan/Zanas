@@ -90,9 +90,7 @@ sub handle_hotkey_focus {
 	<<EOJS
 		if (window.event.keyCode == $$r{code} && window.event.altKey && window.event.ctrlKey) {
 			document.form.$$r{data}.focus ();
-			event.keyCode      = 0;
-			event.returnValue  = false;
-			event.cancelBubble = true;
+			blockEvent ();
 		}
 EOJS
 
@@ -118,9 +116,7 @@ sub handle_hotkey_href {
 				var a = document.getElementById ('$$r{data}');
 				activate_link (a.href, a.target);
 			}
-			event.keyCode      = 0;
-			event.returnValue  = false;
-			event.cancelBubble = true;
+			blockEvent ();
 		}
 EOJS
 
@@ -180,6 +176,19 @@ sub draw_page {
 		print STDERR $@ if $@;
 				
 		return '' if $_REQUEST {__response_sent};
+		
+		if ($_REQUEST {__dump}) {
+			$_REQUEST {__content_type} ||= 'text/plain; charset=' . $i18n -> {_charset};
+			return Dumper ({
+				request => \%_REQUEST,
+				user    => {
+					id      => $_USER -> {id},
+					role    => $_USER -> {role},
+					id_role => $_USER -> {id_role},
+				},
+				content => $content,
+			});
+		}
 
 		if ($_REQUEST {__popup}) {
 			$_REQUEST {__read_only} = 1;
@@ -277,6 +286,8 @@ EOH
 				<title>$$i18n{_page_title}</title>
 								
 				<meta name="Generator" content="Zanas ${Zanas::VERSION} / $$SQL_VERSION{string}; parameters are fetched with $request_package; gateway_interface is $ENV{GATEWAY_INTERFACE}; $mod_perl is in use">
+				<meta http-equiv=Content-Type content="text/html; charset=$$i18n{_charset}">
+				
 				$meta_refresh
 				
 				<LINK href="${root}zanas.css" type=text/css rel=STYLESHEET>
@@ -505,13 +516,13 @@ sub draw_form_field_button {
 
 sub draw_menu {
 
-	my ($types, $cursor, $options) = @_;
+	my ($types, $cursor, $_options) = @_;
 	
 	@$types or return '';
 	
 	$_REQUEST {__no_navigation} and return '';
 	
-	my ($tr1, $tr2, $tr3, $divs, $colspan) = ('', '', '', '', $options -> {lpt} ? 4 : 2);
+	my ($tr1, $tr2, $tr3, $divs, $colspan) = ('', '', '', '', $_options -> {lpt} ? 4 : 2);
 
 	foreach my $type (@$types)	{
 	
@@ -560,7 +571,7 @@ EOH
 			<tr>
 				$tr2
 				<td class=bgr8 width=100%><img height=1 src="$_REQUEST{__uri}0.gif" width=1 border=0></td>
-				@{[ $options -> {lpt} ? <<EOLPT : '']}
+				@{[ $_options -> {lpt} ? <<EOLPT : '']}
 				<td class="main-menu" nowrap>&nbsp;&nbsp;<a class="main-menu" id="main_menu__lpt" target="_blank" href="@{[ create_url (lpt => 1) ]}">$$i18n{Print}</a>&nbsp;&nbsp;</td>
 				<td class="main-menu" nowrap>&nbsp;&nbsp;<a class="main-menu" id="main_menu__xls" target="_blank" href="@{[ create_url (xls => 1, salt => rand * time) ]}">MS Excel</a>&nbsp;&nbsp;</td>
 EOLPT
@@ -1007,10 +1018,10 @@ EOH
 			my $oncontextmenu = '';
 			if (@__types && $conf -> {core_hide_row_buttons} > -1) {
 				$menus .= draw_vert_menu ($i, \@__types);
-				$oncontextmenu  = qq{ oncontextmenu="open_popup_menu('$i'); window.event.keyCode = 0; window.event.cancelBubble = true; window.event.returnValue = false;"};
+				$oncontextmenu  = qq{ oncontextmenu="open_popup_menu('$i'); blockEvent ();"};
 			}
 
-			$trs .= '<tr';
+			$trs .= "<tr id='$i'";
 			$trs .= $oncontextmenu;
 			$trs .= '>';
 			$trs .= $tr;
@@ -1121,7 +1132,7 @@ sub draw_path {
 	
 	}
 
-	if ($conf -> {core_show_icons}) {
+	if ($conf -> {core_show_icons} || $_REQUEST {__core_show_icons}) {
 		$path = qq{<img src="/folder.gif" border=0 hspace=3 vspace=1 align=absmiddle>&nbsp;} . $path;
 	}
 
@@ -1251,7 +1262,7 @@ sub draw_toolbar_button {
 	} 
 
 	my ($bra, $ket) = ();
-	if ($conf -> {core_show_icons} && $options -> {icon}) {	
+	if (($conf -> {core_show_icons} || $_REQUEST {__core_show_icons}) && $options -> {icon}) {	
 		my $label = $options -> {label};
 		$label =~ s{\<.*?\>}{}g;
 		$bra = qq|<img src="/i/buttons/$$options{icon}.gif" alt="$label" border=0 hspace=0 vspace=1 align=absmiddle>&nbsp;|
@@ -1299,6 +1310,94 @@ sub draw_toolbar_input_text {
 	return <<EOH
 		<td nowrap>$$options{label}: <input type=text size=$$options{size} name=$$options{name} value="$value" onFocus="scrollable_table_is_blocked = true; q_is_focused = true" onBlur="scrollable_table_is_blocked = false; q_is_focused = false">$hiddens</td>
 		<td><img height=15 vspace=1 hspace=4 src="/i/toolbars/razd1.gif" width=2 border=0></td>
+EOH
+
+}
+
+################################################################################
+
+sub draw_toolbar_input_date {
+
+	my ($_options) = @_;
+	$_options -> {no_time} = 1;
+	return draw_toolbar_input_datetime ($_options);
+	
+}
+
+################################################################################
+
+sub draw_toolbar_input_datetime {
+
+	my ($options) = @_;
+			
+	if ($r -> header_in ('User-Agent') =~ /MSIE 5\.0/) {
+		$options -> {size} ||= $options -> {no_time} ? 11 : 16;
+		return draw_toolbar_input_string ($options);
+	}	
+
+	my $value = $options -> {value};
+	$value ||= $_REQUEST{$$options{name}};
+		
+	unless ($options -> {format}) {
+	
+		if ($options -> {no_time}) {
+			$conf -> {format_d}   ||= '%d.%m.%Y';
+			$options -> {format}  ||= $conf -> {format_d};
+			$options -> {size}    ||= 11;
+		}
+		else {
+			$conf -> {format_dt}  ||= '%d.%m.%Y %k:%M';
+			$options -> {format}  ||= $conf -> {format_dt};
+			$options -> {size}    ||= 16;
+		}
+	
+	}
+	
+#	$options -> {onClose} ||= "document.all.$$options{name}.form.submit()";
+	$options -> {onClose} ||= 'null';
+	
+	my $s = $options -> {value};
+	$s ||= $$data{$$options{name}};
+	$s =~ s/\"/\&quot\;/gsm; #";
+	
+	$options -> {attributes} -> {id} = 'input_' . $options -> {name};
+	
+	$options -> {no_read_only} or $options -> {attributes} -> {readonly} = 1;
+	
+	my $attributes = dump_attributes ($options -> {attributes});
+	
+	my $size = $options -> {size} ? "size=$$options{size} maxlength=$$options{size}" : "size=30";	
+	
+	unless (grep {/jscalendar/} @{$_REQUEST {__include_js}}) {
+		push @{$_REQUEST {__include_js}},  'jscalendar/calendar', 'jscalendar/lang/calendar-ru', 'jscalendar/calendar-setup';
+		push @{$_REQUEST {__include_css}}, 'jscalendar/calendar-win2k-1';
+	}
+	
+	my $shows_time = $options -> {no_time} ? 'false' : 'true';
+	
+	my $clear_button = $options -> {no_clear_button} || $options -> {no_read_only} ? '' : qq{&nbsp;<button height=12 class="txt7" onClick="document.all.$$options{name}.value=''">X</button>};
+		
+	return <<EOH
+		<td nowrap><nobr>
+			$$options{label}: 
+			<input id="input$$options{name}" $attributes onFocus="scrollable_table_is_blocked = true; q_is_focused = true" onBlur="scrollable_table_is_blocked = false; q_is_focused = false" autocomplete="off" type="text" name="$$options{name}" value="$value" $size>
+			<button id="calendar_trigger$$options{name}" class="txt7">...</button>
+			$clear_button
+		</nobr></td>
+		
+		<script type="text/javascript">
+			Calendar.setup(
+				{
+					inputField : "input$$options{name}",
+					ifFormat   : "$$options{format}",
+					showsTime  : $shows_time,
+					button     : "calendar_trigger$$options{name}",
+					onClose    : $$options{onClose}
+				}
+			);
+		</script>
+		<td><img height=15 vspace=1 hspace=4 src="/i/toolbars/razd1.gif" width=2 border=0></td>
+
 EOH
 
 }
@@ -1375,7 +1474,7 @@ sub draw_row_button {
 			return '';
 		}
 		else {
-			return '<td class=bgr0 valign=top nowrap width="1%">&nbsp;' if $options -> {off} || $_REQUEST {lpt};
+			return '<td class=bgr0 valign=top nowrap width="1%">&nbsp;</td>' if $options -> {off} || $_REQUEST {lpt};
 		}
 	
 	}
@@ -1388,7 +1487,7 @@ sub draw_row_button {
 		$options -> {href} = qq [javascript:if (confirm ($msg)) {window.open('$$options{href}', '_self')}];
 	} 
 		
-	if ($conf -> {core_show_icons}) {	
+	if ($conf -> {core_show_icons} || $_REQUEST {__core_show_icons}) {	
 		my $label = $options -> {label};
 		$options -> {label} = qq|<img src="/i/buttons/$$options{icon}.gif" alt="$$options{label}" border=0 hspace=0 vspace=0 align=absmiddle>|;
 		$options -> {label} .= "&nbsp;$label" if $options -> {force_label} || $conf -> {core_hide_row_buttons} > -1;
@@ -1404,13 +1503,13 @@ sub draw_row_button {
 	push @__types, $vert_line;
 	
 	if ($conf -> {core_hide_row_buttons} == 1 || $preconf -> {core_hide_row_buttons} == 1) {
-		return '<td class=bgr0 valign=top nowrap width="1%">&nbsp;';
+		return '<td class=bgr0 valign=top nowrap width="1%">&nbsp;</td>';
 	}
 	elsif ($conf -> {core_hide_row_buttons} == 2 || $preconf -> {core_hide_row_buttons} == 2) {
 		return '';
 	}
 	else {
-		return qq {<td $$options{title} class="row-button" valign=top nowrap width="1%"><a class="row-button" href="$$options{href}" onFocus="blur()" target="$$options{target}">$$options{label}</a>};
+		return qq {<td $$options{title} class="row-button" valign=top nowrap width="1%"><a class="row-button" href="$$options{href}" onFocus="blur()" target="$$options{target}">$$options{label}</a></td>};
 	}
 
 }
@@ -1422,8 +1521,8 @@ sub draw_row_buttons {
 	my ($options, $buttons) = @_;
 
 	return $options -> {off} ? 
-		'<td class=bgr4 valign=top nowrap width="1%">&nbsp;':
-		(join '', map {draw_row_button ($_)} @$buttons) . '</td>';
+		'<td class=bgr4 valign=top nowrap width="1%">&nbsp;</td>':
+		(join '', map {draw_row_button ($_)} @$buttons);
 
 }
 
@@ -1736,9 +1835,9 @@ sub draw_form_field_string {
 
 sub draw_form_field_date {
 
-	my ($options, $data) = @_;	
-	$options -> {no_time} = 1;	
-	return draw_form_field_datetime ($options, $data);
+	my ($_options, $data) = @_;	
+	$_options -> {no_time} = 1;	
+	return draw_form_field_datetime ($_options, $data);
 
 }
 
@@ -1782,8 +1881,10 @@ sub draw_form_field_datetime {
 	
 	my $size = $options -> {size} ? "size=$$options{size} maxlength=$$options{size}" : "size=30";	
 	
-	push @{$_REQUEST {__include_js}},  'jscalendar/calendar', 'jscalendar/lang/calendar-ru', 'jscalendar/calendar-setup';
-	push @{$_REQUEST {__include_css}}, 'jscalendar/calendar-win2k-1';
+	unless (grep {/jscalendar/} @{$_REQUEST {__include_js}}) {
+		push @{$_REQUEST {__include_js}},  'jscalendar/calendar', 'jscalendar/lang/calendar-ru', 'jscalendar/calendar-setup';
+		push @{$_REQUEST {__include_css}}, 'jscalendar/calendar-win2k-1';
+	}
 	
 	my $shows_time = $options -> {no_time} ? 'false' : 'true';
 	
@@ -2230,7 +2331,7 @@ sub draw_ok_esc_toolbar {
 		{
 			preset => 'edit',
 			href  => create_url () . '&__edit=1',
-			off   => (!$conf -> {core_auto_edit} || !$_REQUEST{__read_only} || $options -> {no_edit}),
+			off   => ((!$conf -> {core_auto_edit} && !$_REQUEST{__auto_edit}) || !$_REQUEST{__read_only} || $options -> {no_edit}),
 		},
 		{
 			preset => 'choose',
@@ -2337,19 +2438,27 @@ sub draw_centered_toolbar_button {
 	} 	
 
 	my ($bra, $ket, $icon) = ();
-	if ($conf -> {core_show_icons} && $options -> {icon}) {	
-		$icon = qq|<td><a onclick="$$options{onclick}" href="$$options{href}" target="$$options{target}"><img hspace=3 src="/i/buttons/$$options{icon}.gif" border=0></a></td>|
+	if (($conf -> {core_show_icons} || $_REQUEST {__core_show_icons}) && $options -> {icon}) {	
+#		$icon = qq|<td><a onclick="$$options{onclick}" href="$$options{href}" target="$$options{target}"><img hspace=3 src="/i/buttons/$$options{icon}.gif" border=0></a></td>|;		
+#		$icon = qq|<a onclick="$$options{onclick}" href="$$options{href}" target="$$options{target}"><img hspace=3 src="/i/buttons/$$options{icon}.gif" border=0></a>|;		
+		$bra = qq|<img src="/i/buttons/$$options{icon}.gif" alt="$label" border=0 hspace=0 vspace=1 align=absmiddle>&nbsp;|
 	}
 	else {
 		$bra = '<b>[';
 		$ket = ']</b>';
 	}
 	
+#	return <<EOH
+#		$icon
+#		<td nowrap>&nbsp;<a class=lnk0 onclick="$$options{onclick}" id="$$options{id}" href="$$options{href}" target="$$options{target}">${bra}$$options{label}${ket}</a>&nbsp;</td>
+#		<td><img height=15 vspace=1 hspace=4 src="/i/toolbars/razd1.gif" width=2 border=0></td>
+#EOH
+
 	return <<EOH
-		$icon
-		<td nowrap>&nbsp;<a class=lnk0 onclick="$$options{onclick}" id="$$options{id}" href="$$options{href}" target="$$options{target}">${bra}$$options{label}${ket}</a>&nbsp;</td>
+		<td class="button" onmouseover="style.borderStyle='groove';style.borderColor='#FFFFFF';" onmouseout="style.borderStyle='solid';style.borderColor='#D6D3CE';" nowrap>&nbsp;<a class=button href="$$options{href}" id="$$options{id}" target="$$options{target}">$bra $$options{label} $ket</a></td>
 		<td><img height=15 vspace=1 hspace=4 src="/i/toolbars/razd1.gif" width=2 border=0></td>
 EOH
+
 
 }
 
@@ -2445,24 +2554,10 @@ EOH
 
 				<td class=bgr1 nowrap width="100%"></td>							
 				
-				@{[ $options -> {lpt} ? <<EOLPT : '']}
-				<td class=bgr1><img height=22 src="$_REQUEST{__uri}0.gif" width=4 border=0></td>
-				<td class=bgr1><nobr><A class=lnk2 href="@{[ create_url (lpt => 1) ]}" target="_blank">[$$i18n{Print}]</a>&nbsp;&nbsp;</nobr></td>
-
-				<td class=bgr1><img height=22 src="$_REQUEST{__uri}0.gif" width=4 border=0></td>
-				<td class=bgr1><nobr><A class=lnk2 href="@{[ create_url (xls => 1, salt => rand) ]}" target="_blank">[MS Excel]</a>&nbsp;&nbsp;</nobr></td>
-EOLPT
-
 				@{[ $_REQUEST {__help_url} ? <<EOHELP : '' ]}
 				<td class=bgr1><img height=22 src="$_REQUEST{__uri}0.gif" width=4 border=0></td>
 				<td class=bgr1><nobr><A id="help" class=lnk2 href="$_REQUEST{__help_url}" target="_blank">[$$i18n{F1}]</A>&nbsp;&nbsp;</nobr></td>
 EOHELP
-
-				@{[ $$_USER{id} ? <<EOEXIT : '' ]}
-				<td class=bgr1><img height=22 src="$_REQUEST{__uri}0.gif" width=4 border=0></td>
-				<td class=bgr1><nobr><A class=lnk2 href="$exit_url">[$$i18n{Exit}]</A>&nbsp;&nbsp;</nobr></td>
-EOEXIT
-
 				<td class=bgr1><img height=22 src="$_REQUEST{__uri}0.gif" width=4 border=0></td>
 				<td class=bgr1><img height=1 src="$_REQUEST{__uri}0.gif" width=7 border=0></td>
 			</tr>
@@ -2554,66 +2649,6 @@ sub draw_select_cell {
 	my $multiple = $data -> {rows} > 1 ? "multiple size=$$options{rows}" : '';
 
 	return qq {<td $attributes><nobr><select name="$$data{name}" onChange="is_dirty=true; $$options{onChange}" onkeypress="typeAhead()" $multiple>$html</select></nobr></td>};
-	
-}
-
-################################################################################
-
-sub draw_form_field_popup {
-
-	my ($options, $data) = @_;
-	
-	$options -> {max_len} ||= $conf -> {max_len};	
-	$options -> {max_len} ||= $options -> {size};
-	$options -> {max_len} ||= 30;		
-	
-	my $s = $options -> {value};
-	$s ||= $$data{$$options{name} . '_label'};
-	if ($options -> {picture}) {
-		$s = format_picture ($s , $options -> {picture});
-		$s =~ s/^\s+//g; 
-	}
-	
-	$s =~ s/\"/\&quot\;/gsm; #";
-	
-	my $attributes = dump_attributes ($options -> {attributes});
-	
-	my $size = $options -> {size} ? "size=$$options{size} maxlength=$$options{size}" : "size=120";
-	
-	$tabindex++;
-		
-	check_href ($options);
-
-	return <<EOH
-		<input type="hidden" name="_$$options{name}" value="$$data{$$options{name}}">
-		<nobr>
-			<input 
-				readonly
-				$attributes 
-				onFocus="scrollable_table_is_blocked = true; q_is_focused = true" 
-				onBlur="scrollable_table_is_blocked = false; q_is_focused = false" 
-				type="text" 
-				maxlength="$$options{max_len}" 
-				name="__$$options{name}_label" 
-				value="$s" 
-				$size 
-				onactivate="if (document.readyState == 'complete') {_$$options{name}_handler ()}"
-				onKeyPress="if (window.event.keyCode != 27) is_dirty=true" 
-				onHelp="_$$options{name}_handler ()"
-				onClick="_$$options{name}_handler ()"
-				tabindex=$tabindex
-			>&nbsp;(F1)
-		<nobr>
-		
-		<script>
-			function _$$options{name}_handler () {
-				var w = window.open ('$$options{href}','_dialog_$$options{name}', 'directories=0,location=0,menubar=0,status=0,titlebar=0,toolbar=0,width=600,height=400');
-				w.focus ();
-				event.returnValue  = false;
-				event.cancelBubble = true;
-			}
-		</script>
-EOH
 	
 }
 

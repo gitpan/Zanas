@@ -92,8 +92,8 @@ sub sql_temporality_callback {
 	
 	while (my ($name, $definition) = each %$needed_tables) {
 
-		next if $name =~ /^__log_/;
-
+		sql_is_temporal_table ($name) or next;
+		
 		my $log_def = Storable::dclone ($definition);
 		
 		foreach my $key (keys %{$log_def -> {columns}}) {
@@ -136,6 +136,27 @@ sub sql_temporality_callback {
 
 	}
 	
+}
+
+################################################################################
+
+sub sql_is_temporal_table {
+
+	if (ref $conf -> {db_temporality} eq ARRAY) {
+		$conf -> {db_temporality} = {(map {$_ => 1} @{$conf -> {db_temporality}})};
+	}
+
+	my ($name) = @_;
+	
+	return 0 if $name =~ /^__log_/;
+
+	if (ref $conf -> {db_temporality} eq HASH) {
+		return $conf -> {db_temporality} -> {$name};
+	}
+	else {
+		return $conf -> {db_temporality};
+	}
+
 }
 
 ################################################################################
