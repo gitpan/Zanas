@@ -432,6 +432,10 @@ sub draw_table {
 
 =over
 
+=item multiline
+
+если истина, то путь разбиваетс€ на строки
+
 =item id_param
 
 им€ параметра, который считаетс€ C<id> по умолчанию.
@@ -1351,6 +1355,14 @@ sub draw_form_field_image {
 =item label
 
 ќтображаемое им€
+
+=item width
+
+Ўирина
+
+=item height
+
+¬ысота
 
 =back
 

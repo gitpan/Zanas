@@ -1,7 +1,11 @@
+0.65: 17.11.03 12:44
+	- "Generator" meta tag with version number added in draw_page sub
+	- empty action values are now allowed in draw_form
+
 0.64: 17.11.03 11:51
-	- added multiline option in draw_path;
-	- added width & height options in draw_form_field_htmleditor (by pashka);
-	- added check_href facility to draw_ok_esc_toolbar and draw_esc_toolbar (by pashka);
+	- added multiline option in draw_path
+	- added width & height options in draw_form_field_htmleditor (by pashka)
+	- added check_href facility to draw_ok_esc_toolbar and draw_esc_toolbar (by pashka)
 	
 0.63: 14.11.03 12:35
 	- added value option in draw_form_field_static sub (by hekima)

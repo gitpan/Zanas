@@ -156,6 +156,7 @@ EOH
 		<html>
 			<head>
 				<title>$$conf{page_title}</title>
+				<meta name="Generator" content="Zanas/MSIE5 $Zanas::VERSION">
 				<LINK href="/i/new.css" type=text/css rel=STYLESHEET>
 				<script src="/i/js.js">
 				</script>
@@ -826,8 +827,7 @@ sub MSIE_5_draw_form {
 
 	my ($options, $data, $fields) = @_;
 	
-	my $action = $options -> {action};
-	$action ||= 'update';
+	my $action = exists $options -> {action} ? $options -> {action} : 'update';
 	
 	my $type = $options -> {type};
 	$type ||= $_REQUEST{type};
