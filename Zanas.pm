@@ -15,18 +15,25 @@ use constant OK => 200;
 
 BEGIN {	
 
-	$Zanas::VERSION = '0.9967';
+	$Zanas::VERSION = '0.9968';
 	
 	eval {
 		require Storable;
 	};
 	
 	unless ($preconf -> {core_path}) {
+
+		if ($preconf -> {core_xul}) {
+			require Zanas::Presentation::XUL;
+		}
+		else {
+			require Zanas::Presentation::MSIE_5;
+		}
+	
 		require Zanas::Apache;
 		require Zanas::Content;
 		require Zanas::InternalRequest;
 		require Zanas::Presentation;
-		require Zanas::Presentation::MSIE_5;
 		require Zanas::Request;
 		require Zanas::Request::Upload;
 		require Zanas::SQL;

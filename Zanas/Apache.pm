@@ -148,14 +148,7 @@ sub handler {
 		Select                   => 'Sélection',
    	});   	
    	   	
-#   	my $path_info = $ENV{REQUEST_URI} || $ENV{PATH_INFO};
-#   	$path_info;
-#print STDERR "\n\$ENV{PATH_INFO}=$ENV{PATH_INFO}\n";
-#print STDERR "\$ENV{REQUEST_URI}=$ENV{REQUEST_URI}\n";
-#print STDERR "\$path_info=$path_info\n";
-#	$_REQUEST {type} = '_static_files' if (($path_info =~ /\w\.[a-z]{3}$/ && $path_info ne '/index.html') || $r -> filename =~ /\w\.\w/);
-
-	$_REQUEST {type} = '_static_files' if $r -> uri =~ /navigation\.js|0\.html|0\.gif|zanas\.css/;
+	$_REQUEST {type} = '_static_files' if $r -> uri =~ m{/(navigation\.js|0\.html|0\.gif|zanas\.css)};
 
 	$conf -> {include_js}  ||= ['js'];
    	
@@ -396,7 +389,7 @@ sub pub_handler {
 	get_request (@_);
 	
 	my $parms = $apr -> parms;
-	if ($parms -> {debug1} or $r -> uri =~ /navigation\.js|0\.html|0\.gif|zanas\.css/) {
+	if ($parms -> {debug1} or $r -> uri =~ m{/(navigation\.js|0\.html|0\.gif|zanas\.css)}) {
 		handler (@_);
 		return OK;		
 	};

@@ -1,3 +1,8 @@
+0.9968:
+
+	- _static_files recognition fixed (by pashka);
+	- js fix: up & down table scrolling is way smoother now;
+
 0.9967:
 
 	- draw_centered_toolbar fixed for broken HTML;

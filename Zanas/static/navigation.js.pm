@@ -140,6 +140,9 @@ function handle_basic_navigation_keys () {
 			scrollable_table_row_cell_old_style = scrollable_rows [scrollable_table_row].cells [effective_scrollable_cell].className;
 			scrollable_rows [scrollable_table_row].cells [effective_scrollable_cell].className = 'txt6';
 			scrollable_rows [scrollable_table_row].cells [effective_scrollable_cell].scrollIntoView (false);
+			window.event.keyCode = 0;	
+			window.event.cancelBubble = true;
+			window.event.returnValue = false;
 			focus_on_first_input (scrollable_rows [scrollable_table_row].cells [effective_scrollable_cell]);
 			return false;
 
@@ -153,7 +156,10 @@ function handle_basic_navigation_keys () {
 			effective_scrollable_cell = Math.min (scrollable_table_row_cell, scrollable_rows [scrollable_table_row].cells.length - 1);
 			scrollable_table_row_cell_old_style = scrollable_rows [scrollable_table_row].cells [effective_scrollable_cell].className;
 			scrollable_rows [scrollable_table_row].cells [effective_scrollable_cell].className = 'txt6';
-			scrollable_rows [scrollable_table_row].cells [effective_scrollable_cell].scrollIntoView ();
+			scrollable_rows [scrollable_table_row].cells [effective_scrollable_cell].scrollIntoView (false);
+			window.event.keyCode = 0;	
+			window.event.cancelBubble = true;
+			window.event.returnValue = false;
 			focus_on_first_input (scrollable_rows [scrollable_table_row].cells [effective_scrollable_cell]);
 			return false;
 

@@ -97,21 +97,71 @@ print STDERR "  Zanas::Dawdler [$$]: $$todo{package}::$$todo{sub} completed \n";
 
 ################################################################################
 
-sub run {
+sub qu_debug_log {
+	my ($package, $filename, $line, $subroutine, $hasargs, $wantarray, $evaltext, $is_require, $hints, $bitmask) = caller (1);
+	print STDERR "${package}::${subroutine} [$$] $_[0] \n";
+	eval {
+		sql_do ("INSERT INTO __qu_log (sub, pid, msg) VALUES (?, ?, ?)", $subroutine, $$, $_[0]);
+	};
+}
 
-print STDERR "Zanas::Dawdler: start\n";
 
-	our $PACKAGE_ROOT = abs_path ('lib') . '/';
 
-	my $self = new Zanas::Dawdler;
 
-	$self -> {preconf} -> {dawdler} -> {activity_period} ||= 60 * 60 - 5;
-	$self -> {preconf} -> {dawdler} -> {sleep_period}    ||= 1;
-	$self -> {finish_time} = time () + $self -> {preconf} -> {dawdler} -> {activity_period};
 
-	$preconf ||= $self -> {preconf};
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+################################################################################
+
+sub qu_reload {
+
+qu_debug_log ('Started');
+
+	unless ($preconf -> {qu}) {
+qu_debug_log ('No $preconf -> {qu} -- bailing out');
+		return;
+	}
+
+	$preconf -> {qu} -> {timeout}           ||= 60;
+	$preconf -> {qu} -> {sleep_after_job}   ||= 1;
+	$preconf -> {qu} -> {sleep_after_sleep} ||= 30;
 	
 	sql_reconnect ();
+	
+qu_debug_log ('DB connected');	
 	
 	$model_update -> assert (
 
@@ -120,57 +170,64 @@ print STDERR "Zanas::Dawdler: start\n";
 		},	
 
 		tables => {		
-			dawdler_tasks => {
+		
+			__qu_tasks => {
+			
 				columns => {
-					parent =>   {TYPE_NAME => 'int'},
-					pid =>      {TYPE_NAME => 'int'},
-					package =>  {TYPE_NAME => 'varchar', COLUMN_SIZE => 255},
-					sub =>      {TYPE_NAME => 'varchar', COLUMN_SIZE => 255},
-					args =>     {TYPE_NAME => 'text'},
-					deadline => {TYPE_NAME => 'datetime'},
+				
+					name =>            {TYPE_NAME => 'varchar', COLUMN_SIZE => 255},
+					parent =>          {TYPE_NAME => 'int'},
+					sub =>             {TYPE_NAME => 'varchar', COLUMN_SIZE => 255},
+					args =>            {TYPE_NAME => 'logntext'},
+
+					pid =>             {TYPE_NAME => 'int'},
+					started =>         {TYPE_NAME => 'timestamp'},
+					
 				},
+				
 			},
 
-			dawdler_log => {
+			__qu_log => {
+			
 				columns => {
-					parent =>  {TYPE_NAME => 'int'},
+				
 					id_task => {TYPE_NAME => 'int'},
 					pid =>     {TYPE_NAME => 'int'},
 					action =>  {TYPE_NAME => 'tinyint'},
-					package => {TYPE_NAME => 'varchar', COLUMN_SIZE => 255},
 					sub =>     {TYPE_NAME => 'varchar', COLUMN_SIZE => 255},
-					args =>    {TYPE_NAME => 'text'},
-					dt =>      {TYPE_NAME => 'timestamp'},
+					arg1 =>    {TYPE_NAME => 'varchar', COLUMN_SIZE => 255},
+					arg2 =>    {TYPE_NAME => 'varchar', COLUMN_SIZE => 255},
+					arg3 =>    {TYPE_NAME => 'varchar', COLUMN_SIZE => 255},
+					dt =>      {TYPE_NAME => 'timestamp'},			
+					msg =>     {TYPE_NAME => 'text'},
+					
 				},
+				
 			},
 
 		},
 
 	);
 		
-	sql_do ("INSERT INTO dawdler_log (parent, id_task, package, sub, args, pid, action) VALUES (0, 0, '', '', '', ?, 3)", $$);
-	
-	foreach my $task (@{$self -> {preconf} -> {dawdler} -> {tasks}}) {		
-		sql_select_scalar ('SELECT COUNT(*) FROM dawdler_tasks WHERE package=? AND sub=? AND args=?', $task -> {package}, $task -> {sub}, freeze ($task -> {args})) or
-			$self -> schedule (0, $task -> {package}, $task -> {sub}, 0, @{$task -> {args}});
-	}
+qu_debug_log ('DB model asserted');			
+					
+}
 
-	sql_do ('UPDATE dawdler_tasks SET pid = NULL');
-	
-	while (1) {
-		last if time () > $self -> {finish_time};
-		$self -> _launch_todos;
+################################################################################
 
-print STDERR " Zanas::Dawdler: sleeping...\n";
+sub qu_schedule {
 
-		sleep ($self -> {preconf} -> {dawdler} -> {sleep_period});
-	}
+	my ($options, $sub, @args) = @_;
 	
-	sql_reconnect ();	
-	sql_do ("INSERT INTO dawdler_log (parent, id_task, package, sub, args, pid, action) VALUES (0, 0, '', '', '', ?, 4)", $$);
+	sql_do (
+		'INSERT INTO __qu_tasks (name, parent, sub, args, due) VALUES (?, ?, ?, ?, ?)', 
+		$options -> {name}, 
+		$__qu_id_task, 
+		$sub, 
+		b64u_freeze (\@args),
+		$options -> {due}, 
+	);
 
-	$db -> disconnect;
-	
 }
 
 1;
