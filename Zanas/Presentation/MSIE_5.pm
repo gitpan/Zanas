@@ -702,6 +702,8 @@ sub MSIE_5_draw_toolbar_button {
 
 	my ($options) = @_;
 	
+	return '' if $options -> {off};
+	
 	MSIE_5_register_hotkey ($options, 'href', $options);
 	
 	check_href ($options);
@@ -1075,7 +1077,7 @@ sub MSIE_5_draw_ok_esc_toolbar {
 	$name ||= 'form';
 	
 	draw_centered_toolbar ($options, [
-		{icon => 'ok',     label => 'применить', href => '#', onclick => 'document.$name.submit()'},
+		{icon => 'ok',     label => 'применить', href => '#', onclick => "document.$name.submit()"},
 		{icon => 'cancel', label => 'вернуться', href => "$esc&sid=$_REQUEST{sid}", id => 'esc'},
 	])
 	

@@ -1,3 +1,7 @@
+	- fixed a bug with '$name.submit'
+	- added 'off' parameter in draw_toolbar_button sub
+
+0.60: 06.11.03 10:40
 	- added draw_form_field_button sub (by hekima)
 	- added support for arbitary value in draw_toolbar_input_text sub (by hekima)
 	- optional rows and cols numbers in draw_form_field_text sub (by hekima)
