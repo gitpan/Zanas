@@ -1,3 +1,7 @@
+0.9939: 
+
+	- fixed logging (was broken with adding support for Oracle);
+
 0.9937: 
 
 	- public_handler fixed: now loading Apache::Cookies;

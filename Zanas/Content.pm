@@ -223,8 +223,6 @@ sub redirect {
 ################################################################################
 
 sub log_action {
-
-	my ($id_user, $type, $action, $error, $id) = @_;
 	
 	my $id_log = sql_do_insert ('log', {
 		id_user => $_USER -> {id}, 
@@ -232,14 +230,15 @@ sub log_action {
 		action => $_OLD_REQUEST {action}, 
 		ip => $ENV {REMOTE_ADDR}, 
 		error => $_REQUEST {error}, 
-		id_object => $id, 
+		id_object => $_REQUEST {id}, 
 		ip_fw => $ENV {HTTP_X_FORWARDED_FOR},
 		fake => 0,
 	});
 	
-	$_REQUEST {params} = Data::Dumper -> Dump ([\%_OLD_REQUEST], ['_REQUEST']);	
-	sql_do_update ('log', [], {id => $id_log, lobs => ['params']});
+	$_REQUEST {_params} = $_REQUEST {params} = Data::Dumper -> Dump ([\%_OLD_REQUEST], ['_REQUEST']);	
+	sql_do_update ('log', ['params'], {id => $id_log, lobs => ['params']});
 	delete $_REQUEST {params};
+	delete $_REQUEST {_params};
 	
 }
 

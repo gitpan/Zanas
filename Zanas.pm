@@ -299,7 +299,7 @@ print STDERR "Zanas.pm loading ("  . __PACKAGE__ .  "): completed\n";
 
 package Zanas;
 
-$VERSION = '0.9936';
+$VERSION = '0.9939';
 
 =head1 NAME
 
