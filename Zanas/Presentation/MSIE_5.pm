@@ -733,6 +733,22 @@ sub draw_table {
 	
 	my $trs = '';
 
+	if (ref $options -> {title} eq HASH) {
+		my $title = '';
+		$options -> {title} -> {height} ||= 10;
+		$title .= draw_hr (%{$options -> {title}});
+		$title .= draw_window_title ($options -> {title}) if $options -> {title} -> {label};
+		$options -> {title} = $title;
+	}
+
+	if (ref $options -> {top_toolbar} eq ARRAY) {
+		$options -> {top_toolbar} = draw_toolbar (@{ $options -> {top_toolbar} });
+	}
+
+	if (ref $options -> {path} eq ARRAY) {
+		$options -> {path} = draw_path ({}, $options -> {path});
+	}
+
 	if ($options -> {'..'} && !$_REQUEST{lpt}) {
 	
 		my $url = $_REQUEST {__path} -> [-2];
@@ -781,8 +797,12 @@ EOH
 		next if $key =~ /^_/ or $key =~/^(type|action|sid)$/;
 		$hiddens .= qq {<input type=hidden name=$key value="$_REQUEST{$key}">};
 	}
-
+	
 	return <<EOH
+	
+		$$options{title}
+		$$options{path}
+		$$options{top_toolbar}
 		
 		@{[ $options -> {js_ok_escape} ? js_ok_escape ({name => $options -> {name}, no_ok => $options -> {no_ok}}) : '' ]}
 		
@@ -918,6 +938,8 @@ sub draw_toolbar {
 	my $form_name = $_REQUEST {__toolbars_number} ? 'toolbar_form_' . $_REQUEST {__toolbars_number} : 'toolbar_form';
 	$_REQUEST {__toolbars_number} ++;
 	
+	my $buttons = join '', map { ref $_ eq HASH ? ( &{'draw_toolbar_' . ($$_{type} || 'button')} ($_) ) : $_ } @buttons;
+	
 	return <<EOH
 		<table class=bgr5 cellspacing=0 cellpadding=0 width="100%" border=0>
 			<form action=/ name=$form_name target="$$options{target}">
@@ -940,7 +962,7 @@ EO
 							</tr>
 						</table>
 					</td>
-					@buttons
+					$buttons
 					<td width="100%">
 						<table cellspacing=0 cellpadding=0 width="100%" border=0>
 							<tr>
@@ -1044,9 +1066,9 @@ sub draw_toolbar_pager {
 		$label .= qq {&nbsp;<a href="$url" class=lnk0 id="_pager_prev" onFocus="blur()"><b><u>&lt;</u></b></a>&nbsp;};
 	}
 	
-	$options -> {total} or return '<td nowrap>список пуст<td><img height=15  hspace=4 src="/i/toolbars/razd1.gif" width=2 border=0></td>';
+	$options -> {total} or return '<td nowrap>$$i18n{toolbar_pager_empty_list}<td><img height=15  hspace=4 src="/i/toolbars/razd1.gif" width=2 border=0></td>';
 	
-	$label .= ($start + 1) . ' - ' . ($start + $$options{cnt}) . ' из ' . $$options{total};
+	$label .= ($start + 1) . ' - ' . ($start + $$options{cnt}) . $$i18n{toolbar_pager_of} . $$options{total};
 	
 	if ($start + $$options{cnt} < $$options{total}) {
 	
@@ -1233,15 +1255,17 @@ sub js_ok_escape {
 	my ($options) = @_;
 	
 	$options -> {name} ||= 'form';
-	$options -> {confirm_ok} ||= 'Сохранить данные?';
+	$options -> {confirm_ok} ||= $i18n -> {confirm_ok};	
+	$options -> {confirm_esc} ||= $i18n -> {confirm_esc};
 	
 	$options -> {confirm_ok} = js_escape ($options -> {confirm_ok});
+	$options -> {confirm_esc} = js_escape ($options -> {confirm_esc});
 
 	return <<EOH
 	
 		<script for="body" event="onkeypress">
 		
-			if (window.event.keyCode == 27 && (!is_dirty || window.confirm ('Уйти без сохранения данных?'))) {
+			if (window.event.keyCode == 27 && (!is_dirty || window.confirm ($$options{confirm_esc}))) {
 				activate_link (document.getElementById ('esc').href);
 			}
 			
@@ -1644,7 +1668,7 @@ sub draw_esc_toolbar {
 		@{$options -> {additional_buttons}},
 		{
 			icon => 'cancel', 
-			label => 'вернуться', 
+			label => $i18n -> {cancel}, 
 			href => $options -> {href}, 
 			id => 'esc'
 		},
@@ -1665,8 +1689,8 @@ sub draw_ok_esc_toolbar {
 	my $name = $options -> {name};
 	$name ||= 'form';
 	
-	$options -> {label_ok} ||= 'применить';
-	$options -> {label_cancel} ||= 'вернуться';
+	$options -> {label_ok}     ||= $i18n -> {ok};
+	$options -> {label_cancel} ||= $i18n -> {cancel};
 
 	draw_centered_toolbar ($options, [
 		{
@@ -1698,7 +1722,7 @@ sub draw_close_toolbar {
 		@{$options -> {additional_buttons}},
 		{
 			icon => 'ok',     
-			label => 'закрыть', 
+			label => $i18n -> {'close'}, 
 			href => 'javascript:window.close()',
 			id => 'esc',
 		},
@@ -1719,9 +1743,9 @@ sub draw_back_next_toolbar {
 	$back ||= "/?type=$type";
 	
 	draw_centered_toolbar ($options, [
-		{icon => 'back', label => '&lt;&lt; назад', href => $back, id => 'esc'},
+		{icon => 'back', label => $i18n -> {back}, href => $back, id => 'esc'},
 		@{$options -> {additional_buttons}},
-		{icon => 'next', label => 'продолжить &gt;&gt;', href => '#', onclick => 'document.form.submit()'},
+		{icon => 'next', label => $i18n -> {'next'}, href => '#', onclick => 'document.form.submit()'},
 	])
 	
 }
@@ -1840,7 +1864,7 @@ EOH
 				<td class=bgr1><nobr>&nbsp;&nbsp;</nobr></td>
 
 				<td class=bgr1><img height=22 src="/0.gif" width=4 border=0></td>
-				<td class=bgr1><nobr><A class=lnk2>Пользователь: @{[ $_USER && $_USER -> {label} ? $_USER -> {label} : 'не определён']}</a>&nbsp;&nbsp;</nobr></td>
+				<td class=bgr1><nobr><A class=lnk2>$$i18n{User}: @{[ $_USER && $_USER -> {label} ? $_USER -> {label} : $i18n -> {not_logged_in}]}</a>&nbsp;&nbsp;</nobr></td>
 
 				$calendar
 
@@ -1848,7 +1872,7 @@ EOH
 				
 				@{[ $options -> {lpt} ? <<EOLPT : '']}
 				<td class=bgr1><img height=22 src="/0.gif" width=4 border=0></td>
-				<td class=bgr1><nobr><A class=lnk2 href="@{[ create_url (lpt => 1) ]}" target="_blank">[Печать]</a>&nbsp;&nbsp;</nobr></td>
+				<td class=bgr1><nobr><A class=lnk2 href="@{[ create_url (lpt => 1) ]}" target="_blank">[$$i18n{Print}]</a>&nbsp;&nbsp;</nobr></td>
 
 				<td class=bgr1><img height=22 src="/0.gif" width=4 border=0></td>
 				<td class=bgr1><nobr><A class=lnk2 href="@{[ create_url (xls => 1, salt => rand) ]}" target="_blank">[MS Excel]</a>&nbsp;&nbsp;</nobr></td>
@@ -1856,12 +1880,12 @@ EOLPT
 
 				@{[ $_REQUEST {__help_url} ? <<EOHELP : '' ]}
 				<td class=bgr1><img height=22 src="/0.gif" width=4 border=0></td>
-				<td class=bgr1><nobr><A id="help" class=lnk2 href="$_REQUEST{__help_url}" target="_blank">[F1: Справка]</A>&nbsp;&nbsp;</nobr></td>
+				<td class=bgr1><nobr><A id="help" class=lnk2 href="$_REQUEST{__help_url}" target="_blank">[$$i18n{F1}]</A>&nbsp;&nbsp;</nobr></td>
 EOHELP
 
 				@{[ $_USER ? <<EOEXIT : '' ]}
 				<td class=bgr1><img height=22 src="/0.gif" width=4 border=0></td>
-				<td class=bgr1><nobr><A class=lnk2 href="$$conf{exit_url}">[Выход]</A>&nbsp;&nbsp;</nobr></td>
+				<td class=bgr1><nobr><A class=lnk2 href="$$conf{exit_url}">[$$i18n{Exit}]</A>&nbsp;&nbsp;</nobr></td>
 EOEXIT
 
 				<td class=bgr1><img height=22 src="/0.gif" width=4 border=0></td>
@@ -1888,7 +1912,7 @@ sub draw_form_field_image {
 <input type="hidden" name="_$$options{name}" value="$$options{id_image}">
 <img src="$$options{src}" id="$$options{name}_preview" width = "$$options{width}" height = "$$options{height}">
 &nbsp;
-<input type="button" value="Выбрать" onClick="window.open('$$options{new_image_url}', 'selectImage' , '');">
+<input type="button" value="$$i18n{Select}" onClick="window.open('$$options{new_image_url}', 'selectImage' , '');">
 EOS
 
 }
@@ -1913,7 +1937,7 @@ sub draw_form_field_htmleditor {
 		<SCRIPT language="javascript">
 <!--
 var oFCKeditor_$$options{name} ;
-oFCKeditor_$$options{name} = new FCKeditor('_$$options{name}', '$$options{width}', '$$options{height}') ;
+oFCKeditor_$$options{name} = new FCKeditor('_$$options{name}', '$$options{width}', '$$options{height}, '$$options{toolbar}');
 oFCKeditor_$$options{name}.Value = '$s';
 oFCKeditor_$$options{name}.Create() ;
 //-->

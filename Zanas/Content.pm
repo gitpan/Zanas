@@ -78,13 +78,21 @@ sub get_user {
 		SELECT
 			users.*
 			, roles.name AS role
+			, sessions.id_role AS session_role
+			, session_roles.name AS session_role_name
 		FROM
 			sessions
 			INNER JOIN users ON sessions.id_user = users.id
 			INNER JOIN roles ON users.id_role = roles.id
+			LEFT JOIN roles as session_roles ON sessions.id_role = session_roles.id
 		WHERE
 			sessions.id = ?
 EOS
+
+	if ($user && $user -> {session_role}) {
+		$user -> {id_role} = $user -> {session_role};
+		$user -> {role} = $user -> {session_role_name};
+	}
 
 	if ($user && $_REQUEST {role} && ($conf -> {core_multiple_roles} || $preconf -> {core_multiple_roles})) {
 
@@ -102,9 +110,20 @@ EOS
 		
 		$user -> {role} = $_REQUEST {role} if ($id_role);
 		
-		if ($id_role && $id_role != $user -> {id_role}) {
-			sql_do ("UPDATE users SET id_role = ? WHERE id = ? ", $id_role, $user -> {id});
-			$user -> {id_role} = $id_role;
+		if ($id_role) {
+
+			my $id_session = sql_select_scalar ("SELECT id FROM sessions WHERE id_user = ? AND id_role = ?", $user -> {id}, $id_role);
+
+			if ($id_session) {
+				$_REQUEST {sid} = $id_session;
+			} else {
+				$_REQUEST {sid} = sql_select_array ("select floor(rand() * 9223372036854775807)");
+				sql_do ("INSERT INTO sessions (id, id_user, id_role) VALUES (?, ?, ?)", $_REQUEST {sid}, $user -> {id}, $id_role);
+			}
+
+			delete $_REQUEST {role};
+
+			$user -> {redirect} = 1;
 		}
 	}
 

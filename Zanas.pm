@@ -187,19 +187,10 @@ BEGIN {
 				
 					columns => {
 
-						id => {
-							TYPE_NAME  => 'bigint',
-							_PK    => 1,
-						},
-
-						id_user => {
-							TYPE_NAME  => 'int',
-						},
-
-						ts => {
-							TYPE_NAME  => 'timestamp',
-						},
-					
+						id      => {TYPE_NAME  => 'bigint', _PK    => 1},
+						id_user => {TYPE_NAME  => 'int'},
+						id_role => {TYPE_NAME  => 'int'},
+						ts      => {TYPE_NAME  => 'timestamp'},
 					}
 
 				},
@@ -266,7 +257,7 @@ BEGIN {
 
 package Zanas;
 
-$VERSION = '0.9912';
+$VERSION = '0.9913';
 
 =head1 NAME
 

@@ -4,6 +4,23 @@ use Number::Format;
 
 ################################################################################
 
+sub fill_in_i18n {
+
+	my ($lang, $entries) = @_;
+   	$conf -> {i18n} ||= {};
+   	$conf -> {i18n} -> {$lang} ||= {};
+	return if $conf -> {i18n} -> {$lang} -> {_is_filled};
+	
+	while (my ($key, $value) = each %$entries) {
+		$conf -> {i18n} -> {$lang} -> {$key} ||= $value;
+	}
+	
+	$conf -> {i18n} -> {$lang} -> {_is_filled} = 1;
+
+};
+
+#################################################################################
+
 sub handler {
 
 	our $_PACKAGE = __PACKAGE__ . '::';
@@ -26,7 +43,68 @@ sub handler {
 	require_fresh ($_PACKAGE . '::Config');
 
    	$conf -> {dbf_dsn} and our $dbf = DBI -> connect ($conf -> {dbf_dsn}, {RaiseError => 1});
+   	
+   	$conf -> {lang} ||= 'RUS';
+   	
+   	$conf -> {i18n} ||= {};
+   	
+   	fill_in_i18n ('RUS', {
+   		_charset                 => 'windows-1251',
+		Exit                     => 'Выход',
+		toolbar_pager_empty_list => 'список пуст',		
+		toolbar_pager_of         => ' из ',
+		confirm_ok               => 'Сохранить данные?',
+		confirm_esc              => 'Уйти без сохранения данных?',
+		ok                       => 'применить', 
+		cancel                   => 'вернуться', 
+		'close'                  => 'закрыть',
+		back                     => '&lt;&lt; назад',
+		'next'                   => 'продолжить &gt;&gt;',		
+		User                     => 'Пользователь',
+		not_logged_in		 => 'не определён',
+		Print                    => 'Печать',
+		F1                       => 'F1: Справка',
+		Select                   => 'Выбрать',
+   	});
+   	
+   	fill_in_i18n ('ENG', {
+   		_charset                 => 'windows-1252',
+		Exit                     => 'Exit',
+		toolbar_pager_empty_list => 'empty list',		
+		toolbar_pager_of         => ' of ',
+		confirm_ok               => 'Commit changes?',
+		confirm_esc              => 'Cancel changes?',
+		ok                       => 'ok', 
+		cancel                   => 'cancel', 
+		'close'                  => 'close',
+		back                     => '&lt;&lt; back',
+		'next'                   => 'next &gt;&gt;',
+		User                     => 'User',
+		not_logged_in		 => 'not logged in',
+		Print                    => 'Print',
+		F1                       => 'F1: Help',
+		Select                   => 'Select',
+   	});
 	
+   	fill_in_i18n ('FRE', {
+   		_charset                 => 'windows-1252',
+		Exit                     => 'Quitter',
+		toolbar_pager_empty_list => 'liste vide',
+		toolbar_pager_of         => ' de ',
+		confirm_ok               => 'Sauver des changements?',
+		confirm_esc              => 'Quitter sans sauvegarde?',
+		ok                       => 'appliquer', 
+		cancel                   => 'annuler', 
+		'close'                  => 'fermer',
+		back                     => '&lt;&lt; pas prйcйdent',
+		'next'                   => 'suite &gt;&gt;',
+		User                     => 'Utilisateur',
+		not_logged_in		 => 'indйfini',
+		Print                    => 'Imprimer',
+		F1                       => 'F1: Aide',
+		Select                   => 'Sйlection',
+   	});
+
 	$_REQUEST {type} = '_static_files' if $r -> filename =~ /\w\.\w/;
 	
 	$conf -> {include_js}  ||= ['js'];
@@ -54,6 +132,12 @@ EOH
 		
 	our $_USER = get_user ();
 	
+	$_REQUEST {lang} ||= $_USER -> {lang} if $_USER;
+	
+	$_REQUEST {lang} ||= $preconf -> {lang} || $conf -> {lang}; # According to NISO Z39.53
+	
+	our $i18n = $conf -> {i18n} -> {$_REQUEST {lang}};
+	
 	require_fresh ($_PACKAGE . '::Calendar');
 	
 	eval "our \$_CALENDAR = new ${_PACKAGE}Calendar (\\\%_REQUEST)";
@@ -67,6 +151,12 @@ EOH
 		delete $_REQUEST {__include_css};
 
 		redirect ('/?type=logon&redirect_params=' . uri_escape (Dumper (\%_REQUEST)));
+		
+	}
+	
+	elsif (exists ($_USER -> {redirect})) {
+		
+		redirect (create_url ());
 		
 	}
 
@@ -202,7 +292,7 @@ sub out_html {
 			$html =~ s{[ \t]+}{ }g;
 		}
 
-		$_REQUEST {__content_type} ||= 'text/html; charset=windows-1251';
+		$_REQUEST {__content_type} ||= 'text/html; charset=' . $i18n -> {_charset};
 		$r -> content_type ($_REQUEST {__content_type});
 		
 		if (($conf -> {core_gzip} or $preconf -> {core_gzip}) and $r -> header_in ('Accept-Encoding') =~ /gzip/) {

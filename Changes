@@ -1,3 +1,13 @@
+0.9913: 
+
+	- new option in draw_form_field_htmleditor: toolbar (by pashka);
+	- new option in draw_table: top_toolbar;
+	- new option in draw_table: path;
+	- new option in draw_table: title;
+	- draw_toolbar: buttons as hashrefs, not plain HTML;
+	- i18n support added;
+	- simultaneous sessions for multiple roles support added (by pashka);
+
 0.9912: 
 
 	- create_url sub fixed to always set random 'salt' parameter;

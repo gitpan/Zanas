@@ -1065,7 +1065,7 @@ EO
 
 	{
 		name     => 'draw_form_field_htmleditor',
-		options  => [qw(name label width height off)],
+		options  => [qw(name label width height off toolbar)],
 		label_en => 'Draws the WYIWYG HTML editing area (see http://www.fredck.com/FCKeditor/). Invoked by draw_form.',
 		label_ru => 'Отрисовывает интерактивный редактор HTML (см. http://www.fredck.com/FCKeditor/). Вызывается процедурой draw_form.',
 		see_also => [qw(draw_form)]
