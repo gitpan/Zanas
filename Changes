@@ -1,3 +1,10 @@
+0.9926: 
+
+	- new option no_clear_button in draw_form_field_datetime (thanks RomALo);
+	- fixed a bug with empty record duplication in draw_toolbar_input_select (thanks RomALo);
+	- added support for plain CGI in pub_handler;
+	- plain hrefs in menus (thanks pashka);
+
 0.9925: 
 
 	- out_html, sql_download_file and pub_handler fixed for proper file downloading on public sites;

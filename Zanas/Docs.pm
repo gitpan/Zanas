@@ -16,6 +16,12 @@ our $deparse = B::Deparse -> new ();
 @options = (
 
 	{
+		name     => 'no_clear_button',
+		label_en => "If true, the [X] button is not shown.",
+		label_ru => "Если истина, то кнопка [X] (очистка содержимого) не отрисовывается.",
+	},
+
+	{
 		name     => 'is_total',
 		label_en => "If true, the table row is displayed as a totals line, not ordinary row.",
 		label_ru => "Если истина, то строка таблицы подцвечивается как строка с суммой.",
@@ -1811,7 +1817,7 @@ EO
 
 	{
 		name     => 'draw_form_field_datetime',
-		options  => [qw(name label value off format/$$conf{format_dt} no_time onClose max_len)],
+		options  => [qw(name label value off format/$$conf{format_dt} no_time no_clear_button onClose max_len)],
 		label_en => 'Draws the calendar form input (DHTML from http://dynarch.com/mishoo/calendar.epl).',
 		label_ru => 'Отрисовывает поле ввода типа "календарь" (DHTML-код позаимствован с http://dynarch.com/mishoo/calendar.epl).',
 		see_also => [qw(draw_form)]
@@ -2060,6 +2066,23 @@ EO
 		label_en => 'Draws table cell containing an input field.',
 		label_ru => 'Отрисовывает клетку таблицы с текстовым полем ввода.',
 		see_also => [qw(draw_table draw_text_cells)]
+	},
+
+					#######################################
+
+	{
+		name     => 'draw_radio_cell',
+		options  => [qw(name value/1 checked off title attributes)],
+		syn      => <<EO,	
+
+	draw_radio_cell ({
+		name     => "item_number_17",
+		checked  => \$REQUEST {id} == 17,
+	})
+EO
+		label_en => 'Draws table cell containing a radio button.',
+		label_ru => 'Отрисовывает клетку таблицы с радио-кнопкой.',
+		see_also => [qw(draw_table)]
 	},
 
 					#######################################

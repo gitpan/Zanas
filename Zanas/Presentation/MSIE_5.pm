@@ -429,11 +429,20 @@ EOH
 			$onhover = qq {onmouseover="open_popup_menu ('$$type{name}')"};
 		}
 		
-		my $href = $type -> {no_page} ? '#' : "$_REQUEST{__uri}?type=$$type{name}&sid=$_REQUEST{sid}@{[$_REQUEST{period} ? '&period=' . $_REQUEST {period} : '']}@{[$type->{role} ? '&role=' . $type->{role} : '']}";
+#		my $href = $type -> {no_page} ? '#' : ("$_REQUEST{__uri}?type=$$type{name}&sid=$_REQUEST{sid}@{[$_REQUEST{period} ? '&period=' . $_REQUEST {period} : '']}@{[$type->{role} ? '&role=' . $type->{role} : '']}";
+
+		if ($type -> {no_page}) {
+			$type -> {href} = '#';
+		} 
+		else {
+			$type -> {href} = "/?type=$$type{name}";
+			$type -> {href} .= "&role=$$type{role}" if $type -> {role};
+			check_href ($type);
+		}
 		
 		$tr2 .= <<EOH;
 			<td class=bgr1><img height=20 src="$_REQUEST{__uri}0.gif" width=1 border=0></td>
-			<td $onhover class=$tclass nowrap>&nbsp;&nbsp;<a class=$aclass id="main_menu_$$type{name}" href="$href">$$type{label}</a>&nbsp;&nbsp;</td>
+			<td $onhover class=$tclass nowrap>&nbsp;&nbsp;<a class=$aclass id="main_menu_$$type{name}" href="$$type{href}">$$type{label}</a>&nbsp;&nbsp;</td>
 EOH
 
 		$tr3 .= <<EOH;
@@ -485,6 +494,10 @@ EOH
 		}
 		else {
 		
+			$type -> {href} = "/?type=$$type{name}";
+			$type -> {href} .= "&role=$$type{role}" if $type -> {role};
+			check_href ($type);		
+		
 			$tr2 .= <<EOH;
 				<tr height=1>
 					<td bgcolor=#485F70 colspan=3><img height=1 src=$_REQUEST{__uri}0.gif width=1 border=0></td>
@@ -494,7 +507,7 @@ EOH
 						nowrap 
 						onmouseover="this.style.background='#efefef'" 
 						onmouseout="this.style.background='#d5d5d5'"
-						onclick="parent.location.href='$_REQUEST{__uri}?type=$$type{name}&sid=$_REQUEST{sid}@{[$_REQUEST{period} ? '&period=' . $_REQUEST {period} : '']}@{[$type->{role} ? '&role=' . $type->{role} : '']}'"
+						onclick="parent.location.href='$$type{href}'
 						style="font-weight: normal; font-size: 11px; color: #000000; font-family: verdana; text-decoration: none"
 					>
 						&nbsp;&nbsp;$$type{label}&nbsp;&nbsp;
@@ -1360,12 +1373,13 @@ sub draw_form_field_datetime {
 	
 	my $shows_time = $options -> {no_time} ? 'false' : 'true';
 	
+	my $clear_button = $options -> {no_clear_button} ? '' : qq{&nbsp;<button class="txt7" onClick="document.all._$$options{name}.value=''">X</button>};
+	
 	return <<EOH
 		<nobr>
 		<input $attributes onFocus="scrollable_table_is_blocked = true; q_is_focused = true" onBlur="scrollable_table_is_blocked = false; q_is_focused = false" autocomplete="off" type="text" name="_$$options{name}" value="$s" $size onKeyPress="if (window.event.keyCode != 27) is_dirty=true">
 		<button id="calendar_trigger_$$options{name}" class="txt7">...</button>
-		&nbsp;
-		<button class="txt7" onClick="document.all._$$options{name}.value=''">X</button>
+		$clear_button
 		</nobr>
 		
 		<script type="text/javascript">
@@ -1602,7 +1616,9 @@ sub draw_toolbar_input_select {
 	
 	$options -> {max_len} ||= $conf -> {max_len};
 	
-	unshift @{$options -> {values}}, {id => 0, label => $options -> {empty}} if exists $options -> {empty};
+	if (exists $options -> {empty}) {
+		$html .= qq {<option value=0 $selected>$$options{empty}</option>};
+	}
 
 	foreach my $value (@{$options -> {values}}) {		
 		my $selected = (($value -> {id} eq $_REQUEST {$options -> {name}}) or ($value -> {id} eq $options -> {value})) ? 'selected' : '';
@@ -1759,10 +1775,13 @@ sub draw_back_next_toolbar {
 	my $back = $options -> {back};
 	$back ||= "/?type=$type";
 	
+	my $name = $options -> {name};
+	$name ||= 'form';
+
 	draw_centered_toolbar ($options, [
 		{icon => 'back', label => $i18n -> {back}, href => $back, id => 'esc'},
 		@{$options -> {additional_buttons}},
-		{icon => 'next', label => $i18n -> {'next'}, href => '#', onclick => 'document.form.submit()'},
+		{icon => 'next', label => $i18n -> {'next'}, href => '#', onclick => "document.$name.submit()"},
 	])
 	
 }
@@ -1954,21 +1973,22 @@ EOH
 ################################################################################
 
 sub draw_radio_cell {
-	my ($data) = @_;
-	my $value = $data -> {value} || 1;
+
+	my ($options) = @_;
+	my $value = $options -> {value} || 1;
 	
-	my $checked = $data -> {checked} ? 'checked' : '';
+	my $checked = $options -> {checked} ? 'checked' : '';
 
-	$data -> {attributes} ||= {};
-	$data -> {attributes} -> {class} ||= 'txt4';
+	$options -> {attributes} ||= {};
+	$options -> {attributes} -> {class} ||= 'txt4';
 
-	my $attributes = dump_attributes ($data -> {attributes});
+	my $attributes = dump_attributes ($options -> {attributes});
 
-	return qq {<td $attributes>&nbsp;} if $data -> {off};	
+	return qq {<td $attributes>&nbsp;} if $options -> {off};	
 
-	check_title ($data);
+	check_title ($options);
 
-	return qq {<td $$data{title} $attributes><input type=radio name=$$data{name} $checked value='$value'></td>};
+	return qq {<td $$options{title} $attributes><input type=radio name=$$options{name} $checked value='$value'></td>};
 
 }
 

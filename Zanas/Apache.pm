@@ -326,6 +326,8 @@ sub out_html {
 sub pub_handler {
 
 	our $_PACKAGE = __PACKAGE__ . '::';
+	
+	my  $use_cgi = $ENV {SCRIPT_NAME} =~ m{index\.pl} || $ENV {GATEWAY_INTERFACE} =~ m{^CGI/} || $conf -> {use_cgi} || $preconf -> {use_cgi} || !$INC{'Apache/Request.pm'};
 
 	our $r   = $use_cgi ? new Zanas::Request () : $_[0];
 	our $apr = $use_cgi ? $r : Apache::Request -> new ($r);
@@ -338,7 +340,7 @@ sub pub_handler {
 	$_REQUEST {__uri_chomped} = $_REQUEST {__uri};
 	$_REQUEST {__uri_chomped} =~ s{/$}{};
 
-	our %_COOKIES = Apache::Cookie -> fetch;
+	our %_COOKIES = $use_cgi ? CGI::Cookie -> fetch : Apache::Cookie -> fetch;
 	my $c = $_COOKIES {psid};
 	$_REQUEST {sid} = $c -> value if $c;
 	
