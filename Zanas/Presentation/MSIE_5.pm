@@ -164,11 +164,14 @@ EOH
 	
 	$_REQUEST {__scrollable_table_row} ||= 0;
 	
+	my $meta_refresh = $_REQUEST {__meta_refresh} ? qq{<META HTTP-EQUIV=Refresh CONTENT="$_REQUEST{__meta_refresh}; URL=@{[create_url()]}">} : '';	
+	
 	return <<EOH;
 		<html>
 			<head>
 				<title>$$conf{page_title}</title>
 				<meta name="Generator" content="Zanas/MSIE5 $Zanas::VERSION">
+				$meta_refresh
 				<LINK href="/i/new.css" type=text/css rel=STYLESHEET>
 				<script src="/i/js.js">
 				</script>
@@ -330,7 +333,16 @@ EOF
 						if (window.event.keyCode == 13) {
 							
 							var children = scrollable_rows [scrollable_table_row].cells [scrollable_table_row_cell].getElementsByTagName ('a');
-							if (children != null && children.length > 0) document.location.href = children [0].href + '&_salt=@{[rand]}';
+							if (children != null && children.length > 0) {
+								var href = children [0].href;
+								if (href.indexOf ('javascript:') == 0) {
+									var code = href.substr (11).replace (/%20/g, ' ');
+									eval (code);
+								}
+								else {
+									document.location.href = children [0].href + '&_salt=@{[rand]}';
+								}
+							}
 							return false;
 							
 						}
@@ -519,9 +531,37 @@ EOH
 
 ################################################################################
 
+sub MSIE_5_draw_table_header {
+
+	my ($cell) = @_;
+	
+	if (ref $cell eq ARRAY) {
+	
+		my $line = join '', (map {MSIE_5_draw_table_header ($_)} @$cell);
+		
+		return (ref $cell -> [0] eq ARRAY ? '' : '<tr>') . $line;
+							
+	}
+	elsif (!ref $cell) {
+	
+		return "<th class=bgr4>$cell\&nbsp;";
+		
+	}
+	
+	return '' if $cell -> {off};
+	
+	$cell -> {label} = "<a class=lnk4 href=\"$$cell{href}\"><b>" . $cell -> {label} . "</b></a>" if $cell -> {href};
+	$cell -> {colspan} ||= 1;
+	
+	return "<th class=bgr4 colspan=$$cell{colspan}>$$cell{label}\&nbsp;";
+
+}
+
+################################################################################
+
 sub MSIE_5_draw_table {
 
-	my ($headers, $ths) = ([], '');
+	my $headers = [];
 
 	unless (ref $_[0] eq CODE or (ref $_[0] eq ARRAY and ref $_[0] -> [0] eq CODE)) {
 		$headers = shift;
@@ -530,10 +570,8 @@ sub MSIE_5_draw_table {
 	my ($tr_callback, $list, $options) = @_;
 	
 	return '' if $options -> {off};
-	
-	if (@$headers) {
-		$ths = '<tr>' . (join '', map { ref $_ eq HASH ? ($$_{off} ? '' : "<th class=bgr4".($$_{colspan} ? " colspan=$$_{colspan}>" : ">"). ($$_{href} ? "<a class=lnk4 href=\"$$_{href}\"><b>": '') . $$_{label} . ($$_{href} ? "</b></a>":'') . "\&nbsp;") : "<th class=bgr4".($$_{colspan} ? " colspan=$$_{colspan} " : "").">$_\&nbsp;" } @$headers);
-	}
+		
+	my $ths = @$headers ? '<thead>' . MSIE_5_draw_table_header ($headers) . '</thead>' : '';
 	
 	my $trs = '';
 	
@@ -574,9 +612,7 @@ sub MSIE_5_draw_table {
 				$hiddens
 		
 				<table cellspacing=1 cellpadding=5 width="100%" id="scrollable_table">
-					<thead>
-						$ths
-					</thead>
+					$ths
 					<tbody>
 						$trs
 					</tbody>
@@ -608,11 +644,14 @@ sub MSIE_5_draw_path {
 	
 	my $nowrap = $options -> {multiline} ? '' : 'nowrap';
 	
+	my $n = 2;
 	foreach my $item (@$list) {		
 	
 		my $name = trunc_string ($item -> {name}, $options -> {max_len});
 	
 		$path and $path .= '&nbsp;/&nbsp;';
+		
+		$path and $options -> {multiline} and $path .= '<br>' . ('&nbsp;&nbsp;' x ($n++));
 		
 		$id_param = $item -> {id_param};
 		$id_param ||= $options -> {id_param};
@@ -635,8 +674,10 @@ EOH
 							<td class=bgr6 colspan=4><img height=1 src="/i/0.gif" width=1 border=0></td>
 						</tr>
 						<tr>
+<!--						
 							<td><img height=14 hspace=4 src="/i/toolbars/4pt.gif" width=2 border=0></td>
-							<td class=header6 $nowrap>&nbsp;$path&nbsp;</td>
+-->							
+							<td class='header6' $nowrap>&nbsp;$path&nbsp;</td>
 							<td>
 								<table cellspacing=0 cellpadding=0 width="100%" border=0>
 									<tr>
@@ -669,7 +710,7 @@ sub MSIE_5_draw_window_title {
 	return '' if $options -> {off};
 	
 	return <<EOH
-		<table cellspacing=0 cellpadding=0 width="100%"><tr><td class=header15><img src="/i/0.gif" width=1 height=20 align=absmiddle>&nbsp;&nbsp;&nbsp;$$options{label}</table>
+		<table cellspacing=0 cellpadding=0 width="100%"><tr><td class='header15'><img src="/i/0.gif" width=1 height=20 align=absmiddle>&nbsp;&nbsp;&nbsp;$$options{label}</table>
 EOH
 
 }
@@ -796,6 +837,8 @@ sub MSIE_5_draw_toolbar_pager {
 		$label .= qq {&nbsp;<a href="$url" class=lnk0 id="_pager_prev" onFocus="blur()"><b><u>&lt;</u></b></a>&nbsp;};
 	}
 	
+	$options -> {total} or return '<td nowrap>список пуст<td><img height=15  hspace=4 src="/i/toolbars/razd1.gif" width=2 border=0></td>';
+	
 	$label .= ($start + 1) . ' - ' . ($start + $$options{cnt}) . ' из ' . $$options{total};
 	
 	if ($start + $$options{cnt} < $$options{total}) {
@@ -854,6 +897,50 @@ sub MSIE_5_draw_row_buttons {
 
 ################################################################################
 
+sub MSIE_5_draw_form_field {
+
+	my ($field, $data) = @_;
+		
+	if (ref $field eq ARRAY) {
+	
+		my $html = '';
+	
+		for (my $i = 0; $i < @$field; $i++) {		
+			my $subfield = $field -> [$i];					
+			$subfield -> {colspan} = $i == @$field - 1 ? $_REQUEST {__max_cols} - 2 * $i - 1 : 1;
+			$html .= MSIE_5_draw_form_field ($subfield, $data);		
+		}
+		
+		return $html;
+	
+	}
+
+	return '' if $field -> {off};
+	
+	my $type = $field -> {type};
+	$type ||= 'string';
+	
+	my $html = &{"draw_form_field_$type"} ($field, $data);
+	
+	MSIE_5_register_hotkey ($field, 'focus', '_' . $field -> {name});	
+
+	$field -> {label} .= '&nbsp;*' if $field -> {mandatory};
+	
+	$field -> {label} .= ':' if $field -> {label};
+	
+	$field -> {colspan} ||= $_REQUEST {__max_cols} - 1;
+	
+	my $width = $field -> {is_slave} ? '' : 'width="20%"';
+		
+	return $type eq 'hidden' ? $html : <<EOH;
+		<td class='header5' nowrap align=right $width>$$field{label}</td>
+		<td class=bgr4 colspan=$$field{colspan}>$html</td>
+EOH
+
+}
+
+################################################################################
+
 sub MSIE_5_draw_form {
 
 	my ($options, $data, $fields) = @_;
@@ -872,30 +959,18 @@ sub MSIE_5_draw_form {
 	my $trs = '';
 	my $n = 0;	
 	
+	my $max_cols = 1;
+	
 	foreach my $field (@$fields) {
+		next unless ref $field eq ARRAY;
+		$max_cols = @$field if $max_cols < @$field;
+	}
 	
-		next if $field -> {off};
-		
-		my $type = $field -> {type};
-		$type ||= 'string';
-		
-		my $html = &{"draw_form_field_$type"} ($field, $data);
-	
-#		my ($c1, $c2) = $n++ % 2 ? (5, 4) : (4, 0);
-		
-		my ($c1, $c2) = (5, 4);
+	$_REQUEST {__max_cols} = $max_cols * 2;
 
-		MSIE_5_register_hotkey ($field, 'focus', '_' . $field -> {name});	
-
-		$field -> {label} .= '&nbsp;*' if $field -> {mandatory};
-		
-		$field -> {label} .= ':' if $field -> {label};
-				
-		$trs .= $type eq 'hidden' ? $html : <<EOH;
-			<tr>
-				<td class=header$c1 nowrap align=right width="20%">$$field{label}</td>
-				<td class=bgr$c2>$html</td></tr>
-EOH
+	foreach my $field (@$fields) {
+					
+		$trs .= '<tr>' . MSIE_5_draw_form_field ($field, $data) . '</tr>';
 	
 	}
 	
@@ -1035,7 +1110,7 @@ sub MSIE_5_draw_form_field_static {
 	$hidden_value ||= $$options{value};
 	$hidden_value =~ s/\"/\&quot\;/gsm;
 	
-	my $static_value = $$options{value} || $$data{$$options{name}};
+	my $static_value = $options -> {values} ? $options -> {values} -> {$data -> {$options -> {name}}} : $options -> {value} || $data -> {$options -> {name}};
 
 	return $$options{add_hidden} ? qq {$static_value <input type=hidden name="$hidden_name" value="$hidden_value">} : $static_value;
 	
@@ -1064,7 +1139,7 @@ sub MSIE_5_draw_form_field_checkbox {
 
 	my ($options, $data) = @_;
 	
-	my $s = $$data{$$options{name}};
+	my $s = $options -> {checked} || $data -> {$options -> {name}};
 	
 	$s =~ s/\"/\&quot\;/gsm; #"
 	
@@ -1099,11 +1174,14 @@ sub MSIE_5_draw_form_field_select {
 	
 	my $html = '';
 	
+	$options -> {max_len} ||= $conf -> {max_len};
+	
 	unshift @{$options -> {values}}, {id => 0, label => $options -> {empty}} if exists $options -> {empty};
 
 	foreach my $value (@{$options -> {values}}) {
-		my $selected = $data -> {$options -> {name}} == $value -> {id} ? 'selected' : '';
-		$html .= qq {<option value="$$value{id}" $selected>$$value{label}</option>};
+		my $selected = $data -> {$options -> {name}} eq $value -> {id} ? 'selected' : '';		
+		my $label = trunc_string ($value -> {label}, $options -> {max_len});						
+		$html .= qq {<option value="$$value{id}" $selected>$label</option>};
 	}
 		
 	return <<EOH;

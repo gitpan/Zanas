@@ -1,3 +1,17 @@
+0.68: 24.11.03 10:10
+	- js fix (char 13 from keyboard & javascript href);
+	- added checked option in draw_form_field_checkbox sub (by hekima);
+	- added support for $_REQUEST {__meta_refresh} parameter;
+	- truncating long strings in draw_form_field_static sub;
+
+0.67: 20.11.03 14:00
+
+	- added values option in draw_form_field_static
+	- added support for multicolumn form rows via nested arrays in draw_form sub
+	- steps in draw_path in multiline mode (Mayakovsky style)
+	- added support for multirow table headers via nested arrays in draw_table sub
+	- draw_toolbar_pager is fixed for the case total == 0
+
 0.66: 18.11.03 13:40
 	- added portion option in draw_toolbar_pager
 	- added support for $_REQUEST {__blur_all} parameter

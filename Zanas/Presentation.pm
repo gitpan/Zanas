@@ -986,6 +986,10 @@ sub draw_form_field_hidden {
 
 Отображаемое имя
 
+=item checked
+
+1, если надо форсированно отметить.
+
 =back
 
 =cut
@@ -1082,6 +1086,18 @@ sub draw_form_field_password {
 =item label
 
 Отображаемое имя
+
+=item value
+
+Отображаемое значение (если не определено в $data)
+
+=item hidden_value
+
+Передаваемое значение (должно отличаться от value)
+
+=item values 
+
+Маппинг от hidden_value к value.
 
 =back
 

@@ -192,6 +192,7 @@ sub sql_select_path {
 			id => 0, 
 			parent => 0, 
 			name => $options -> {root}, 
+			type => $options -> {type}, 
 			id_param => $options -> {id_param},
 			cgi_tail => $options -> {cgi_tail},
 		};
