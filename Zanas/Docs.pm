@@ -529,6 +529,54 @@ our $charset = {
 					#######################################
 
 	{
+		name     => 'send_mail',
+		syn      => <<EO,
+	
+		my \$file = sql_upload_file (...);
+		
+		send_mail ({
+			to      => \$id_user,
+			subject => 'Notification',
+			text    => 'We want you to know...',
+			href    => "/?type=this_type&id=\$_REQUEST{id}",
+			attach  => \$file,
+		});		
+
+		send_mail ({
+			to           => {
+				label => 'Customer',
+				mail  => 'foo@bar.com',
+			},
+			subject      => 'Notification',
+			text         => 'We want you to &lt;b&gt;know&lt;b&gt;...',
+			content_type => 'text/html',
+			href         => "http://www.perl.com",
+		});		
+		
+		send_mail ({
+			to           => ['foo@bar.com', 'baz@bar.com'],
+			subject      => 'Spam',
+			text         => 'You win!!!',
+		});		
+
+EO
+		label_en => 'Sends a mail message',
+		label_ru => 'Отправка e-mail',
+		see_also => [qw(encode_mail_header upload_file sql_upload_file)],
+	},
+
+					#######################################
+
+	{
+		name     => 'encode_mail_header',
+		label_en => 'B-encodes the mail header',
+		label_ru => 'B-кодирует 1-й аргумент. Charset (2-й аргумент) по умолчанию windows-1251. Если он windows-1251, то производится перекодирование в koi8-r.',
+		see_also => [qw(send_mail)],
+	},
+
+					#######################################
+
+	{
 		name     => 'sql_is_temporal_table',
 		label_en => 'Returns 1 if 1st argument is the name of a temporal table.',
 		label_ru => 'Определяет является ли 1-й аргумент именем темпоральной таблицы.',
@@ -2925,8 +2973,14 @@ our @conf = (
 
 	{
 		name => 'core_show_icons',
-		label_en => 'Reserved :-(',
-		label_ru => 'Зарезервировано :-(',
+		label_en => 'Shows buttons with icons, if present',
+		label_ru => 'Показывать графические кнопки',
+	},
+
+	{
+		name => 'core_recycle_ids',
+		label_en => 'If true, fake records ids are recycled',
+		label_ru => 'Если истина, то id, принадлежащие fake-записям, не пропускаются, а переиспользуются.',
 	},
 
 	{

@@ -72,7 +72,7 @@ sub handler {
    	   	
 	fill_in ();
    	   	
-	$_REQUEST {type} = '_static_files' if $r -> uri =~ m{/(navigation\.js|0\.html|0\.gif|folder\.gif|zanas\.css|favicon\.ico|tab_([blr]_)?[01]{1,2}\.gif)};
+	$_REQUEST {type} = '_static_files' if $r -> uri =~ m{/(navigation_\w+\.js|0\.html|0\.gif|folder\.gif|zanas_\w+\.css|favicon\.ico|tab_([blr]_)?[01]{1,2}\.gif)};
 
 	$conf -> {include_js}  ||= ['js'];
    	
@@ -146,6 +146,8 @@ EOH
 		
 		if ($action) {
 			
+			undef $__last_insert_id;
+
 			eval { $db -> {AutoCommit} = 0; };
 	
 			our %_OLD_REQUEST = %_REQUEST;
@@ -157,7 +159,7 @@ EOH
 			my $error_code = call_for_role ($sub_name);
 			
 			if ($_USER -> {demo_level} > 0) {
-				($action eq 'execute' and $$page{type} eq 'logon') or $error_code ||= '»звините, вы работаете в демонстрационном режиме';
+				($action =~ /^execute/ and $$page{type} eq 'logon') or $error_code ||= '»звините, вы работаете в демонстрационном режиме';
 			}
 			
 			if ($error_code) {		
@@ -171,14 +173,14 @@ EOH
 			else {
 			
 				delete $_REQUEST {__response_sent};
-
-				eval {	
+				
+				eval {					
 				
 					delete_fakes () if $action eq 'create';
 					
 					call_for_role ("do_${action}_$$page{type}");
 					
-					if (($action eq 'execute') and ($$page{type} eq 'logon') and $_REQUEST {redirect_params}) {
+					if (($action =~ /^execute/) and ($$page{type} eq 'logon') and $_REQUEST {redirect_params}) {
 					
 						my $VAR1 = b64u_thaw ($_REQUEST {redirect_params});
 						

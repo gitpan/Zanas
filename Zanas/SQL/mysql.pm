@@ -47,7 +47,7 @@ sub sql_do {
 
 	my ($sql, @params) = @_;
 	
-	undef $__last_insert_id if $sql =~ /INSERT/i;
+#	undef $__last_insert_id if $sql =~ /INSERT/i;
 	my $ids = '-1';
 
 	if ($conf -> {'db_temporality'} && $_REQUEST {_id_log}) {
@@ -346,16 +346,20 @@ sub sql_do_insert {
 	my @params = ();
 
 	$pairs -> {fake} = $_REQUEST {sid} unless exists $pairs -> {fake};
+	
+	if ($conf -> {core_recycle_ids} && __last_insert_id) {
+		$pairs -> {id} = $__last_insert_id;
+	}
 
-	while (my ($field, $value) = each %$pairs) {	
-		my $comma = @params ? ', ' : '';	
+	while (my ($field, $value) = each %$pairs) {
+		my $comma = @params ? ', ' : '';
 		$fields .= "$comma $field";
 		$args   .= "$comma ?";
-		push @params, $value;	
+		push @params, $value;
 	}
-	
-	sql_do ("INSERT INTO $table_name ($fields) VALUES ($args)", @params);	
-	
+
+	sql_do ("INSERT INTO $table_name ($fields) VALUES ($args)", @params);
+
 	return sql_last_insert_id ();
 	
 }

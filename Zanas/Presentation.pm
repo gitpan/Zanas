@@ -122,45 +122,48 @@ sub check_href {
 	
 	if (ref $options -> {href} eq HASH) {
 		$options -> {href} = create_url (%{$options -> {href}});
-	}
-	
-	if ($options -> {href} !~ /^(\#|java|\/i\/)/ and $options -> {href} !~ /[\&\?]sid=/) {
-		$options -> {href} .= "\&sid=$_REQUEST{sid}";
 	}	
 	
-	if ($options -> {href} !~ /^(\#|java|\/i\/)/ and $_REQUEST {select} and $options -> {href} !~ /[\&\?]select=/) {
-		$options -> {href} .= "\&select=$_REQUEST{select}";
-	}	
-
-	if ($options -> {href} !~ /^(\#|java|\/i\/)/) {	
+	if ($options -> {href} !~ /^(\#|java|mailto|\/i\/)/) {
+	
 		$options -> {href} =~ s/([\&\?])_?salt=[\d\.]+/$1/g;
 		$options -> {href} .= '&salt=' . (rand * time);
-	}	
 
-	if ($_REQUEST{period} and $options -> {href} !~ /^(\#|java)/ and $options -> {href} !~ /\&period=/) {
-		$options -> {href} .= "\&period=$_REQUEST{period}";
+		if ($options -> {href} !~ /[\&\?]sid=/) {
+			$options -> {href} .= "\&sid=$_REQUEST{sid}";
+		}	
+
+		if ($_REQUEST {select} and $options -> {href} !~ /[\&\?]select=/) {
+			$options -> {href} .= "\&select=$_REQUEST{select}";
+		}	
+
+		if ($_REQUEST {period} and $options -> {href} !~ /\&period=/) {
+			$options -> {href} .= "\&period=$_REQUEST{period}";
+		}
+
+		if ($_REQUEST {__uri} ne '/' && $options -> {href} =~ m{^\/\?}) {
+			$options -> {href} =~ s{^\/\?}{$_REQUEST{__uri}\?};
+		}
+
+		if ($_FLAG_ADD_LAST_QUERY_STRING && $conf -> {core_auto_esc}) {
+
+			my $query_string = $ENV {QUERY_STRING};
+			$query_string =~ s{\&?__last_query_string\=[^\&]+}{}gsm;
+
+			$query_string =~ s{\&?__scrollable_table_row\=\d*}{}g;
+			$query_string .= "&__scrollable_table_row=$scrollable_row_id";
+
+			my $esc_query_string = MIME::Base64::encode ($query_string);
+			$esc_query_string =~ y{+/=}{-_.};
+			$esc_query_string =~ s{[\r\n]}{}gsm;
+
+			$options -> {href} =~ s{\&?__last_query_string\=[^\&]+}{}gsm;
+			$options -> {href} .= "&__last_query_string=$esc_query_string";
+
+		}		
+	
 	}
 	
-	if ($_REQUEST {__uri} ne '/' && $options -> {href} =~ m{^\/\?}) {
-		$options -> {href} =~ s{^\/\?}{$_REQUEST{__uri}\?};
-	}
-
-	if ($_FLAG_ADD_LAST_QUERY_STRING && $conf -> {core_auto_esc} && $options -> {href} !~ /^(\#|java|\/i\/)/) {
-	
-		my $query_string = $ENV {QUERY_STRING};
-		$query_string =~ s{\&?__last_query_string\=[^\&]+}{}gsm;
-
-		$query_string =~ s{\&?__scrollable_table_row\=\d*}{}g;
-		$query_string .= "&__scrollable_table_row=$scrollable_row_id";
-		
-		my $esc_query_string = MIME::Base64::encode ($query_string);
-		$esc_query_string =~ y{+/=}{-_.};
-		$esc_query_string =~ s{[\r\n]}{}gsm;
-	
-		$options -> {href} =~ s{\&?__last_query_string\=[^\&]+}{}gsm;
-		$options -> {href} .= "&__last_query_string=$esc_query_string";
-		
-	}		
 	
 	$options -> {href} =~ s/\&+/\&/g;
 	

@@ -2,6 +2,151 @@ no warnings;
 
 ################################################################################
 
+sub send_mail {
+
+	my ($options) = @_;
+	
+print STDERR "send_mail: " . Dumper ($options);
+	
+	my $to = $options -> {to};
+	
+		##### Multiple recipients
+	
+	if (ref $to eq ARRAY) {
+	
+		foreach (@$to) {
+			$options -> {to} = $_;
+			send_mail ($options);
+		}
+		
+		return;
+	
+	}
+	
+		##### To address
+		
+	if (!ref $to && $to > 0) {
+		$to = sql_select_hash ('SELECT label, mail FROM users WHERE id = ?', $to);
+	}
+
+	my $real_to = $to;	
+	if (ref $to eq HASH) {
+		$real_to = $to -> {mail};
+		$to = encode_mail_header ($to -> {label}, $options -> {header_charset}) . "<$real_to>";
+	}
+	
+		##### From address
+
+	$options -> {from} ||= $preconf -> {mail} -> {from};
+	my $from = $options -> {from};
+	if (ref $from eq HASH) {
+		$from -> {mail} ||= $from -> {address};
+		$from = encode_mail_header ($from -> {label}, $options -> {header_charset}) . "<" . $from -> {mail} . ">";
+	}
+
+		##### Message subject
+
+	my $subject = encode_mail_header ($options -> {subject}, $options -> {header_charset});
+
+		##### Message body
+	
+	$options -> {body_charset} ||= 'windows-1251';
+	$options -> {content_type} ||= 'text/plain';
+	
+	if ($options -> {href}) {	
+		$options -> {href} =~ /^http/ or $options -> {href} = "http://$ENV{HTTP_HOST}" . $options -> {href};
+		$options -> {href} = "<br><br><a href='$$options{href}'>$$options{href}</a>" if $options -> {content_type} eq 'text/html';
+		$options -> {text} .= "\n\n" . $options -> {href};
+	}
+#	my $text = encode_qp ($options -> {text});
+	my $text = $options -> {text};
+	
+	
+		##### connecting...
+
+	my $smtp = Net::SMTP -> new ($preconf -> {mail} -> {host});
+	$smtp -> mail ($ENV{USER});
+	$smtp -> to ($real_to);
+	$smtp -> data ();
+
+		##### sending main message
+
+	$smtp -> datasend (<<EOT);
+From: $from
+To: $to
+Subject: $subject
+Content-type: multipart/mixed;
+	Boundary="0__=4CBBE500DFA7329E8f9e8a93df938690918c4CBBE500DFA7329E"
+Content-Disposition: inline
+
+--0__=4CBBE500DFA7329E8f9e8a93df938690918c4CBBE500DFA7329E
+Content-Type: $$options{content_type}; charset="$$options{body_charset}"
+Content-Transfer-Encoding: 8bit
+
+$text
+EOT
+
+		##### sending attach
+		
+	if ($options -> {attach} && -f $options -> {attach} -> {real_path}) {
+	
+		my $type = $options -> {attach} -> {type};
+		$type ||= 'application/octet-stream';
+		
+		my $fn   = $options -> {attach} -> {file_name};
+		$fn ||= $options -> {attach} -> {real_path};
+		$fn =~ s{.*[\\\/]}{};
+		
+	$smtp -> datasend (<<EOT);
+--0__=4CBBE500DFA7329E8f9e8a93df938690918c4CBBE500DFA7329E
+Content-type: $type;
+	name="$fn"
+Content-Disposition: attachment; filename="$fn"
+Content-transfer-encoding: base64
+
+EOT
+
+	my $buf = '';
+	open (FILE, $options -> {attach} -> {real_path}) or die "Can't open ${$$options{attach}}{real_path}: $!";
+	while (read (FILE, $buf, 60*57)) {
+	       $smtp -> datasend (encode_base64 ($buf));
+	}
+	close (FILE);
+
+	$smtp -> datasend (<<EOT);
+
+--0__=4CBBE500DFA7329E8f9e8a93df938690918c4CBBE500DFA7329E--
+EOT
+	
+	}
+
+	$smtp -> dataend ();
+	$smtp -> quit;
+
+
+}
+
+################################################################################
+
+sub encode_mail_header {
+
+	my ($s, $charset) = @_;
+
+	$charset ||= 'windows-1251';
+	
+	if ($charset eq 'windows-1251') {
+		$s =~ y{ÀÁÂÃÄÅ¨ÆÇÈÉÊËÌÍÎÏĞÑÒÓÔÕÖ×ØÙÚÛÜİŞßàáâãäå¸æçèéêëìíîïğñòóôõö÷øùúûüışÿ}{áâ÷çäå³öúéêëìíîïğòóôõæèãşûıÿùøüàñÁÂ×ÇÄÅ£ÖÚÉÊËÌÍÎÏĞÒÓÔÕÆÈÃŞÛİßÙØÜÀÑ};
+		$charset = 'koi8-r';
+	}
+
+	$s = '=?' . $charset . '?B?' . encode_base64 ($s) . '?=';
+	$s =~ s{[\n\r]}{}g;
+	return $s;	
+	
+}
+
+################################################################################
+
 sub b64u_freeze {
 
 	b64u_encode (
@@ -52,14 +197,10 @@ sub require_fresh {
 
 	my ($module_name, $fatal) = @_;	
 	
-#print STDERR "\nrequire_fresh: \$module_name = $module_name\n";
-
 	my $file_name = $module_name;
 	$file_name =~ s{(::)+}{\/}g;
 
 	my $inc_key = $file_name . '.pm';
-
-#print STDERR "require_fresh: \$inc_key = $inc_key\n";
 
 	$file_name =~ s{^(.+?)\/}{\/};
 	
@@ -283,7 +424,20 @@ sub delete_fakes {
 	my ($table_name) = @_;
 	$table_name ||= $_REQUEST {type};
 	my @sids = (0, sql_select_col ("SELECT id FROM sessions WHERE id <> ?", $_REQUEST {sid}));	
-	sql_do ("DELETE FROM $table_name WHERE fake NOT IN (" . (join ', ', @sids) . ')');
+	my $sids = join ', ', @sids;
+	
+print STDERR "\$sids = $sids\n";
+	
+	if ($conf -> {core_recycle_ids}) {
+		$__last_insert_id = sql_select_scalar ("SELECT MIN(id) FROM $table_name WHERE fake NOT IN ($sids) ORDER BY id");
+		sql_do ("DELETE FROM $table_name WHERE id = ?", $__last_insert_id);
+		sql_do ("UPDATE $table_name SET fake = ? WHERE id = ?", $_REQUEST {sid}, $__last_insert_id);
+	}
+	else {
+		sql_do ("DELETE FROM $table_name WHERE fake NOT IN ($sids)");
+	}
+	
+	
 }
 
 ################################################################################
@@ -410,6 +564,9 @@ sub select__static_files {
 	$ENV{PATH_INFO} =~ /\w+\.\w+/ or $r -> filename =~ /\w+\.\w+/ or $ENV {REQUEST_URI} =~ /\w+\.\w+/;
 	
 	my $filename = $&;
+	
+	my $v = '_' . $Zanas::VERSION_NAME;	
+	$filename =~ s{$v}{};
 	
 	my $content_type = 
 		$filename =~ /\.js/ ? 'application/x-javascript' :

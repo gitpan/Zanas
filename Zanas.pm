@@ -15,8 +15,8 @@ use constant OK => 200;
 
 BEGIN {	
 
-	$Zanas::VERSION = '5.1.24';
-	$Zanas::VERSION_NAME = 'Molchalinn';
+	$Zanas::VERSION = '5.2.14';
+	$Zanas::VERSION_NAME = 'Valentine';
 	
 	eval {
 		require Storable;

@@ -1,3 +1,48 @@
+5.2.14:
+
+	- js fix: no more parent.location...
+	- textarea: onKeyPress -> Onchange (Ctrl-Z is back);
+	- dt fields are highlighted on focus;
+	- $_REQUEST{__no_focus} introduced;
+	- core_recycle_ids - related fix: fake rewriting;
+
+5.2.10:
+
+	- body/@onload fixed for focusing on hidden SELECT's;
+	- js function hasMouse fixed for geometry;
+	- debug print cleanup;
+
+5.2.8:
+
+	- js fixes in menu rendering;
+	- version signatures for static files introduced;
+	- $_REQUEST{__uri} for folder.gif;
+
+5.2.7:
+
+	- got rid of createPopup, menus are now absolutely positioned divs;
+	- js function hasMouse introduced;
+
+5.2.3:
+
+	- readded option onclick in draw_centered_toolbar_button sub for backward compatibility;
+	- Enter now moves the input focus (tabOnEnter js function); 
+	- no more tabbing through menu and path;
+	- keyboard handlers are moved off the file upload field (because of inevitable security alerts :-(( );
+	- send_mail introduced;
+
+5.1.31:
+
+	- $action =~ /^execute/;
+	- esc_href on ..;
+
+5.1.27:
+
+	- check_href optimization;
+	- vert_menu are no more drawn when $_REQUEST {lpt} is on;
+	- new $conf option introduced: core_recycle_ids;
+	- window.focus () onLoad;
+
 5.1.24:
 
 	- uri_escape '%' in draw_*_button because window.open uri_unescapes its 1st arg;

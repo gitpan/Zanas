@@ -268,7 +268,7 @@ EOH
 	
 	$_REQUEST {__scrollable_table_row} ||= 0;
 	
-	my $meta_refresh = $_REQUEST {__meta_refresh} ? qq{<META HTTP-EQUIV=Refresh CONTENT="$_REQUEST{__meta_refresh}; URL=@{[create_url()]}">} : '';	
+	my $meta_refresh = $_REQUEST {__meta_refresh} ? qq{<META HTTP-EQUIV=Refresh CONTENT="$_REQUEST{__meta_refresh}; URL=@{[create_url()]}&__no_focus=1">} : '';	
 	
 	my $auth_toolbar = $conf -> {core_no_auth_toolbar} ? '' : draw_auth_toolbar ({lpt => $lpt});
 
@@ -293,12 +293,12 @@ EOH
 				
 				$meta_refresh
 				
-				<LINK href="${root}zanas.css" type=text/css rel=STYLESHEET>
+				<LINK href="${root}zanas_${Zanas::VERSION_NAME}.css" type=text/css rel=STYLESHEET>
 				@{[ map {<<EOJS} @{$_REQUEST{__include_css}} ]}
 					<LINK href="/i/$_.css" type=text/css rel=STYLESHEET>
 EOJS
 
-					<script src="${root}navigation.js">
+					<script src="${root}navigation_${Zanas::VERSION_NAME}.js">
 					</script>
 				@{[ map {<<EOCSS} @{$_REQUEST{__include_js}} ]}
 					<script type="text/javascript" src="/i/${_}.js">
@@ -317,6 +317,8 @@ EOCSS
 					var scrollable_rows = new Array();		
 					var td2sr = new Array ();
 					var td2sc = new Array ();
+					var last_vert_menu = null;
+					var last_main_menu = null;
 					
 					function td_on_click () {
 						var uid = window.event.srcElement.uniqueID;
@@ -338,6 +340,8 @@ EOCSS
 			<body bgcolor=white leftMargin=0 topMargin=0 marginwidth="0" marginheight="0" name="body" id="body">
 
 				<script for="body" event="onload">
+				
+					@{[ $_REQUEST{__no_focus} ? '' : 'window.focus ();' ]}
 				
 					@{[ $_REQUEST{sid} ? <<EOK : '' ]}
 						keepaliveID = setTimeout ("open('$_REQUEST{__uri}?keepalive=$_REQUEST{sid}', 'invisible'); clearTimeout (keepaliveID)", $timeout);
@@ -430,9 +434,9 @@ EOF
 										}
 
 										if (
-											(element.tagName == 'INPUT' && (element.type == 'text' || element.type == 'checkbox' || element.type == 'radio'))
-											|| element.tagName == 'SELECT' 
-											|| element.tagName == 'TEXTAREA') 
+											   (element.tagName == 'INPUT'  && (element.type == 'text' || element.type == 'checkbox' || element.type == 'radio'))
+											|| (element.tagName == 'SELECT' &&  element.style.visibility != 'hidden')
+											||  element.tagName == 'TEXTAREA') 
 										{
 											element.focus ();
 											done = 1;
@@ -542,10 +546,10 @@ sub draw_menu {
 			$is_active ||= ($cursor && $$type{name} eq $cursor);
 		}
 
-		my $onhover = '';
+		my $onhover = "if (last_vert_menu) {last_vert_menu.style.display = 'none'; last_vert_menu = null} ";
 		if (ref $type -> {items} eq ARRAY && !$_REQUEST {__edit}) {
 			$divs .= draw_vert_menu ($type -> {name}, $type -> {items});
-			$onhover = qq {open_popup_menu ('$$type{name}')} unless $type -> {no_page};
+			$onhover .= qq {open_popup_menu ('$$type{name}')} unless $type -> {no_page};
 		}
 		
 		if ($_REQUEST {__edit}) {
@@ -562,7 +566,30 @@ sub draw_menu {
 		
 		
 		$tr2 .= <<EOH;
-			<td onmouseover="this.style.borderColor='#FFFFFF'; this.style.borderStyle='groove'; ;$onhover" onmouseout="this.style.borderColor='#D6D3CE'; this.style.borderStyle='solid';" class="main-menu" nowrap>&nbsp;<a class="main-menu" id="main_menu_$$type{name}" href="$$type{href}">&nbsp;$$type{label}&nbsp;</a>&nbsp;</td>
+			<td 
+				onmouseover="
+					if (last_main_menu) {
+						last_main_menu.style.borderColor='#D6D3CE'; 
+						last_main_menu.style.borderStyle='solid';
+					}
+					last_main_menu = this;
+					this.style.borderColor='#FFFFFF'; 
+					this.style.borderStyle='groove'; 
+					$onhover
+				" 
+				onmouseout="
+					if (hasMouse (this, event)) return;
+					this.style.borderColor='#D6D3CE'; 
+					this.style.borderStyle='solid';
+					if (
+						(event.y < this.offsetTop + this.offsetParent.offsetTop + this.offsetParent.offsetParent.offsetTop + 2) && last_vert_menu
+					) {
+						last_vert_menu.style.display = 'none';
+					}				
+				" 
+				class="main-menu" 
+				nowrap
+			>&nbsp;<a class="main-menu" id="main_menu_$$type{name}" href="$$type{href}" tabindex=-1>&nbsp;$$type{label}&nbsp;</a>&nbsp;</td>
 EOH
 
 		$colspan++;
@@ -582,7 +609,7 @@ EOH
 				<td class="main-menu" nowrap>&nbsp;&nbsp;<a class="main-menu" id="main_menu__lpt" target="_blank" href="@{[ create_url (lpt => 1) ]}">$$i18n{Print}</a>&nbsp;&nbsp;</td>
 				<td class="main-menu" nowrap>&nbsp;&nbsp;<a class="main-menu" id="main_menu__xls" target="_blank" href="@{[ create_url (xls => 1, salt => rand * time) ]}">MS Excel</a>&nbsp;&nbsp;</td>
 EOLPT
-				<td class="main-menu" nowrap>&nbsp;&nbsp;<a class="main-menu" id="main_menu__logout" href="$exit_url">$$i18n{Exit}</a>&nbsp;&nbsp;</td>
+				<td class="main-menu" nowrap>&nbsp;&nbsp;<a class="main-menu" id="main_menu__logout" TABINDEX=-1 href="$exit_url">$$i18n{Exit}</a>&nbsp;&nbsp;</td>
 			<tr>
 				<td class=bgr8 colspan=$colspan width=100%><img height=2 src="$_REQUEST{__uri}0.gif" width=1 border=0></td>
 			<tr>
@@ -610,16 +637,16 @@ sub draw_vert_menu {
 			$tr2 .= <<EOH;
 				<tr height=2>
 
-					<td bgcolor=#D6D3CE><img height=2 src=$_REQUEST{__uri}0.gif width=1 border=0></td>
-					<td bgcolor=#ffffff><img height=2 src=$_REQUEST{__uri}0.gif width=1 border=0></td>
+					<td bgcolor=#D6D3CE width=1><img height=2 src=$_REQUEST{__uri}0.gif width=1 border=0></td>
+					<td bgcolor=#ffffff width=1><img height=2 src=$_REQUEST{__uri}0.gif width=1 border=0></td>
 
 					<td>
 					<table width=90% border=0 cellspacing=0 cellpadding=0 align=center minheight=2>
 						<tr height=1><td bgcolor="#888888"><img height=1 src=$_REQUEST{__uri}0.gif width=1 border=0></td></tr>
 						<tr height=1><td bgcolor="#ffffff"><img height=1 src=$_REQUEST{__uri}0.gif width=1 border=0></td></tr>
 					</table></td>
-					<td bgcolor=#888888><img height=2 src=$_REQUEST{__uri}0.gif width=1 border=0></td>
-					<td bgcolor=#424142><img height=2 src=$_REQUEST{__uri}0.gif width=1 border=0></td>
+					<td width=1 bgcolor=#888888><img height=2 src=$_REQUEST{__uri}0.gif width=1 border=0></td>
+					<td width=1 bgcolor=#424142><img height=2 src=$_REQUEST{__uri}0.gif width=1 border=0></td>
 					
 				</tr>
 				
@@ -641,14 +668,13 @@ EOH
 			$type -> {href} .= "&role=$$type{role}" if $type -> {role};
 			check_href ($type);	
 			
-			my $onclick = $type -> {href} =~ /^javascript\:/i ? $' : "parent.location.href='$$type{href}'";
+			my $onclick = $type -> {href} =~ /^javascript\:/i ? $' : "activate_link('$$type{href}')";
 			$onclick =~ s{[\n\r]}{}gsm;
-			$onclick =~ s{window\.open\('(.*?)'\, '_self'\)}{parent.location.href='$1'};
-					
+
 			$tr2 .= <<EOH;
 				<tr>
-					<td bgcolor=#D6D3CE><img height=1 src=$_REQUEST{__uri}0.gif width=1 border=0></td>
-					<td bgcolor=#ffffff><img height=1 src=$_REQUEST{__uri}0.gif width=1 border=0></td>
+					<td width=1 bgcolor=#D6D3CE><img height=1 src=$_REQUEST{__uri}0.gif width=1 border=0></td>
+					<td width=1 bgcolor=#ffffff><img height=1 src=$_REQUEST{__uri}0.gif width=1 border=0></td>
 					<td bgcolor=#D6D3CE
 						nowrap 
 						onmouseover="this.style.background='#08246b'; this.style.color='white'" 
@@ -666,31 +692,40 @@ EOH
 					>
 						&nbsp;&nbsp;$$type{label}&nbsp;&nbsp;
 					</td>
-					<td bgcolor=#888888><img height=1 src=$_REQUEST{__uri}0.gif width=1 border=0></td>
-					<td bgcolor=#424142><img height=1 src=$_REQUEST{__uri}0.gif width=1 border=0></td>
+					<td width=1 bgcolor=#888888><img height=1 src=$_REQUEST{__uri}0.gif width=1 border=0></td>
+					<td width=1 bgcolor=#424142><img height=1 src=$_REQUEST{__uri}0.gif width=1 border=0></td>
 EOH
 		}
 	
 	}
 
 	return <<EOH;
-		<div id="vert_menu_$name" style="visibility:hidden; position:absolute; z-index:-100;">
-			<table id="vert_menu_table_$name" width=1% bgcolor=#d5d5d5 cellspacing=0 cellpadding=0 border=0  border=1>
+		<div 
+			id="vert_menu_$name" 
+			style="display:none; position:absolute; z-index:100" 
+			onmouseout="
+				if (!hasMouse (this, event)) {
+					this.style.display = 'none';
+					last_vert_menu = null;
+				}				
+			"
+		>
+			<table id="vert_menu_table_$name" width=1 bgcolor=#d5d5d5 cellspacing=0 cellpadding=0 border=0  border=1>
 				<tr height=1>
 					<td bgcolor=#D6D3CE colspan=4><img height=1 src=$_REQUEST{__uri}0.gif width=1 border=0></td>
-					<td bgcolor=#424142 colspan=1><img height=1 src=$_REQUEST{__uri}0.gif width=1 border=0></td>
+					<td width=1 bgcolor=#424142 colspan=1><img height=1 src=$_REQUEST{__uri}0.gif width=1 border=0></td>
 				<tr height=1>
-					<td bgcolor=#D6D3CE><img height=1 src=$_REQUEST{__uri}0.gif width=1 border=0></td>
-					<td bgcolor=#ffffff colspan=2><img height=1 src=$_REQUEST{__uri}0.gif width=1 border=0></td>
-					<td bgcolor=#888888><img height=1 src=$_REQUEST{__uri}0.gif width=1 border=0></td>
-					<td bgcolor=#424142><img height=1 src=$_REQUEST{__uri}0.gif width=1 border=0></td>
+					<td width=1 bgcolor=#D6D3CE><img height=1 src=$_REQUEST{__uri}0.gif width=1 border=0></td>
+					<td width=1 bgcolor=#ffffff colspan=2><img height=1 src=$_REQUEST{__uri}0.gif width=1 border=0></td>
+					<td width=1 bgcolor=#888888><img height=1 src=$_REQUEST{__uri}0.gif width=1 border=0></td>
+					<td width=1 bgcolor=#424142><img height=1 src=$_REQUEST{__uri}0.gif width=1 border=0></td>
 				$tr2
 				<tr height=1>
-					<td bgcolor=#D6D3CE><img height=1 src=$_REQUEST{__uri}0.gif width=1 border=0></td>
-					<td bgcolor=#888888 colspan=3><img height=1 src=$_REQUEST{__uri}0.gif width=1 border=0></td>
-					<td bgcolor=#424142><img height=1 src=$_REQUEST{__uri}0.gif width=1 border=0></td>
+					<td width=1 bgcolor=#D6D3CE><img height=1 src=$_REQUEST{__uri}0.gif width=1 border=0></td>
+					<td width=1 bgcolor=#888888 colspan=3><img height=1 src=$_REQUEST{__uri}0.gif width=1 border=0></td>
+					<td width=1 bgcolor=#424142><img height=1 src=$_REQUEST{__uri}0.gif width=1 border=0></td>
 				<tr height=1>
-					<td bgcolor=#424142 colspan=5><img height=1 src=$_REQUEST{__uri}0.gif width=1 border=0></td>
+					<td width=1 bgcolor=#424142 colspan=5><img height=1 src=$_REQUEST{__uri}0.gif width=1 border=0></td>
 			</table>
 		</div>
 EOH
@@ -985,7 +1020,10 @@ sub draw_table {
 
 	if ($options -> {'..'} && !$_REQUEST{lpt}) {
 	
-		my $url = $_REQUEST {__path} -> [-2];
+		my $url = $_REQUEST {__path} -> [-2];		
+		if ($conf -> {core_auto_esc} && $_REQUEST {__last_query_string}) {
+			$url = esc_href ();
+		}
 		
 		$scrollable_row_id ++;
 	
@@ -1023,7 +1061,7 @@ EOH
 			undef $_FLAG_ADD_LAST_QUERY_STRING;
 			
 			my $oncontextmenu = '';
-			if (@__types && $conf -> {core_hide_row_buttons} > -1) {
+			if (@__types && $conf -> {core_hide_row_buttons} > -1 && !$_REQUEST {lpt}) {
 				$menus .= draw_vert_menu ($i, \@__types);
 				$oncontextmenu  = qq{ oncontextmenu="open_popup_menu('$i'); blockEvent ();"};
 			}
@@ -1135,12 +1173,12 @@ sub draw_path {
 
 		my $href = $_REQUEST {__read_only} ? '' : qq {href="$url"};
 
-		$path .= qq{<a class=path $href>$name</a>};
+		$path .= qq{<a class=path $href TABINDEX=-1>$name</a>};
 	
 	}
 
 	if ($conf -> {core_show_icons} || $_REQUEST {__core_show_icons}) {
-		$path = qq{<img src="/folder.gif" border=0 hspace=3 vspace=1 align=absmiddle>&nbsp;} . $path;
+		$path = qq{<img src="$_REQUEST{__uri}folder.gif" border=0 hspace=3 vspace=1 align=absmiddle>&nbsp;} . $path;
 	}
 
 	return <<EOH
@@ -1316,7 +1354,7 @@ sub draw_toolbar_button {
 	my $id = $options -> {id} || $options;
 	
 	return <<EOH
-		<td class="button" onmouseover="style.borderStyle='groove';style.borderColor='#FFFFFF';" onmouseout="style.borderStyle='solid';style.borderColor='#D6D3CE';" nowrap>&nbsp;<a class=button href="$$options{href}" id="$id" target="$$options{target}">$bra $$options{label} $ket</a></td>
+		<td class="button" onmouseover="style.borderStyle='groove';style.borderColor='#FFFFFF';" onmouseout="style.borderStyle='solid';style.borderColor='#D6D3CE';" nowrap>&nbsp;<a TABINDEX=-1 class=button href="$$options{href}" id="$id" target="$$options{target}">$bra $$options{label} $ket</a></td>
 		<td><img height=15 vspace=1 hspace=4 src="/i/toolbars/razd1.gif" width=2 border=0></td>
 EOH
 
@@ -1469,13 +1507,13 @@ sub draw_toolbar_pager {
 
 	if ($start > $options -> {portion}) {
 		$url = create_url (start => 0);
-		$label .= qq {&nbsp;<a href="$url" class=lnk0 onFocus="blur()"><b>&lt;&lt;</b></a>&nbsp;};
+		$label .= qq {&nbsp;<a TABINDEX=-1 href="$url" class=lnk0 onFocus="blur()"><b>&lt;&lt;</b></a>&nbsp;};
 	}
 
 	if ($start > 0) {
 		register_hotkey ({label => '&<'}, 'href', '_pager_prev', $conf -> {kb_options_pager});
 		$url = create_url (start => ($start - $options -> {portion} < 0 ? 0 : $start - $options -> {portion}));
-		$label .= qq {&nbsp;<a href="$url" class=lnk0 id="_pager_prev" onFocus="blur()"><b><u>&lt;</u></b></a>&nbsp;};
+		$label .= qq {&nbsp;<a TABINDEX=-1 href="$url" class=lnk0 id="_pager_prev" onFocus="blur()"><b><u>&lt;</u></b></a>&nbsp;};
 	}
 	
 	$options -> {total} or return qq {<td nowrap>$$i18n{toolbar_pager_empty_list}<td><img height=15 vspace=1 hspace=4 src="/i/toolbars/razd1.gif" width=2 border=0></td>};
@@ -1489,7 +1527,7 @@ sub draw_toolbar_pager {
 	
 		register_hotkey ({label => '&>'}, 'href', '_pager_next', $conf -> {kb_options_pager});
 		$url = create_url (start => $start + $options -> {portion});
-		$label .= qq {&nbsp;<a href="$url" class=lnk0 id="_pager_next" onFocus="blur()"><b><u>&gt;</u></b></a>&nbsp;};
+		$label .= qq {&nbsp;<a TABINDEX=-1 href="$url" class=lnk0 id="_pager_next" onFocus="blur()"><b><u>&gt;</u></b></a>&nbsp;};
 	}
 	
 	return <<EOH
@@ -1547,7 +1585,7 @@ sub draw_row_button {
 		return '';
 	}
 	else {
-		return qq {<td $$options{title} class="row-button" valign=top nowrap width="1%"><a class="row-button" href="$$options{href}" onFocus="blur()" target="$$options{target}">$$options{label}</a></td>};
+		return qq {<td $$options{title} class="row-button" valign=top nowrap width="1%"><a TABINDEX=-1 class="row-button" href="$$options{href}" target="$$options{target}">$$options{label}</a></td>};
 	}
 
 }
@@ -1867,7 +1905,22 @@ sub draw_form_field_string {
 	
 	my $autocomplete = $options -> {autocomplete} ? "vcard_name='vCard.$$options{autocomplete}'" : "autocomplete='off'";
 	
-	return qq {<input $attributes onFocus="scrollable_table_is_blocked = true; q_is_focused = true" onBlur="scrollable_table_is_blocked = false; q_is_focused = false" $autocomplete type="text" maxlength="$$options{max_len}" name="_$$options{name}" value="$s" $size onKeyPress="if (window.event.keyCode != 27) is_dirty=true" tabindex=$tabindex>};
+	return <<EOH;
+		<input 
+			type="text" 
+			value="$s" 
+			$attributes 
+			$autocomplete 
+			maxlength="$$options{max_len}" 
+			name="_$$options{name}" 
+			$size 
+			onKeyPress="if (window.event.keyCode != 27) is_dirty=true" 
+			onKeyDown="tabOnEnter()" 
+			onFocus="scrollable_table_is_blocked = true; q_is_focused = true" 
+			onBlur="scrollable_table_is_blocked = false; q_is_focused = false" 
+			tabindex=$tabindex
+		>
+EOH
 	
 }
 
@@ -1934,7 +1987,19 @@ sub draw_form_field_datetime {
 	
 	return <<EOH
 		<nobr>
-		<input $attributes onFocus="scrollable_table_is_blocked = true; q_is_focused = true" onBlur="scrollable_table_is_blocked = false; q_is_focused = false" autocomplete="off" type="text" name="_$$options{name}" value="$s" $size onKeyPress="if (window.event.keyCode != 27) is_dirty=true" tabindex=$tabindex>
+		<input 
+			type="text" 
+			name="_$$options{name}" 
+			value="$s" 
+			$size 
+			$attributes 
+			autocomplete="off" 
+			onFocus="scrollable_table_is_blocked = true; q_is_focused = true; this.select()" 
+			onBlur="scrollable_table_is_blocked = false; q_is_focused = false" 
+			onKeyPress="if (window.event.keyCode != 27) is_dirty=true" 
+			onKeyDown="tabOnEnter()"
+			tabindex=$tabindex
+		>
 		<button id="calendar_trigger_$$options{name}" class="form-active-ellipsis">...</button>
 		$clear_button
 		</nobr>
@@ -1960,8 +2025,20 @@ EOH
 sub draw_form_field_file {
 	my ($options, $data) = @_;	
 	$options -> {size} ||= 60;
-	$tabindex ++;
-	return qq {<input onFocus="scrollable_table_is_blocked = true; q_is_focused = true" onBlur="scrollable_table_is_blocked = false; q_is_focused = false" type="file" name="_$$options{name}" size=$$options{size} onKeyPress="if (window.event.keyCode != 27) is_dirty=true" onChange="is_dirty=true; $$options{onChange}" tabindex=$tabindex>};
+#	$tabindex ++;
+	return <<EOH;
+		<input 
+			type="file" 
+			name="_$$options{name}" 
+			size=$$options{size} 
+			onFocus="scrollable_table_is_blocked = true; q_is_focused = true" 
+			onBlur="scrollable_table_is_blocked = false; q_is_focused = false" 
+			_onKeyPress="if (window.event.keyCode != 27) is_dirty=true" 
+			onChange="is_dirty=true; $$options{onChange}" 
+			_onKeyDown="blockEvent ()" 
+			tabindex=-1
+		>
+EOH
 }
 
 ################################################################################
@@ -2004,7 +2081,7 @@ sub draw_form_field_text {
 	$options -> {attributes} -> {class} ||= 'form-active-inputs';	
 	my $attributes = dump_attributes ($options -> {attributes});
 
-	return qq {<textarea $attributes onFocus="scrollable_table_is_blocked = true; q_is_focused = true" onBlur="scrollable_table_is_blocked = false; q_is_focused = false" rows=$rows cols=$cols name="_$$options{name}" value="$value" onKeyPress="if (window.event.keyCode != 27) is_dirty=true" tabindex=$tabindex>$s</textarea>};
+	return qq {<textarea $attributes onFocus="scrollable_table_is_blocked = true; q_is_focused = true" onBlur="scrollable_table_is_blocked = false; q_is_focused = false" rows=$rows cols=$cols name="_$$options{name}" value="$value" onchange="alert (is_dirty); is_dirty=true; alert (is_dirty);" tabindex=$tabindex>$s</textarea>};
 }
 
 ################################################################################
@@ -2013,7 +2090,7 @@ sub draw_form_field_password {
 	my ($options, $data) = @_;
 	$options -> {size} ||= $conf -> {size} || 120;	
 	$tabindex++;
-	return qq {<input type="password" name="_$$options{name}" size="$$options{size}" onKeyPress="if (window.event.keyCode != 27) is_dirty=true" tabindex=$tabindex>};
+	return qq {<input type="password" name="_$$options{name}" size="$$options{size}" onKeyPress="if (window.event.keyCode != 27) is_dirty=true" tabindex=$tabindex onKeyDown="tabOnEnter()">};
 }
 
 ################################################################################
@@ -2081,7 +2158,7 @@ sub draw_form_field_radio {
 	foreach my $value (@{$options -> {values}}) {
 		$tabindex++;
 		my $checked = $data -> {$options -> {name}} == $value -> {id} ? 'checked' : '';
-		$html .= qq {<tr><td><input id="$value" onFocus="scrollable_table_is_blocked = true; q_is_focused = true" onBlur="scrollable_table_is_blocked = false; q_is_focused = false" type="radio" name="_$$options{name}" value="$$value{id}" $checked onClick="is_dirty=true" tabindex=$tabindex>&nbsp;$$value{label}};
+		$html .= qq {<tr><td><input id="$value" onFocus="scrollable_table_is_blocked = true; q_is_focused = true" onBlur="scrollable_table_is_blocked = false; q_is_focused = false" type="radio" name="_$$options{name}" value="$$value{id}" $checked onClick="is_dirty=true" tabindex=$tabindex onKeyDown="tabOnEnter()">&nbsp;$$value{label}};
 		
 		if ($value -> {values}) {
 			my $s = draw_form_field_select ({
@@ -2115,7 +2192,7 @@ sub draw_form_field_checkbox {
 	
 	$tabindex++;
 	
-	return qq {<input type="checkbox" name="_$$options{name}" value="1" $checked onChange="is_dirty=true" tabindex=$tabindex>};
+	return qq {<input type="checkbox" name="_$$options{name}" value="1" $checked onChange="is_dirty=true" tabindex=$tabindex onKeyDown="tabOnEnter()">};
 	
 }
 
@@ -2215,7 +2292,7 @@ sub draw_toolbar_input_select {
 		
 	return <<EOH;
 		<td>
-		<select name="$$options{name}" onChange="submit()" onkeypress="typeAhead()">
+		<select name="$$options{name}" onChange="submit()" onkeypress="typeAhead()" style="visibility:expression(last_vert_menu ? 'hidden' : '')">
 			$html
 		</select>
 		</td>
@@ -2310,7 +2387,16 @@ EOJS
 	my $attributes = dump_attributes ($options -> {attributes});
 
 	return <<EOH;
-		<select $attributes name="_$$options{name}" id="_$$options{name}_select" onChange="is_dirty=true; $$options{onChange}" onkeypress="typeAhead()" $multiple  tabindex='$tabindex'>
+		<select 
+			name="_$$options{name}" 
+			id="_$$options{name}_select" 
+			$multiple  
+			tabindex='$tabindex'
+			$attributes 
+			onKeyDown="tabOnEnter()"
+			onChange="is_dirty=true; $$options{onChange}" 
+			onKeyPress="typeAhead()" 
+		>
 			$html
 		</select>
 		$iframe
@@ -2465,6 +2551,8 @@ sub draw_centered_toolbar_button {
 		hotkey ($options -> {hotkey});
 	}
 
+	$options -> {href} = 'javaScript:' . $options -> {onclick} if $options -> {onclick};
+
 	check_href ($options);
 	
 	my $target = $options -> {target};
@@ -2496,7 +2584,7 @@ sub draw_centered_toolbar_button {
 #EOH
 
 	return <<EOH
-		<td class="button" onmouseover="style.borderStyle='groove';style.borderColor='#FFFFFF';" onmouseout="style.borderStyle='solid';style.borderColor='#D6D3CE';" nowrap>&nbsp;<a class=button href="$$options{href}" id="$$options{id}" target="$$options{target}">$bra $$options{label} $ket</a></td>
+		<td class="button" onmouseover="style.borderStyle='groove';style.borderColor='#FFFFFF';" onmouseout="style.borderStyle='solid';style.borderColor='#D6D3CE';" nowrap>&nbsp;<a TABINDEX=-1 class=button href="$$options{href}" id="$$options{id}" target="$$options{target}">$bra $$options{label} $ket</a></td>
 		<td><img height=15 vspace=1 hspace=4 src="/i/toolbars/razd1.gif" width=2 border=0></td>
 EOH
 
@@ -2597,7 +2685,7 @@ EOH
 				
 				@{[ $_REQUEST {__help_url} ? <<EOHELP : '' ]}
 				<td class=bgr1><img height=22 src="$_REQUEST{__uri}0.gif" width=4 border=0></td>
-				<td class=bgr1><nobr><A id="help" class=lnk2 href="$_REQUEST{__help_url}" target="_blank">[$$i18n{F1}]</A>&nbsp;&nbsp;</nobr></td>
+				<td class=bgr1><nobr><A TABINDEX=-1 id="help" class=lnk2 href="$_REQUEST{__help_url}" target="_blank">[$$i18n{F1}]</A>&nbsp;&nbsp;</nobr></td>
 EOHELP
 				<td class=bgr1><img height=22 src="$_REQUEST{__uri}0.gif" width=4 border=0></td>
 				<td class=bgr1><img height=1 src="$_REQUEST{__uri}0.gif" width=7 border=0></td>

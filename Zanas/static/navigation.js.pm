@@ -7,7 +7,19 @@ var typeAheadInfo = {last:0,
 
 function nop() {}
 
+function tabOnEnter () {
+   if (window.event && window.event.keyCode == 13 && !window.event.ctrlKey && !window.event.altKey) {
+   	window.event.keyCode = 9;
+   }
+}
+
 function typeAhead() { // borrowed from http://www.oreillynet.com/javascript/2003/09/03/examples/jsdhtmlcb_bonus2_example.html
+   
+   if (window.event && window.event.keyCode == 13 && !window.event.ctrlKey && !window.event.altKey) {
+   	window.event.keyCode = 9;
+   	return;
+   }
+
    if (window.event && !window.event.ctrlKey) {
       var now = new Date();
       if (typeAheadInfo.accumString == "" || now - typeAheadInfo.last < typeAheadInfo.delay) {
@@ -60,23 +72,26 @@ function activate_link (href, target) {
 
 function open_popup_menu (type) {
 
-	var oPopup = window.createPopup ();
 	var div = document.getElementById ('vert_menu_' + type);
-	var table = document.getElementById ('vert_menu_table_' + type);
-	var w = table.offsetWidth;
-	var h = table.offsetHeight;
-	oPopup.document.body.innerHTML = div.innerHTML;
-	
+
 	var mainMenuCell = document.getElementById ('main_menu_' + type);
 	
 	if (mainMenuCell) {
-		oPopup.show (-6, 16, w, h, mainMenuCell);
+		div.style.top  = mainMenuCell.offsetTop  + mainMenuCell.offsetParent.offsetTop  + mainMenuCell.offsetParent.offsetParent.offsetTop  + 16;
+		div.style.left = mainMenuCell.offsetLeft + mainMenuCell.offsetParent.offsetLeft + mainMenuCell.offsetParent.offsetParent.offsetLeft - 6;
+		last_vert_menu = div;
 	}
 	else {
-		oPopup.show (event.screenX, event.screenY, w, h);
-	}	
+		div.style.top  = event.y - 5;
+		div.style.left = event.x - 5;
+	}
+	
+	div.style.display = 'block';
 	
 }
+
+
+
 
 function setVisible (id, isVisible) { 
 	document.getElementById (id).style.display = isVisible ? 'block' : 'none'
@@ -128,11 +143,11 @@ function focus_on_first_input (td) {
 	var inputs = td.getElementsByTagName ('input');
 	var input  = null;
 	for (var i = 0; i < inputs.length; i++) {
-		if (inputs [i].type != 'hidden') {
+		if (inputs [i].type != 'hidden' && inputs [i].style.visibility != 'hidden') {
 			input = inputs [i];
 			break;
 		}
-	}	
+	}
 	if (input == null) return blur_all_inputs ();
 	input.focus  ();
 	input.select ();
@@ -292,6 +307,31 @@ function handle_basic_navigation_keys () {
 
 	}
 
+
+}
+
+function hasMouse (e, event) {
+
+	if (!event) event = window.event;	
+	var x = event.x ? event.x : event.pageX;
+	var y = event.y ? event.y : event.pageY;
+	
+	var top  = 0;
+	var left = 0;
+	var ce   = e;	
+	while (1) {
+		top  += ce.offsetTop;
+		left += ce.offsetLeft;
+		ce    = ce.offsetParent;
+		if (!ce) break;
+	}
+
+	if (y <= top) return false;
+	if (y >= top + e.offsetHeight) return false;
+	if (x <= left) return false;
+	if (x >= left + e.offsetWidth) return false;
+
+	return true;
 
 }
 
