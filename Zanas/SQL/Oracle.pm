@@ -118,15 +118,6 @@ sub sql_select_col {
 
 ################################################################################
 
-sub sql_select_vocabulary {
-
-	my ($table_name) = @_;	
-	return sql_select_all ("SELECT id, label FROM $table_name WHERE fake = 0 ORDER BY label");
-	
-}
-
-################################################################################
-
 sub lc_hashref {
 
 	my ($hr) = @_;

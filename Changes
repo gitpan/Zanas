@@ -1,3 +1,9 @@
+0.9942:
+	
+	- added order option in sql_select_vocabulary sub;
+	- documentation fixes;
+	- get_user fixed (multirole specific bug was introduced in 0.9937 with Oracle support);
+
 0.9941:
 
 	- added icon option in draw_centered_toolbar_button sub;

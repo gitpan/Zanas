@@ -2,6 +2,7 @@ no warnings;
 
 use Data::Dumper;
 use URI::Escape;
+use MIME::Base64;
 
 use Zanas::Presentation::MSIE_5;
 #use Zanas::Presentation::Mozilla_3;
@@ -141,6 +142,18 @@ sub check_href {
 	if ($_REQUEST {__uri} ne '/' && $options -> {href} =~ m{^\/\?}) {
 		$options -> {href} =~ s{^\/\?}{$_REQUEST{__uri}\?};
 	}
+
+	if ($_FLAG_ADD_LAST_QUERY_STRING && $conf -> {core_auto_esc}) {
+	
+		my $query_string = "$ENV{QUERY_STRING}&__scrollable_table_row=$scrollable_row_id";
+		
+		my $esc_query_string = MIME::Base64::encode ($query_string);
+		$esc_query_string =~ y{+/=}{-_.};
+	
+		$options -> {href} .= "&__last_query_string=$esc_query_string";
+		
+	}		
+
 
 }
 

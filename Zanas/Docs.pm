@@ -21,6 +21,24 @@ our $charset = {
 @options = (
 
 	{
+		name     => 'no_time',
+		label_en => "If true, only the date input is awaited, but no time.",
+		label_ru => "Если истина, это поле ввода даты, но не времени.",
+	},
+
+	{
+		name     => 'no_read_only',
+		label_en => "If true, the input allows keyboard input.",
+		label_ru => "Если истина, то возможен ввод с клавиатуры.",
+	},
+
+	{
+		name     => 'order',
+		label_en => "Items sort order.",
+		label_ru => "Порядок сортировки элементов",
+	},
+
+	{
 		name     => 'no_clear_button',
 		label_en => "If true, the [X] button is not shown.",
 		label_ru => "Если истина, то кнопка [X] (очистка содержимого) не отрисовывается.",
@@ -557,6 +575,7 @@ EO
 
 	{
 		name     => 'js_ok_escape',
+		options  => [qw(name)],
 		syn      => <<EO,		
 		
 	js_ok_escape ({
@@ -662,11 +681,8 @@ EO
 		see_also => [qw(sql_select_all)],
 	},
 
-
-
-
 					#######################################
-
+					
 	{
 		name     => 'sql_reconnect',
 		syn      => <<EO,		
@@ -674,8 +690,18 @@ EO
 EO
 		label_en => 'Internal sub maintainning the [my]sql server connection.',
 		label_ru => 'Внутренняя процедура поддержки связи с [my]sql-сервером.',
-#		see_also => [qw(hotkey)],
+		see_also => [qw(sql_disconnect)],
 	},
+	
+					#######################################
+
+	{
+		name     => 'sql_disconnect',
+		label_en => 'Closes the database connection.',
+		label_ru => 'Закрывает текущую связь с БД',
+		see_also => [qw(sql_reconnect)]
+	},
+	
 
 					#######################################
 
@@ -704,6 +730,7 @@ EO
 
 	{
 		name     => 'register_hotkey',
+		options  => [qw(ctrl)],
 		syn      => <<EO,		
 EO
 		label_en => 'Internal sub for defining a hotkey for the current page. Use "hotkey" instead.',
@@ -1312,7 +1339,10 @@ EO
 	{
 		name     => 'add_vocabularies',
 		syn      => <<EO,	
-	\$item -> add_vocabularies ('roles', 'departments', 'sexes');
+	\$item -> add_vocabularies ('roles', 
+		'departments', 
+		'sexes' => {order => 'id'}
+	);
 EO
 		label_en => 'Add multiple data vocabularies simultanuousely.',
 		label_ru => 'Добавляет к объекту сразу несколько словарей данных.',
@@ -1494,12 +1524,15 @@ EOP
 		name     => 'sql_select_vocabulary',
 		syn      => <<EOP,	
 	\$item -> {roles} = sql_select_vocabulary ('roles');
+	
+	\$item -> {types} = sql_select_vocabulary ('types', {order => 'code'});
+	
 EOP
+		options  => [qw(order/label)],
 		label_en => 'Selects all records from a given table where fake=0 ordered by label ascending (data vocabulary).',
 		label_ru => 'Выбирает из заданной таблицы все записи, для которых fake=0 в опрядке возрастания label (словарь данных).',
 		see_also => [qw(add_vocabularies draw_form_field_radio draw_form_field_select)]
 	},
-
 
 
 					#######################################
@@ -1591,7 +1624,7 @@ EO
 
 	{
 		name     => 'draw_form',
-		options  => [qw(action/update type/$_REQUEST{type} id/$_REQUEST{id} name/form target/invisible bottom_toolbar/draw_ok_esc_toolbar() no_ok keep_params)],
+		options  => [qw(action/update type/$_REQUEST{type} id/$_REQUEST{id} name/form esc target/invisible bottom_toolbar/draw_ok_esc_toolbar() no_ok keep_params)],
 		syn      => <<EO,
 		
 	my \$data = {				# comes from 'get_item_of_users' callback sub
@@ -1762,7 +1795,7 @@ EO
 
 	{
 		name     => 'draw_form_field_password',
-		options  => [qw(name label value off)],
+		options  => [qw(name label value off size/120)],
 		label_en => 'Draws the password form input. Invoked by draw_form.',
 		label_ru => 'Отрисовывает поле ввода пароля. Вызывается процедурой draw_form.',
 		see_also => [qw(draw_form)]
@@ -1821,8 +1854,18 @@ EO
 					#######################################
 
 	{
+		name     => 'draw_form_field_date',
+		options  => [qw(name label value off format/$$conf{format_dt} no_clear_button onClose max_len size/11_16 no_read_only)],
+		label_en => 'The same as draw_form_field_datetime with no_time set to 1',
+		label_ru => 'То же, что draw_form_field_datetime, но всегда без ввода времени',
+		see_also => [qw(draw_form draw_form_field_datetime)]
+	},
+
+					#######################################
+
+	{
 		name     => 'draw_form_field_datetime',
-		options  => [qw(name label value off format/$$conf{format_dt} no_time no_clear_button onClose max_len)],
+		options  => [qw(name label value off format/$$conf{format_dt} no_time no_clear_button onClose max_len size/11_16 no_read_only)],
 		label_en => 'Draws the calendar form input (DHTML from http://dynarch.com/mishoo/calendar.epl).',
 		label_ru => 'Отрисовывает поле ввода типа "календарь" (DHTML-код позаимствован с http://dynarch.com/mishoo/calendar.epl).',
 		see_also => [qw(draw_form)]
@@ -2120,6 +2163,46 @@ EO
 		label_ru => 'Отрисовывает клетку таблицы с текстовым полем ввода.',
 		see_also => [qw(draw_table)]
 	},
+
+
+
+
+
+
+
+
+
+
+
+					#######################################
+
+	{
+		name     => 'draw_select_cell',
+		options  => [qw(onChange rows)],
+		syn      => <<EO,	
+	draw_select_cell ({
+		name   => "_adding_\$\$i{id}",
+		values => [
+			{id => 0, label => 'Off'},
+			{id => 1, label => 'On'},
+		]
+	})
+EO
+		label_en => 'Draws table cell containing an input field.',
+		label_ru => 'Отрисовывает клетку таблицы с текстовым полем ввода.',
+		see_also => [qw(draw_table)]
+	},
+
+
+
+
+
+
+
+
+
+
+
 
 					#######################################
 
@@ -2470,6 +2553,12 @@ our @conf = (
 	},
 
 	{
+		name => 'size',
+		label_en => 'Default value for input sizes',
+		label_ru => 'Значение по умолчанию для размера полей ввода',
+	},
+
+	{
 		name => 'use_cgi',
 		label_en => 'If true, then CGI.pm is used instead of mod_perl interface',
 		label_ru => 'Если истина, то вместо родного интерфейса mod_perl используется CGI.pm.',
@@ -2482,9 +2571,21 @@ our @conf = (
 	},
 
 	{
+		name => 'core_auto_esc',
+		label_en => 'If true, then return URLs and \$REQUEST{__scrollable_table_row}s are saved and esc hrefs for all forms are autogenerated.',
+		label_ru => 'Если истина, то для каждой ссылки из строки таблицы сохраняется обратный URL и номер выбранной строки (__scrollable_table_row), ссылки с кнопок [вернуться] при этом генерируются автоматически.',
+	},
+
+	{
 		name => 'core_cache_html',
 		label_en => 'If true, then resulting HTML is cached for public sites.',
 		label_ru => 'Если истина, HTML страниц для публичных сайтов кэшируется.',
+	},
+
+	{
+		name => 'core_multiple_roles',
+		label_en => 'If true, multiple roles mode is enabled.',
+		label_ru => 'Если истина, активизируется режим множественных ролей.',
 	},
 
 	{
@@ -3037,7 +3138,7 @@ EOF
 	close (F);
 	
 	my @subs_in_zanas = subs_in 'Zanas';
-	my %imported_subs = map {$_ => 1} (map {subs_in $_} qw(Data::Dumper URI::Escape HTTP::Date));
+	my %imported_subs = map {$_ => 1} ('OK', map {subs_in $_} qw(Data::Dumper URI::Escape HTTP::Date MIME::Base64));
 	my %documented_subs = map {$_ -> {name} => 1} @subs;
 	my @undocumented_subs = grep {!exists $imported_subs {$_} && !exists $documented_subs {$_}} @subs_in_zanas;
 

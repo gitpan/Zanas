@@ -130,7 +130,7 @@ EOS
 			if ($id_session) {
 				$_REQUEST {sid} = $id_session;
 			} else {
-				$_REQUEST {sid} = int (rand() * 9223372036854775807);
+				$_REQUEST {sid} = int (rand() * 10000000000);
 				sql_do ("INSERT INTO sessions (id, id_user, id_role) VALUES (?, ?, ?)", $_REQUEST {sid}, $user -> {id}, $id_role);
 				sql_do_refresh_sessions ();
 			}
@@ -370,9 +370,25 @@ sub upload_file {
 
 sub add_vocabularies {
 
-	my ($item, @names) = @_;
+	my ($item, @items) = @_;
 	
-	map {$item -> {$_} = sql_select_vocabulary ($_)} @names;
+#	map {$item -> {$_} = sql_select_vocabulary ($_)} @names;
+
+	while (@items) {
+	
+		my $name = shift @items;
+		
+		my $options = {};
+		
+		if (@items > 0 && ref $items [0] eq HASH) {
+		
+			$options = shift @items;
+		
+		}
+		
+		$item -> {$name} = sql_select_vocabulary ($name, $options);
+		
+	}
 
 }
 

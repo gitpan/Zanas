@@ -130,6 +130,8 @@ sub draw_page {
 	
 	our @scan2names = ();
 	
+	our $scrollable_row_id = 0;
+
 	unless ($_REQUEST {error}) {
 	
 		if ($_REQUEST {id}) {
@@ -832,8 +834,11 @@ EOH
 		foreach my $callback (@tr_callbacks) {
 #			$trs .= '<tr style="position:relative;left:0px;top:0px;z-index:1;">';
 			$trs .= '<tr>';
+			our $_FLAG_ADD_LAST_QUERY_STRING = 1;
 			$trs .= &$callback ();
+			undef $_FLAG_ADD_LAST_QUERY_STRING;
 			$trs .= '</tr>';
+			$scrollable_row_id ++;
 		}
 		$trs .= '</thead>' if $n == @$list && !$i -> {id};
 	}
@@ -1260,6 +1265,15 @@ sub draw_form {
 
 	my ($options, $data, $fields) = @_;
 	
+	if ($conf -> {core_auto_esc} && $_REQUEST {__last_query_string}) {
+		my $esc_query_string = $_REQUEST {__last_query_string};
+		$esc_query_string =~ y{-_.}{+/=};
+		my $query_string = MIME::Base64::decode ($esc_query_string);
+		my $salt = time (); #rand ();
+		$query_string =~ s{salt\=[\d\.]+}{salt=$salt}g;
+		$options -> {esc} = $_REQUEST {__uri} . '?' . $query_string;
+	}	
+
 	my $action = exists $options -> {action} ? $options -> {action} : 'update';
 	
 	my $type = $options -> {type};
@@ -1318,6 +1332,7 @@ $path<table cellspacing=1 cellpadding=5 width="100%">
 				<input type=hidden name=id value=$id> 
 				<input type=hidden name=action value=$action> 
 				<input type=hidden name=sid value=$_REQUEST{sid}>
+				<input type=hidden name=__last_query_string value="$_REQUEST{__last_query_string}">
 				@{[ map {<<EO} @{$options -> {keep_params}} ]}
 					<input type=hidden name=$_ value=$_REQUEST{$_}>
 EO

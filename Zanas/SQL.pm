@@ -42,4 +42,12 @@ sub sql_disconnect {
 	
 }
 
+################################################################################
+
+sub sql_select_vocabulary {
+	my ($table_name, $options) = @_;	
+	$options -> {order} ||= 'label';
+	return sql_select_all ("SELECT id, label FROM $table_name WHERE fake = 0 ORDER BY $$options{order}");
+}
+
 1;
