@@ -1,3 +1,7 @@
+0.9947:
+
+	- core_auto_esc related fix (cleaning up the request string);
+
 0.9946:
 
 	- $_USER -> {demo_level} introduced;

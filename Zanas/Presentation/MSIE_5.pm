@@ -814,7 +814,9 @@ sub draw_table {
 	}
 
 	if (ref $options -> {top_toolbar} eq ARRAY) {
+#		$_FLAG_ADD_LAST_QUERY_STRING = 1;
 		$options -> {top_toolbar} = draw_toolbar (@{ $options -> {top_toolbar} });
+#		$_FLAG_ADD_LAST_QUERY_STRING = 0;
 	}
 
 	if (ref $options -> {path} eq ARRAY) {

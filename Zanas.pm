@@ -301,7 +301,7 @@ print STDERR "\rZanas.pm: loading ("  . __PACKAGE__ .  ") ok.\n";
 
 package Zanas;
 
-$VERSION = '0.9946';
+$VERSION = '0.9947';
 
 =head1 NAME
 

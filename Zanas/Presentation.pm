@@ -145,7 +145,9 @@ sub check_href {
 
 	if ($_FLAG_ADD_LAST_QUERY_STRING && $conf -> {core_auto_esc}) {
 	
-		my $query_string = "$ENV{QUERY_STRING}&__scrollable_table_row=$scrollable_row_id";
+		my $query_string = $ENV {QUERY_STRING};
+		$query_string =~ s{\&?__scrollable_table_row=\d*}{}g;
+		$query_string .= "&__scrollable_table_row=$scrollable_row_id";
 		
 		my $esc_query_string = MIME::Base64::encode ($query_string);
 		$esc_query_string =~ y{+/=}{-_.};
