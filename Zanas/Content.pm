@@ -7,6 +7,13 @@ use Zanas::SQL;
 
 ################################################################################
 
+sub keep_alive {
+	my $sid = shift;
+	sql_do ("UPDATE sessions SET ts = NULL WHERE id = ? ", $sid);
+}
+
+################################################################################
+
 sub call_for_role {
 	my $sub_name = shift;
 	my $role = $_USER ? $_USER -> {role} : '';	

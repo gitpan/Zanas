@@ -10,11 +10,24 @@ sub handler {
 	require_fresh ($_PACKAGE . '::Config');
 
    	our $db  = DBI -> connect ($conf -> {'db_dsn'}, $conf -> {'db_user'}, $conf -> {'db_password'}, {RaiseError => 1});
-   	
+
    	$conf -> {dbf_dsn} and our $dbf = DBI -> connect ($conf -> {dbf_dsn}, {RaiseError => 1});
 
 	our %_REQUEST = %{$parms};
-
+   	
+	if ($_REQUEST {keepalive}) {
+		my $timeout = 60 * $conf -> {session_timeout} - 1;
+		keep_alive ($_REQUEST {keepalive});
+		$r -> content_type ('text/html');
+		$r -> send_http_header;
+		print <<EOH;
+			<html><head>
+				<META HTTP-EQUIV=Refresh CONTENT="$timeout; URL=/?keepalive=$_REQUEST{keepalive}">
+			</head></html>			
+EOH
+		return;
+	}	
+   	
 	my $action = $_REQUEST {action};
 		
 	our $_USER = get_user ();
@@ -24,6 +37,11 @@ sub handler {
 	eval "our \$_CALENDAR = new ${_PACKAGE}Calendar (\\\%_REQUEST)";
 
 	if (!$_USER and $_REQUEST {type} ne 'logon') {
+	
+		redirect ("/\?type=logon&_frame=$_REQUEST{_frame}");
+		
+	}
+	elsif ($_REQUEST {keepalive}) {
 	
 		redirect ("/\?type=logon&_frame=$_REQUEST{_frame}");
 		

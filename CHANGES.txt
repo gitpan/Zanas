@@ -1,3 +1,9 @@
+0.59: 03.11.03 12:28
+	- added support for keepalive
+	- size and max_length attributes separated in draw_form_field_string
+	- default 'string' type in draw_form_field_hgroup
+	- don't show ':' after empty labels in forms
+
 0.58: 30.10.03 14:21
 	- workaround for missing error message templates (by Hekima)
 	- added 'mandatory' option in draw_form sub

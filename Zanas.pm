@@ -8,6 +8,56 @@ sub require_fresh {
 
 	my ($module_name) = @_;	
 	
+	if ($_USER and $$_USER{role} and $module_name =~ /Content|Presentation/) {
+	
+		my $specific_module_name = $module_name;
+		
+		$specific_module_name =~ s/(Content|Presentation)/$$_USER{role}::$1/;
+		
+		my $error;
+		
+		eval {$error = require_fresh_internal ($specific_module_name)};
+		
+		return unless $error;
+		
+	}
+	
+	require_fresh_internal ($module_name, 1);
+
+}
+
+################################################################################
+
+sub fix_module_for_role {
+
+	my ($file_name) = @_;
+	
+	my $tmp_file_name = $file_name . '~';
+	
+	open (IN, $file_name) or die "Cannot open $file_name: $!\n";
+	open (OUT, ">$tmp_file_name") or die "Cannot write to $tmp_file_name: $!\n";
+	
+	my $suffix = ($_USER and $$_USER{role}) ? '_for_' . $_USER -> {role} : '';
+	
+	while (my $s = <IN>) {
+	
+		$s =~ s/sub\s+get_menu\w*/sub get_menu$suffix/;
+		
+		print OUT $s;
+		
+	}
+	
+	close (OUT);
+	close (IN);	
+
+}
+
+################################################################################
+
+sub require_fresh_internal {
+
+	my ($module_name, $fatal) = @_;	
+
 	if ($conf -> {core_spy_modules}) {
 		
 		my $file_name = $module_name;
@@ -18,6 +68,10 @@ sub require_fresh {
 
 		$file_name =~ s{^(.+?)\/}{\/};
 		$file_name = $PACKAGE_ROOT . $file_name . '.pm';
+		
+		-f $file_name or return "File not found: $file_name\n";
+		
+		fix_module_for_role ($file_name) if $conf -> {core_fix_modules} and $module_name =~ /Content|Presentation/;
 
 		my ($dev, $ino, $mode, $nlink, $uid, $gid, $rdev, $size, $atime, $last_modified, $ctime, $blksize, $blocks) = stat ($file_name);
 
@@ -27,18 +81,28 @@ sub require_fresh {
 
 		$need_refresh or return;
 
+#		eval { do $file_name };
+
 		delete $INC {$inc_key};
 
-	}	
+		eval "require $module_name";
 
-	eval "require $module_name";	
+	}	
 	
-        if ($@) {
+	else {
+		
+		eval "require $module_name";
+
+	}
+
+	$INC_FRESH {$module_name} = time;
+
+        if ($@ and $fatal) {
 		$_REQUEST {error} = $@;
 		print STDERR "require_fresh: error load module $module_name: $@\n";
         }	
-
-	$INC_FRESH {$module_name} = time;
+        
+        return $@;
 	
 }
 
@@ -88,7 +152,7 @@ BEGIN {
 
 package Zanas;
 
-$VERSION = '0.58';
+$VERSION = '0.59';
 
 =head1 NAME
 

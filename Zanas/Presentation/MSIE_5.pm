@@ -317,6 +317,8 @@ EOH
 				$body
 				<iframe name=invisible src="/i/0.html" width=0 height=0>
 				</iframe>
+				<iframe name=keepalive src="/?keepalive=$_REQUEST{sid}" width=0 height=0>
+				</iframe>
 			</body>
 		</html>
 EOH
@@ -765,11 +767,15 @@ sub MSIE_5_draw_form {
 	
 		my ($c1, $c2) = $n++ % 2 ? (5, 4) : (4, 0);
 		
-		MSIE_5_register_hotkey ($field, 'focus', '_' . $field -> {name});
+		MSIE_5_register_hotkey ($field, 'focus', '_' . $field -> {name});	
+
+		$field -> {label} .= '&nbsp;*' if $field -> {mandatory};
+		
+		$field -> {label} .= ':' if $field -> {label};
 				
 		$trs .= $type eq 'hidden' ? $html : <<EOH;
 			<tr>
-				<td class=header$c1 nowrap align=right width="20%">$$field{label}@{[$field -> {mandatory} ? '&nbsp;*' : '']}: </td>
+				<td class=header$c1 nowrap align=right width="20%">$$field{label}</td>
 				<td class=bgr$c2>$html</td></tr>
 EOH
 	
@@ -826,9 +832,11 @@ EOH
 
 sub MSIE_5_draw_form_field_string {
 	my ($options, $data) = @_;
-	$options -> {max_len} ||= $conf -> {max_len};
+	
+	$options -> {max_len} ||= $conf -> {max_len};	
+	$options -> {max_len} ||= $options -> {size};
 	$options -> {max_len} ||= 30;
-	$options -> {size} ||= $options -> {max_len};
+	
 	my $s = $$data{$$options{name}};
 	$s =~ s/\"/\&quot\;/gsm; #"
 	my $size = $options -> {size} ? "size=$$options{size} maxlength=$$options{size}" : "size=120";	
@@ -849,7 +857,7 @@ sub MSIE_5_draw_form_field_hidden {
 
 sub MSIE_5_draw_form_field_hgroup {
 	my ($options, $data) = @_;
-	return join '&nbsp;&nbsp;', map {$_ -> {label} . ': ' . &{'draw_form_field_' . $_ -> {type}}($_, $data)} @{$options -> {items}};
+	return join '&nbsp;&nbsp;', map {$_ -> {label} . ': ' . &{'draw_form_field_' . ($_ -> {type} ? $_ -> {type} : 'string')}($_, $data)} @{$options -> {items}};
 }
 
 ################################################################################
@@ -937,7 +945,7 @@ sub MSIE_5_draw_form_field_select {
 
 	foreach my $value (@{$options -> {values}}) {
 		my $selected = $data -> {$options -> {name}} == $value -> {id} ? 'selected' : '';
-		$html .= qq {<option value="$$value{id}" $selected>$$value{label}</option>};		
+		$html .= qq {<option value="$$value{id}" $selected>$$value{label}</option>};
 	}
 		
 	return <<EOH;

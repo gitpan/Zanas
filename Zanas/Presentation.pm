@@ -103,6 +103,7 @@ sub create_url {
 
 	my %over = @_;	
 	my %param = %_REQUEST;
+	$over {password} = '';
 	while (my ($key, $value) = each %over) {
 		$param {$key} = $value;
 	}
