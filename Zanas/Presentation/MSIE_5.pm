@@ -1953,6 +1953,27 @@ EOH
 
 ################################################################################
 
+sub draw_radio_cell {
+	my ($data) = @_;
+	my $value = $data -> {value} || 1;
+	
+	my $checked = $data -> {checked} ? 'checked' : '';
+
+	$data -> {attributes} ||= {};
+	$data -> {attributes} -> {class} ||= 'txt4';
+
+	my $attributes = dump_attributes ($data -> {attributes});
+
+	return qq {<td $attributes>&nbsp;} if $data -> {off};	
+
+	check_title ($data);
+
+	return qq {<td $$data{title} $attributes><input type=radio name=$$data{name} $checked value='$value'></td>};
+
+}
+
+################################################################################
+
 sub draw_form_field_htmleditor {
 	
 	my ($options, $data) = @_;

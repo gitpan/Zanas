@@ -270,6 +270,8 @@ sub out_html {
 		
 	$html or return;
 	
+	return if $_REQUEST {__response_sent};
+	
 	if ($_REQUEST {dbf}) {
 		redirect ("/$html");
 	}
@@ -451,6 +453,7 @@ sub pub_handler {
 		
 		eval {
 			my $content = &$selector ();
+			return OK if $_REQUEST {__response_sent}; 
 			$_PAGE -> {body} = &$renderrer ($content);
 		};
 		print STDERR $@ if $@;

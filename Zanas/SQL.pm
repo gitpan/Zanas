@@ -284,6 +284,8 @@ sub sql_download_file {
 
 	my ($options) = @_;
 	
+	$_REQUEST {id} ||= $_PAGE -> {id};
+	
 	my $r = sql_select_hash ("SELECT * FROM $$options{table} WHERE id = ?", $_REQUEST {id});
 	$options -> {path} = $r -> {$options -> {path_column}};
 	$options -> {type} = $r -> {$options -> {type_column}};

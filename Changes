@@ -1,3 +1,11 @@
+0.9925: 
+
+	- out_html, sql_download_file and pub_handler fixed for proper file downloading on public sites;
+
+0.9924: 
+
+	- draw_radio_cell sub added (by pashka for another pashka);
+
 0.9923: 
 
 	- module compilation errors are in STDERR again (lost in 0.9922);
