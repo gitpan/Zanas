@@ -879,6 +879,12 @@ sub MSIE_5_draw_toolbar_button {
 	MSIE_5_register_hotkey ($options, 'href', $options);
 	
 	check_href ($options);
+
+	if ($options -> {confirm}) {
+		my $salt = rand;
+		my $msg = js_escape ($options -> {confirm});
+		$options -> {href} = qq [javascript:if (confirm ($msg)) {window.open('$$options{href}', '_self')}];
+	} 
 	
 	return <<EOH
 		<td nowrap>&nbsp;<a class=lnk0 href="$$options{href}" id="$options"><b>[$$options{label}]</b></a></td>
@@ -1058,6 +1064,9 @@ sub MSIE_5_draw_form {
 	my $name = $options -> {name};
 	$name ||= 'form';
 
+	my $target = $options -> {target};
+	$target ||= 'invisible';
+
 	my $trs = '';
 	my $n = 0;	
 	
@@ -1093,7 +1102,7 @@ $path<table cellspacing=1 cellpadding=5 width="100%">
 
 			@{[ MSIE_5_js_ok_escape ($options) ]}
 			
-			<form name=$name action=/ method=post enctype=multipart/form-data target=invisible>
+			<form name=$name action=/ method=post enctype=multipart/form-data target=$target>
 				<input type=hidden name=type value=$type> 
 				<input type=hidden name=id value=$id> 
 				<input type=hidden name=action value=$action> 

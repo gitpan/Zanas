@@ -1,6 +1,7 @@
 use Zanas::Presentation;
 use Zanas::Content;
 use Zanas::Apache;
+use Zanas::SQL;
 
 ################################################################################
 
@@ -48,7 +49,7 @@ sub fix_module_for_role {
 	}
 	
 	close (OUT);
-	close (IN);	
+	close (IN);		
 
 }
 
@@ -126,7 +127,6 @@ BEGIN {
 
 	if ($conf -> {core_load_modules}) {
 
-
 		opendir (DIR, "$PACKAGE_ROOT/Content") || die "can't opendir $PACKAGE_ROOT/Content: $!";
 		my @files = grep {/\.pm$/} map { "Content/$_" } readdir(DIR);
 		closedir DIR;	
@@ -145,6 +145,21 @@ BEGIN {
 		}
 	
 	}
+	
+	if ($conf -> {db_dsn}) {
+		
+		sql_reconnect ();
+		
+		sql_adjust_schema [
+		
+			{
+				name => 'sessions',
+				
+			}
+		
+		]
+		
+	}	
 		
 }
 
@@ -152,7 +167,7 @@ BEGIN {
 
 package Zanas;
 
-$VERSION = '0.73';
+$VERSION = '0.74';
 
 =head1 NAME
 

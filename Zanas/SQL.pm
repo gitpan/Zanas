@@ -418,7 +418,7 @@ sub sql_adjust_schema ($) {
 	ref $tables eq HASH and $tables = [$tables];
 	
 	foreach my $table (@$tables) {
-	
+		      	
 		my @test = sql_select_col ("SHOW TABLES LIKE '$$table{name}'");
 		
 		@test or sql_do (<<EOH);
@@ -429,10 +429,10 @@ sub sql_adjust_schema ($) {
 EOH
 		
 		my $existing_columns = {};
-		my $st = $db -> prepare ("SHOW COLUMNS FROM ?");
-		$st -> execute ($table -> {name});
+		my $st = $db -> prepare ("SHOW COLUMNS FROM $$table{name}");
+		$st -> execute ();
 	
-		while (my $col = $st -> fetchrow_hashref) {		
+		while (my $col = $st -> fetchrow_hashref) {
 			next if $col -> {Field} =~ /^id|fake$/;
 			$existing_columns -> {$col -> {Field}} = $col;
 		}
@@ -446,5 +446,13 @@ EOH
 	}	
 
 }
+
+################################################################################
+
+sub sql_reconnect {
+
+   	($db and $db -> ping) or our $db  = DBI -> connect ($conf -> {'db_dsn'}, $conf -> {'db_user'}, $conf -> {'db_password'}, {RaiseError => 1});
+
+}   	
 
 1;

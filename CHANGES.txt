@@ -1,3 +1,8 @@
+0.74: 04.12.03 14:00
+
+	- added confirm option to draw_toolbar_button sub;
+	- added target option to draw_form sub;
+
 0.73: 02.12.03 15:00
 
 	- added off option to draw_toolbar_input_text sub;

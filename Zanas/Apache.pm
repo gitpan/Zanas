@@ -13,7 +13,7 @@ sub handler {
 	
 	require_fresh ($_PACKAGE . '::Config');
 
-   	($db and $db -> ping) or our $db  = DBI -> connect ($conf -> {'db_dsn'}, $conf -> {'db_user'}, $conf -> {'db_password'}, {RaiseError => 1});
+   	sql_reconnect ();
 
    	$conf -> {dbf_dsn} and our $dbf = DBI -> connect ($conf -> {dbf_dsn}, {RaiseError => 1});
 
