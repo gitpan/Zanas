@@ -941,7 +941,7 @@ EO
 
 	{
 		name     => 'draw_form',
-		options  => [qw(action/update type/$_REQUEST{type} id/$_REQUEST{id} name/form target/invisible bottom_toolbar/draw_ok_esc_toolbar() no_ok)],
+		options  => [qw(action/update type/$_REQUEST{type} id/$_REQUEST{id} name/form target/invisible bottom_toolbar/draw_ok_esc_toolbar() no_ok keep_params)],
 		syn      => <<EO,
 		
 	my \$data = {				# comes from 'get_item_of_users' callback sub
@@ -1182,7 +1182,7 @@ EO
 
 	{
 		name     => 'draw_toolbar_input_text',
-		options  => [qw(name label value off)],
+		options  => [qw(name label value off keep_params)],
 		syn      => <<EO,	
 	draw_toolbar_input_text ({
 		label  => 'Search',
@@ -1211,6 +1211,21 @@ EO
 		see_also => [qw(draw_toolbar)]
 	},
 
+					#######################################
+
+	{
+		name     => 'draw_toolbar_input_checkbox',
+		options  => [qw(name label)],
+		syn      => <<EO,	
+	draw_toolbar_input_checkbox ({
+		name   => 'show_hidden',
+		label  => 'Show hidden items',
+	}),						
+EO
+		label_en => 'Draws the checkbox input (usually, for quick filter).',
+		label_ru => 'Отрисовывает поле для галочки на панели над таблицей (обычно для быстрого фильтра).',
+		see_also => [qw(draw_toolbar)]
+	},
 
 					#######################################
 

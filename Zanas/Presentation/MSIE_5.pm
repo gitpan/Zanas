@@ -217,7 +217,7 @@ EOH
 
 	}
 	
-	$_USER -> {role} eq 'admin' and $_REQUEST{id} or my $lpt = $body =~ s{<table[^\>]*lpt\=\"?1\"?[^\>]*\>}{\<table cellspacing\=1 cellpadding\=5 width\=100\%\>}gsm; #"
+	$_USER -> {role} eq 'admin' and $_REQUEST{id} or my $lpt = $body =~ s{<table[^\>]*lpt\=\"?1\"?[^\>]*\>}{\<table cellspacing\=1 cellpadding\=5 id='scrollable_table' width\=100\%\>}gsm; #"
 	
 	my $menu = draw_menu ($page -> {menu}, $page -> {highlighted_type});
 	
@@ -1000,7 +1000,9 @@ sub draw_toolbar_input_text {
 	
 	my $hiddens = '';
 	
-	foreach my $key (keys %_REQUEST) {
+	$options -> {keep_params} ||= [keys %_REQUEST];
+	
+	foreach my $key (@{$options -> {keep_params}}) {
 		next if $key eq $options -> {name} or $key =~ /^_/ or $key eq 'start' or $key eq 'sid';
 		$hiddens .= qq {<input type=hidden name=$key value="$_REQUEST{$key}">};
 	}
@@ -1210,6 +1212,9 @@ $path<table cellspacing=1 cellpadding=5 width="100%">
 				<input type=hidden name=id value=$id> 
 				<input type=hidden name=action value=$action> 
 				<input type=hidden name=sid value=$_REQUEST{sid}>
+				@{[ map {<<EO} @{$options -> {keep_params}} ]}
+					<input type=hidden name=$_ value=$_REQUEST{$_}>
+EO
 				$trs
 			</form>
 		</table>$bottom_toolbar
@@ -1551,7 +1556,7 @@ EOH
 
 sub draw_toolbar_input_select {
 
-	my ($options, $data) = @_;
+	my ($options) = @_;
 	
 	my $html = '';
 	
@@ -1570,6 +1575,27 @@ sub draw_toolbar_input_select {
 		<select name="$$options{name}" onChange="submit()" onkeypress="typeAhead()">
 			$html
 		</select>
+		</td>
+EOH
+	
+}
+
+################################################################################
+
+sub draw_toolbar_input_checkbox {
+
+	my ($options) = @_;
+	
+	my $html = '';
+	
+	my $checked = $_REQUEST {$options -> {name}} ? 'checked' : '';
+				
+	return <<EOH;
+		<td nowrap>
+			$$options{label}:&nbsp;
+		</td>
+		<td>
+			<input type=checkbox value=1 $checked name="$$options{name}" onClick="submit()">
 		</td>
 EOH
 	
