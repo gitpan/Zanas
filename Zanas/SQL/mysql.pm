@@ -34,11 +34,84 @@ sub sql_do_refresh_sessions {
 
 ################################################################################
 
-sub sql_do {
+sub sql_select_ids {
 	my ($sql, @params) = @_;
+	my @ids = sql_select_col ($sql, @params);
+	push @ids, -1;
+	return join ',', @ids;
+}
+
+################################################################################
+
+sub sql_do {
+
+	my ($sql, @params) = @_;
+	
+	undef $__last_insert_id if $sql =~ /INSERT/i;
+
+
+	if ($conf -> {'db_temporality'} && $_REQUEST {_id_log}) {
+			
+		my $insert_sql = '';
+
+		if ($sql =~ /\s*DELETE\s+FROM\s*(\w+).*?(WHERE.*)/i && $1 ne 'log') {
+		
+			my $cols = join ', ', keys %{$model_update -> get_columns ($1)};
+
+			my $select_sql = "SELECT id FROM $1 $2";
+			my $param_number = $select_sql =~ y/?/?/;
+			splice (@params, 0, @params - $param_number);
+			my $ids = sql_select_ids ($select_sql, @params);
+
+			$insert_sql = "INSERT INTO __log_$1 ($cols, __dt, __op, __id_log) SELECT $cols, NOW() AS __dt, 3 AS __op, $_REQUEST{_id_log} AS __id_log FROM $1 WHERE $1.id IN ($ids)";
+			
+		}
+		
+#print STDERR "sql_do: \$insert_sql = $insert_sql\n";
+
+		$db -> do ($insert_sql) if $insert_sql;
+
+	}	
+
+
+	
 	my $st = $db -> prepare ($sql);
 	$st -> execute (@params);
 	$st -> finish;	
+	
+	if ($conf -> {'db_temporality'} && $_REQUEST {_id_log}) {
+			
+		my $insert_sql = '';
+
+		if ($sql =~ /\s*UPDATE\s*(\w+).*?(WHERE.*)/i && $1 ne 'log') {
+		
+			my $cols = join ', ', keys %{$model_update -> get_columns ($1)};
+
+			my $select_sql = "SELECT id FROM $1 $2";
+			my $param_number = $select_sql =~ y/?/?/;
+			splice (@params, 0, @params - $param_number);
+			my $ids = sql_select_ids ($select_sql, @params);
+
+			$insert_sql = "INSERT INTO __log_$1 ($cols, __dt, __op, __id_log) SELECT $cols, NOW() AS __dt, 1 AS __op, $_REQUEST{_id_log} AS __id_log FROM $1 WHERE $1.id IN ($ids)";
+			
+		}
+		
+		elsif ($sql =~ /\s*INSERT\s+INTO\s*(\w+)/i && $1 ne 'log') {
+		
+			my $cols = join ', ', keys %{$model_update -> get_columns ($1)};
+
+			our $__last_insert_id = sql_last_insert_id ();
+			
+			$insert_sql = "INSERT INTO __log_$1 ($cols, __dt, __op, __id_log) SELECT $cols, NOW() AS __dt, 0 AS __op, $_REQUEST{_id_log} AS __id_log FROM $1 WHERE $1.id = $__last_insert_id";
+			
+		}
+
+#print STDERR "sql_do: \$insert_sql = $insert_sql\n";
+
+		$db -> do ($insert_sql) if $insert_sql;
+
+	}	
+	
 }
 
 ################################################################################
@@ -104,6 +177,8 @@ sub sql_select_all {
 sub sql_select_col {
 
 	my ($sql, @params) = @_;
+	
+#print STDERR "sql_select_col: ", Dumper (\@_);
 	
 	my @result = ();
 	my $st = $db -> prepare ($sql);
@@ -229,7 +304,7 @@ sub sql_select_subtree {
 ################################################################################
 
 sub sql_last_insert_id {
-	return 0 + sql_select_array ("SELECT LAST_INSERT_ID()");
+	return $__last_insert_id || sql_select_scalar ("SELECT LAST_INSERT_ID()") || 0;
 }
 
 ################################################################################

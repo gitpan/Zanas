@@ -511,6 +511,27 @@ our $charset = {
 					#######################################
 
 	{
+		name     => 'sql_temporality_callback',
+		label_en => 'Internal sub passed to DBIx::ModelUpdate when $conf -> {db_temporality} is on.',
+		label_ru => 'Внутренняя процедура, передаваемая DBIx::ModelUpdate при вкючённой опции $conf -> {db_temporality}.',
+#		see_also => [qw(sql_select_col)],
+	},
+
+					#######################################
+
+	{
+		name     => 'sql_select_ids',
+		syn      => <<EO,
+	my \$ids = sql_select_ids ('SELECT id FROM users WHERE id_role = ?', 1);
+EO
+		label_en => 'Returns ID list suitable for IN () clause',
+		label_ru => 'Возвращает список ID, пригодный для подстановки в выражение IN (). Всегда непустой: минимум -1.',
+		see_also => [qw(sql_select_col)],
+	},
+
+					#######################################
+
+	{
 		name     => 'b64u_encode',
 		syn      => <<EO,
 	my \$s = b64u_encode ( chr (2) );

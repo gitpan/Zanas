@@ -341,9 +341,9 @@ sub redirect {
 
 ################################################################################
 
-sub log_action {
+sub log_action_start {
 	
-	my $id_log = sql_do_insert ('log', {
+	$_REQUEST {_id_log} = sql_do_insert ('log', {
 		id_user => $_USER -> {id}, 
 		type => $_OLD_REQUEST {type}, 
 		action => $_OLD_REQUEST {action}, 
@@ -353,9 +353,17 @@ sub log_action {
 		ip_fw => $ENV {HTTP_X_FORWARDED_FOR},
 		fake => 0,
 	});
+		
+}
+
+################################################################################
+
+sub log_action_finish {
 	
 	$_REQUEST {_params} = $_REQUEST {params} = Data::Dumper -> Dump ([\%_OLD_REQUEST], ['_REQUEST']);	
-	sql_do_update ('log', ['params'], {id => $id_log, lobs => ['params']});
+	$_REQUEST {_error}  = $_REQUEST {error};
+	
+	sql_do_update ('log', ['params', 'error'], {id => $_REQUEST {_id_log}, lobs => ['params']});
 	delete $_REQUEST {params};
 	delete $_REQUEST {_params};
 	

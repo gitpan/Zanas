@@ -1,3 +1,9 @@
+0.9967:
+
+	- draw_centered_toolbar fixed for broken HTML;
+	- sql_select_ids added;
+	- $conf -> {db_temporality} introduced;
+
 0.9966:
 
 	- js_escape fixed for \ quoting;

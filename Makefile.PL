@@ -7,7 +7,7 @@ WriteMakefile(
 #	'DBD::mysql'		=> '2.9002',
 #	'Apache::Request'	=> '0.33',
 	'Number::Format'	=> '1.45',
-	'DBIx::ModelUpdate'	=> '0.63',
+	'DBIx::ModelUpdate'	=> '0.65',
 	'Storable'		=> '',
 	'MIME::Base64'		=> '',
 	'Time::HiRes'		=> '',
@@ -15,6 +15,7 @@ WriteMakefile(
 	'File::Temp'		=> '',
     },
     ($] >= 5.005 ?    
-	(ABSTRACT_FROM => 'Zanas.pm', 
+	(
+	ABSTRACT   => 'A RAD platform for WEB GUIs with rich DHTML widget set.', 
 	AUTHOR     => 'D. Ovsyanko <do@zanas.ru>') : ())
 );

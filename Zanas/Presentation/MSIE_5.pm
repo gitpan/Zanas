@@ -2011,13 +2011,12 @@ sub draw_centered_toolbar {
 								<tr>
 									<td class=bgr6 colspan=$colspan><img height=1 src="$_REQUEST{__uri}0.gif" width=1 border=0></td>
 								</tr>
-							</table>
+							</td>
 						</tr>
 					</table>
-				</tr>
-			</table>
-		</tr>
-	</table>
+				</td>
+			</tr>
+		</table>
 	
 EOH
 

@@ -233,6 +233,8 @@ EOH
 			eval { $db -> {AutoCommit} = 0; };
 	
 			our %_OLD_REQUEST = %_REQUEST;
+			
+			log_action_start ();
 		
 			my $sub_name = "validate_${action}_$$page{type}";		
 			
@@ -291,9 +293,7 @@ EOH
 				$db -> {AutoCommit} = 1;
 			};
 
-			log_action ();
-			
-
+			log_action_finish ();
 
 		}
 		else {

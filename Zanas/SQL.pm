@@ -84,6 +84,56 @@ my $time = time;
 
 ################################################################################
 
+sub sql_temporality_callback {
+		
+	my ($self, %params) = @_;
+	
+	my $needed_tables = $params {tables};
+	
+	while (my ($name, $definition) = each %$needed_tables) {
+
+		next if $name =~ /^__log_/;
+
+		my $log_def = Storable::dclone ($definition);
+		
+		foreach my $key (keys %{$log_def -> {columns}}) {
+			delete $log_def -> {columns} -> {$key} -> {_EXTRA};
+			delete $log_def -> {columns} -> {$key} -> {_PK};
+		}
+
+		$log_def -> {columns} -> {id} -> {TYPE_NAME} ||= 'int';
+
+		delete $log_def -> {data};
+
+		$log_def -> {keys} ||= {};
+		$log_def -> {keys} -> {__id} = 'id';
+
+		$log_def -> {columns} -> {__dt} = {
+			TYPE_NAME => 'datetime',
+		};
+
+		$log_def -> {columns} -> {__id} = {
+			TYPE_NAME  => 'int', 
+			_EXTRA => 'auto_increment', 
+			_PK    => 1,
+		};
+
+		$log_def -> {columns} -> {__op} = {
+			TYPE_NAME  => 'int', 
+		};
+
+		$log_def -> {columns} -> {__id_log} = {
+			TYPE_NAME  => 'int', 
+		};
+
+		$params {tables} -> {'__log_' . $name} = $log_def;			
+
+	}
+	
+}
+
+################################################################################
+
 sub sql_reconnect {
 
 	return if $db and $db -> ping;
@@ -108,7 +158,11 @@ sub sql_reconnect {
 
 	delete $INC {"Zanas/SQL/${driver_name}.pm"};
 
-	our $model_update = DBIx::ModelUpdate -> new ($db, dump_to_stderr => 1);
+	our $model_update = DBIx::ModelUpdate -> new (
+		$db, 
+		dump_to_stderr => 1, 
+		before_assert  => $conf -> {'db_temporality'} ? \&sql_temporality_callback : undef,
+	);
 		
 	our %sts = ();
 
