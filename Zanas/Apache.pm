@@ -7,6 +7,8 @@ sub handler {
 	our $apr = Apache::Request -> new ($r);
 	my $parms = $apr -> parms;
 	
+	require_fresh ($_PACKAGE . '::Config');
+
    	our $db  = DBI -> connect ($conf -> {'db_dsn'}, $conf -> {'db_user'}, $conf -> {'db_password'}, {RaiseError => 1});
    	
    	$conf -> {dbf_dsn} and our $dbf = DBI -> connect ($conf -> {dbf_dsn}, {RaiseError => 1});

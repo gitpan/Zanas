@@ -1,5 +1,66 @@
 ################################################################################
 
+sub MSIE_5_register_hotkey {
+
+	my ($hashref, $type, $data) = @_;
+
+	$hashref -> {label} =~ s{\&(.)}{<u>$1</u>} or return;
+	
+	my $c = $1;
+	
+	my $code = 0;
+	
+	if ($c eq '<') {
+		$code = 37; #188;
+	}
+	elsif ($c eq '>') {
+		$code = 39; #190;
+	}
+	else {
+		$c =~ y{…÷” ≈Ќ√Ўў«’Џ‘џ¬јѕ–ќЋƒ∆Ёя„—ћ»“№Ѕёйцукенгшщзхъфывапролджэ€чсмитьбю}{qwertyuiop[]asdfghjkl;'zxcvbnm,.qwertyuiop[]asdfghjkl;'zxcvbnm,.};
+		$code = (ord ($c) - 32);
+	}
+
+
+	push @scan2names, {
+		code => $code,
+		type => $type,
+		data => $data,
+	};
+
+}
+
+################################################################################
+
+sub MSIE_5_handle_hotkey_focus {
+
+	my ($r) = @_;
+	
+	<<EOJS
+		if (window.event.keyCode == $$r{code} && window.event.altKey && window.event.ctrlKey) {
+			document.form.$$r{data}.focus ();
+			event.returnValue = false;
+		}
+EOJS
+
+}
+
+################################################################################
+
+sub MSIE_5_handle_hotkey_href {
+
+	my ($r) = @_;
+	
+	<<EOJS
+		if (window.event.keyCode == $$r{code} && window.event.altKey && window.event.ctrlKey) {
+			window.location.href = document.getElementById ('$$r{data}').href + '&_salt=@{[rand]}';
+		}
+EOJS
+
+}
+
+################################################################################
+
 sub MSIE_5_js_escape {
 	my ($s) = @_;	
 	$s =~ s/\"/\'/gsm;
@@ -19,6 +80,8 @@ sub MSIE_5_draw_page {
 	my $body = '';
 
 	my ($selector, $renderrer);
+	
+	our @scan2names = ();
 
 	if ($_REQUEST {error}) {
 	
@@ -85,8 +148,113 @@ EOH
 				<LINK href="/i/new.css" type=text/css rel=STYLESHEET>
 				<script src="/i/js.js">
 				</script>
+				<script>
+					var scrollable_table = null;
+					var scrollable_table_row = 0;
+					var scrollable_table_row_cell = 0;						
+					var scrollable_table_row_cell_old_style = '';
+					var is_dirty = false;					
+					var scrollable_table_is_blocked = false;
+				</script>
 			</head>
-			<body bgcolor=white leftMargin=0 topMargin=0 marginwidth="0" marginheight="0">
+			<body bgcolor=white leftMargin=0 topMargin=0 marginwidth="0" marginheight="0" name="body" id="body">
+
+				<script for="body" event="onload">
+				
+					scrollable_table = getElementById ('scrollable_table');
+							
+					if (scrollable_table) {				
+				
+						scrollable_table = scrollable_table.tBodies (0);
+					
+						scrollable_table_row = 0;
+						scrollable_table_row_cell = 0;
+
+						if (scrollable_table.rows.length > 0) {
+							scrollable_table_row_cell_old_style = scrollable_table.rows [scrollable_table_row].cells [scrollable_table_row_cell].className;
+							scrollable_table.rows [scrollable_table_row].cells [scrollable_table_row_cell].className = 'txt6';
+						}
+						else {
+							scrollable_table = null;
+						}
+						
+					}
+					
+					var inputs = document.body.getElementsByTagName ('input');
+					if (inputs != null) {
+						for (var i = 0; i < inputs.length; i++) {
+							if (inputs [i].type != 'text') continue;
+							inputs [i].focus ();
+							break;
+						}					
+					}
+
+				</script>
+
+				<script for="body" event="onkeydown">
+								
+					if (window.event.keyCode == 88 && window.event.altKey) {
+							
+						document.location.href = '/?_salt=@{[rand]}';
+							
+					}
+
+					if (scrollable_table && !scrollable_table_is_blocked) {
+				
+						if (window.event.keyCode == 40 && scrollable_table_row < scrollable_table.rows.length - 1) {
+
+							scrollable_table.rows [scrollable_table_row].cells [scrollable_table_row_cell].className = scrollable_table_row_cell_old_style;
+							scrollable_table_row ++;
+							scrollable_table_row_cell_old_style = scrollable_table.rows [scrollable_table_row].cells [scrollable_table_row_cell].className;
+							scrollable_table.rows [scrollable_table_row].cells [scrollable_table_row_cell].className = 'txt6';
+							scrollable_table.rows [scrollable_table_row].cells [scrollable_table_row_cell].scrollIntoView (false);
+							event.returnValue = false;						
+
+						}
+
+						if (window.event.keyCode == 38 && scrollable_table_row > 0) {
+
+							scrollable_table.rows [scrollable_table_row].cells [scrollable_table_row_cell].className = scrollable_table_row_cell_old_style;
+							scrollable_table_row --;
+							scrollable_table_row_cell_old_style = scrollable_table.rows [scrollable_table_row].cells [scrollable_table_row_cell].className;
+							scrollable_table.rows [scrollable_table_row].cells [scrollable_table_row_cell].className = 'txt6';					
+							scrollable_table.rows [scrollable_table_row].cells [scrollable_table_row_cell].scrollIntoView ();
+							event.returnValue = false;
+
+						}
+
+						if (window.event.keyCode == 37 && scrollable_table_row_cell > 0) {
+
+							scrollable_table.rows [scrollable_table_row].cells [scrollable_table_row_cell].className = scrollable_table_row_cell_old_style;
+							scrollable_table_row_cell --;
+							scrollable_table_row_cell_old_style = scrollable_table.rows [scrollable_table_row].cells [scrollable_table_row_cell].className;
+							scrollable_table.rows [scrollable_table_row].cells [scrollable_table_row_cell].className = 'txt6';
+							event.returnValue = false;
+
+						}
+
+						if (window.event.keyCode == 39 && scrollable_table_row_cell < scrollable_table.rows [scrollable_table_row].cells.length - 1) {
+
+							scrollable_table.rows [scrollable_table_row].cells [scrollable_table_row_cell].className = scrollable_table_row_cell_old_style;
+							scrollable_table_row_cell ++;
+							scrollable_table_row_cell_old_style = scrollable_table.rows [scrollable_table_row].cells [scrollable_table_row_cell].className;
+							scrollable_table.rows [scrollable_table_row].cells [scrollable_table_row_cell].className = 'txt6';
+							event.returnValue = false;
+
+						}
+
+						if (window.event.keyCode == 13) {
+							
+							var children = scrollable_table.rows [scrollable_table_row].cells [scrollable_table_row_cell].getElementsByTagName ('a');
+							if (children != null) document.location.href = children [0].href + '&_salt=@{[rand]}';
+							
+						}
+						
+					}
+
+					@{[ map {&{"MSIE_5_handle_hotkey_$$_{type}"} ($_)} @scan2names ]}				
+							
+				</script>
 						
 				@{[ 				
 					draw_auth_toolbar ({lpt => $lpt}) 
@@ -114,6 +282,8 @@ sub MSIE_5_draw_menu {
 
 	foreach my $type (@$types)	{
 	
+		MSIE_5_register_hotkey ($type, 'href', 'main_menu_' . $type -> {name});
+	
 		$tr1 .= <<EOH;
 			<td class=bgr8 rowspan=2><img src="/i/toolbars/n_left.gif" border=0></td>
 			<td bgcolor=#ffffff><img height=1 src="/i/0.gif" width=1 border=0></td>				
@@ -125,7 +295,7 @@ EOH
 
 		$tr2 .= <<EOH;
 			<td class=bgr1><img height=20 src="/i/0.gif" width=1 border=0></td>
-			<td class=$tclass nowrap>&nbsp;&nbsp;<a class=$aclass href="/?type=$$type{name}&sid=$_REQUEST{sid}@{[$$type{search} ? '&search=1' : '']}">$$type{label}</a>&nbsp;&nbsp;</td>
+			<td class=$tclass nowrap>&nbsp;&nbsp;<a class=$aclass id="main_menu_$$type{name}" href="/?type=$$type{name}&sid=$_REQUEST{sid}@{[$$type{search} ? '&search=1' : '']}">$$type{label}</a>&nbsp;&nbsp;</td>
 EOH
 
 		$tr3 .= <<EOH;
@@ -174,13 +344,15 @@ EOH
 sub MSIE_5_draw_text_cell {
 
 	my ($data) = @_;
+	
+	return '' if $data -> {off};
 
 	my $txt = $data -> {label};
 	
 	if ($data -> {href}) {
 		$data -> {href} =~ /sid\=\d/ or $data -> {href} .= "\&sid=$_REQUEST{sid}";
 		my $target = $data -> {target} ? "target='$$data{target}'" : '';
-		$txt = qq { <a class=lnk4 $target href="$$data{href}">$txt</a> };
+		$txt = qq { <a class=lnk4 $target href="$$data{href}" onFocus="blur()">$txt</a> };
 	}
 	
 	return qq {<td class=txt4><nobr>$txt</nobr></td>};
@@ -224,7 +396,7 @@ sub MSIE_5_draw_table {
 	}
 	
 	if (@$headers) {
-		$ths = '<tr>' . (join '', map { "<th class=bgr4>$_\&nbsp;" } @$headers);
+		$ths = '<tr>' . (join '', map { ref $_ eq HASH ? ($$_{off} ? '' : "<th class=bgr4>$$_{label}\&nbsp;") : "<th class=bgr4>$_\&nbsp;" } @$headers);
 	}
 
 	my ($tr_callback, $list) = @_;
@@ -238,9 +410,13 @@ sub MSIE_5_draw_table {
 	
 	return <<EOH
 		<table cellspacing=0 cellpadding=0 width="100%"><tr><td class=bgr8>
-			<table cellspacing=1 cellpadding=5 width="100%">
-				$ths
-				$trs
+			<table cellspacing=1 cellpadding=5 width="100%" id="scrollable_table">
+				<thead>
+					$ths
+				</thead>
+				<tbody>
+					$trs
+				</tbody>
 			</table>
 		</table>
 EOH
@@ -324,6 +500,8 @@ sub MSIE_5_draw_toolbar {
 
 	my ($options, @buttons) = @_;
 	
+	return '' if $options -> {off};
+	
 	return <<EOH
 		<table class=bgr5 cellspacing=0 cellpadding=0 width="100%" border=0>
 			<form action=/>
@@ -370,12 +548,11 @@ sub MSIE_5_draw_toolbar_button {
 
 	my ($options) = @_;
 	
+	MSIE_5_register_hotkey ($options, 'href', $options);
+	
 	return <<EOH
-<!--
-		<td><a href="$$options{href}&sid=$_REQUEST{sid}"><img hspace=3 src="/i/buttons/$$options{icon}.gif" border=0></a></td>
--->		
-		<td nowrap>&nbsp;<a class=lnk0 href="$$options{href}&sid=$_REQUEST{sid}"><b>[$$options{label}]</b></a></td>
-		<td><img height=15  hspace=4 src="/i/toolbars/razd1.gif" width=2 border=0></td>
+		<td nowrap>&nbsp;<a class=lnk0 href="$$options{href}&sid=$_REQUEST{sid}" id="$options"><b>[$$options{label}]</b></a></td>
+		<td><img height=15 hspace=4 src="/i/toolbars/razd1.gif" width=2 border=0></td>
 EOH
 
 }
@@ -390,7 +567,7 @@ sub MSIE_5_draw_toolbar_input_text {
 <!--	
 		<td><a href="$$options{href}&sid=$_REQUEST{sid}"><input type=image hspace=3 src="/i/buttons/$$options{icon}.gif" border=0></a></td>
 -->		
-		<td nowrap>$$options{label}: <input type=text name=$$options{name} value="$_REQUEST{$$options{name}}"><input type=hidden name=search value=1><input type=hidden name=type value="$_REQUEST{type}"></td>
+		<td nowrap>$$options{label}: <input type=text name=$$options{name} value="$_REQUEST{$$options{name}}" onFocus="scrollable_table_is_blocked = true" onBlur="scrollable_table_is_blocked = false"><input type=hidden name=search value=1><input type=hidden name=type value="$_REQUEST{type}"></td>
 		<td><img height=15  hspace=4 src="/i/toolbars/razd1.gif" width=2 border=0></td>
 EOH
 
@@ -404,20 +581,25 @@ sub MSIE_5_draw_toolbar_pager {
 
 	my $start = $_REQUEST {start} + 0;
 
-	my $label = '';
-	
+	my $label = '';	
+
+	if ($start > $conf -> {portion}) {
+		$url = create_url (start => 0);
+		$label .= qq {&nbsp;<a href="$url" class=lnk0 onFocus="blur()"><b>&lt;&lt;</b></a>&nbsp;};
+	}
+
 	if ($start > 0) {
+		MSIE_5_register_hotkey ({label => '&<'}, 'href', '_pager_prev');
 		$url = create_url (start => $start - $conf -> {portion});
-#		$label = qq {<a href="$url"><img hspace=3 src="/i/buttons/down.gif" border=0 align=absmiddle></a>} . $label;
-		$label .= qq {&nbsp;<a href="$url" class=lnk0><b>&lt;&lt;</b></a>&nbsp;};
+		$label .= qq {&nbsp;<a href="$url" class=lnk0 id="_pager_prev" onFocus="blur()"><b><u>&lt;</u></b></a>&nbsp;};
 	}
 	
 	$label .= ($start + 1) . ' - ' . ($start + $$options{cnt}) . ' из ' . $$options{total};
 	
 	if ($start + $$options{cnt} < $$options{total}) {
+		MSIE_5_register_hotkey ({label => '&>'}, 'href', '_pager_next');
 		$url = create_url (start => $start + $conf -> {portion});
-#		$label .= qq {<a href="$url"><img hspace=3 src="/i/buttons/up.gif" border=0 align=absmiddle></a>};
-		$label .= qq {&nbsp;<a href="$url" class=lnk0><b>&gt;&gt;</b></a>&nbsp;};
+		$label .= qq {&nbsp;<a href="$url" class=lnk0 id="_pager_next" onFocus="blur()"><b><u>&gt;</u></b></a>&nbsp;};
 	}
 	
 	return <<EOH
@@ -433,6 +615,8 @@ sub MSIE_5_draw_row_button {
 
 	my ($options) = @_;
 	
+	return '' if $options -> {off};
+	
 	if ($options -> {confirm}) {
 		my $salt = rand;
 		my $msg = js_escape ($options -> {confirm});
@@ -441,7 +625,7 @@ sub MSIE_5_draw_row_button {
 		$options -> {href} .= "&sid=$_REQUEST{sid}";
 	}
 
-	return qq {<a class=lnk0 title="$$options{label}" href="$$options{href}">\&nbsp;<b>[$$options{label}]</b>\&nbsp;</a>};
+	return qq {<a class=lnk0 title="$$options{label}" href="$$options{href}" onFocus="blur()">\&nbsp;<b>[$$options{label}]</b>\&nbsp;</a>};
 
 }
 
@@ -484,7 +668,9 @@ sub MSIE_5_draw_form {
 	
 		my ($c1, $c2) = $n++ % 2 ? (5, 4) : (4, 0);
 		
-		$trs .= <<EOH;
+		MSIE_5_register_hotkey ($field, 'focus', '_' . $field -> {name});
+				
+		$trs .= $type eq 'hidden' ? $html : <<EOH;
 			<tr>
 				<td class=header$c1 nowrap align=right width="20%">$$field{label}: </td>
 				<td class=bgr$c2>$html</td></tr>
@@ -501,6 +687,19 @@ EOH
 
 	return <<EOH
 $path<table cellspacing=1 cellpadding=5 width="100%">
+			
+			<script for="body" event="onkeypress">
+			
+				if (window.event.keyCode == 27 && (!is_dirty || window.confirm ('”йти без сохранени€ данных?'))) {
+					window.location.href = document.getElementById ('esc').href + '&_salt=@{[rand]}';
+				}
+			
+				if (window.event.keyCode == 10 && window.confirm ('—охранить данные?')) {					
+					document.form.submit ();					
+				}
+														
+			</script>
+
 			<form name=form action=/ method=post enctype=multipart/form-data target=invisible>
 				<input type=hidden name=type value=$type> 
 				<input type=hidden name=id value=$id> 
@@ -520,7 +719,17 @@ sub MSIE_5_draw_form_field_string {
 	my $s = $$data{$$options{name}};
 	$s =~ s/\"/\&quot\;/gsm; #"
 	my $size = $options -> {size} ? "size=$$options{size} maxlength=$$options{size}" : "size=120";	
-	return qq {<input type="text" name="_$$options{name}" value="$s" $size>};
+	return qq {<input type="text" name="_$$options{name}" value="$s" $size onKeyPress="if (window.event.keyCode != 27) is_dirty=true">};
+}
+
+################################################################################
+
+sub MSIE_5_draw_form_field_hidden {
+	my ($options, $data) = @_;
+	my $s = $$data{$$options{name}};
+	$s ||= $$options{value};
+	$s =~ s/\"/\&quot\;/gsm; #"
+	return qq {<input type="hidden" name="_$$options{name}" value="$s">};
 }
 
 ################################################################################
@@ -536,14 +745,14 @@ sub MSIE_5_draw_form_field_text {
 	my ($options, $data) = @_;
 	my $s = $$data{$$options{name}};
 	$s =~ s/\"/\&quot\;/gsm; #"
-	return qq {<textarea rows=25 cols=120 name="_$$options{name}">$s</textarea>};
+	return qq {<textarea rows=25 cols=120 name="_$$options{name}" onKeyPress="if (window.event.keyCode != 27) is_dirty=true">$s</textarea>};
 }
 
 ################################################################################
 
 sub MSIE_5_draw_form_field_password {
 	my ($options, $data) = @_;
-	return qq {<input type="password" name="_$$options{name}" size=120>};
+	return qq {<input type="password" name="_$$options{name}" size=120 onKeyPress="if (window.event.keyCode != 27) is_dirty=true">};
 }
 
 ################################################################################
@@ -563,7 +772,7 @@ sub MSIE_5_draw_form_field_radio {
 	
 	foreach my $value (@{$options -> {values}}) {
 		my $checked = $data -> {$options -> {name}} == $value -> {id} ? 'checked' : '';
-		$html .= qq {<input type="radio" name="_$$options{name}" value="$$value{id}" $checked>&nbsp;$$value{label} <br>};
+		$html .= qq {<input type="radio" name="_$$options{name}" value="$$value{id}" $checked onClick="is_dirty=true">&nbsp;$$value{label} <br>};
 	}
 		
 	return $html;
@@ -582,7 +791,7 @@ sub MSIE_5_draw_form_field_checkbox {
 	
 	my $checked = $s ? 'checked' : '';
 	
-	return qq {<input type="checkbox" name="_$$options{name}" value="1" $checked>};
+	return qq {<input type="checkbox" name="_$$options{name}" value="1" $checked onChange="is_dirty=true">};
 	
 }
 
@@ -596,7 +805,7 @@ sub MSIE_5_draw_form_field_checkboxes {
 	
 	foreach my $value (@{$options -> {values}}) {
 		my $checked = $data -> {$options -> {name}} == $value -> {id} ? 'checked' : '';
-		$html .= qq {<input type="checkbox" name="_$$options{name}" value="$$value{id}" $checked>&nbsp;$$value{label} <br>};
+		$html .= qq {<input type="checkbox" name="_$$options{name}" value="$$value{id}" $checked onChange="is_dirty=true">&nbsp;$$value{label} <br>};
 	}
 		
 	return $html;
@@ -617,7 +826,7 @@ sub MSIE_5_draw_form_field_select {
 	}
 		
 	return <<EOH;
-		<select name="_$$options{name}">
+		<select name="_$$options{name}" onChange="is_dirty=true">
 			$html
 		</select>
 EOH
@@ -635,7 +844,7 @@ sub MSIE_5_draw_ok_esc_toolbar {
 	
 	draw_centered_toolbar ($options, [
 		{icon => 'ok',     label => 'применить', href => '#', onclick => 'document.form.submit()'},
-		{icon => 'cancel', label => 'вернутьс€', href => "$esc&sid=$_REQUEST{sid}"},
+		{icon => 'cancel', label => 'вернутьс€', href => "$esc&sid=$_REQUEST{sid}", id => 'esc'},
 	])
 	
 }
@@ -653,7 +862,7 @@ sub MSIE_5_draw_back_next_toolbar {
 	$back ||= "/?type=$type";
 	
 	draw_centered_toolbar ($options, [
-		{icon => 'back', label => '&lt;&lt; назад', href => $back},
+		{icon => 'back', label => '&lt;&lt; назад', href => $back, id => 'esc'},
 		{icon => 'next', label => 'продолжить &gt;&gt;', href => '#', onclick => 'document.form.submit()'},
 	])
 	
@@ -671,7 +880,7 @@ sub MSIE_5_draw_centered_toolbar_button {
 	
 	return <<EOH
 		<!--<td><a onclick="$$options{onclick}" href="$$options{href}" target="$$options{target}"><img hspace=3 src="/i/buttons/$$options{icon}.gif" border=0></a></td>-->
-		<td nowrap>&nbsp;<a class=lnk0 onclick="$$options{onclick}" href="$$options{href}" target="$$options{target}"><b>[$$options{label}]</b></a>&nbsp;</td>
+		<td nowrap>&nbsp;<a class=lnk0 onclick="$$options{onclick}" id="$$options{id}" href="$$options{href}" target="$$options{target}"><b>[$$options{label}]</b></a>&nbsp;</td>
 		<td><img height=15 hspace=4 src="/i/toolbars/razd1.gif" width=2 border=0></td>
 EOH
 
@@ -761,7 +970,7 @@ EOH
 <!--				
 				<td class=bgr1><img src="/i/top_tb_icons/user.gif" border=0 hspace=3 align=absmiddle></td>
 -->				
-				<td class=bgr1><nobr><A class=lnk2>ѕользователь: @{[ $_USER ? $_USER -> {name} : 'ѕользователь неопределЄн']}</a>&nbsp;&nbsp;</nobr></td>
+				<td class=bgr1><nobr><A class=lnk2>ѕользователь: @{[ $_USER ? $_USER -> {label} : 'ѕользователь неопределЄн']}</a>&nbsp;&nbsp;</nobr></td>
 
 				$calendar
 

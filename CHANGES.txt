@@ -1,0 +1,4 @@
+0.53: 26.09.03 13:18
+	- added error reporting when reloading modules;
+	- fixed hidden inputs rendering;
+	- added $options -> {value} for hidden inputs.

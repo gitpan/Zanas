@@ -29,10 +29,14 @@ sub require_fresh {
 
 		delete $INC {$inc_key};
 
-	}
-	
+	}	
 
 	eval "require $module_name";	
+	
+        if ($@) {
+		$_REQUEST {error} = $@;
+		print STDERR "require_fresh: error load module $module_name: $@\n";
+        }	
 
 	$INC_FRESH {$module_name} = time;
 	
@@ -51,6 +55,8 @@ BEGIN {
 	}
 
 	our $PACKAGE_ROOT = $INC {__PACKAGE__ . '/Config.pm'};
+	
+	$PACKAGE_ROOT ||= '';
 
 	$PACKAGE_ROOT =~ s{\/Config\.pm}{};
 
@@ -314,5 +320,6 @@ Zanas::Presentation
 =head1 AUTHOR
 
 Dmitry Ovsyanko <do@zanas.ru>
+Pavel Kudryavtzev <pashka@zanas.ru>
 
 1;

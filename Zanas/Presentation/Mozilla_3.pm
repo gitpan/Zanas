@@ -179,6 +179,8 @@ sub Mozilla_3_draw_text_cell {
 
 	my ($data) = @_;
 
+	return '' if $data -> {off};
+
 	my $txt = $data -> {label};
 	
 	$txt ||= '&nbsp;';
@@ -230,11 +232,11 @@ sub Mozilla_3_draw_table {
 	unless (ref $_[0] eq CODE) {
 		$headers = shift;
 	}
-	
+		
 	if (@$headers) {
-		$ths = '<tr>' . (join '', map { "<th bgcolor=efefef><font face='Arial Cyr' size=2 color=000000>$_\&nbsp;</th>" } @$headers);
+		$ths = '<tr>' . (join '', map { ref $_ eq HASH ? ($$_{off} ? '' : "<th bgcolor=efefef><font face='Arial Cyr' size=2 color=000000>$$_{label}\&nbsp;") : "<th bgcolor=efefef><font face='Arial Cyr' size=2 color=000000>$_\&nbsp;" } @$headers);
 	}
-
+	
 	my ($tr_callback, $list) = @_;
 	
 	my $trs = '';
@@ -329,6 +331,8 @@ EOH
 sub Mozilla_3_draw_toolbar {
 
 	my ($options, @buttons) = @_;
+
+	return '' if $options -> {off};
 	
 	my $colspan = 2 * @buttons + 3;
 	
@@ -430,6 +434,8 @@ sub Mozilla_3_draw_row_button {
 
 	my ($options) = @_;
 	
+	return '' if $options -> {off};
+
 	if ($options -> {confirm}) {
 		my $salt = rand;
 		my $msg = js_escape ($options -> {confirm});
@@ -487,7 +493,7 @@ sub Mozilla_3_draw_form {
 		
 		my $bgcolor = $n++ % 2 ? 'efefef' : 'ffffff';
 		
-		$trs .= <<EOH;
+		$trs .= $type eq 'hidden' ? $html : <<EOH;
 			<tr bgcolor=$bgcolor>
 				<td bgcolor=$bgcolor nowrap align=right width="20%"><font face='Arial cyr' size=2>$$field{label}: </font></td>
 				<td bgcolor=$bgcolor><font face='Arial cyr' size=2>$html</font></td></tr>
@@ -546,6 +552,16 @@ sub Mozilla_3_draw_form_field_text {
 
 ################################################################################
 
+sub Mozilla_3_draw_form_field_hidden {
+	my ($options, $data) = @_;
+	my $s = $$data{$$options{name}};
+	$s ||= $$options{value};
+	$s =~ s/\"/\&quot\;/gsm; #"
+	return qq {<input type="hidden" name="_$$options{name}" value="$s">};
+}
+
+################################################################################
+
 sub Mozilla_3_draw_form_field_password {
 	my ($options, $data) = @_;
 	return qq {<input type="password" name="_$$options{name}" size=120>};
@@ -560,7 +576,7 @@ sub Mozilla_3_draw_form_field_static {
 
 ################################################################################
 
-sub MSIE_5_draw_form_field_checkbox {
+sub Mozilla_3_draw_form_field_checkbox {
 
 	my ($options, $data) = @_;
 	
@@ -576,7 +592,7 @@ sub MSIE_5_draw_form_field_checkbox {
 
 ################################################################################
 
-sub MSIE_5_draw_form_field_checkboxes {
+sub Mozilla_3_draw_form_field_checkboxes {
 
 	my ($options, $data) = @_;
 	
