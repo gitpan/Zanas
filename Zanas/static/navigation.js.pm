@@ -50,7 +50,7 @@ function activate_link (href, target) {
 	}
 	else {
 	
-		href = href + '&_salt=' + Math.random ();
+		href = href + '&salt=' + Math.random ();
 		if (target == null || target == '') target = '_self';
 		window.open (href, target, 'toolbar=no,resizable=yes');
 	

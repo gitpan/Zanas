@@ -1,3 +1,26 @@
+5.1.24:
+
+	- uri_escape '%' in draw_*_button because window.open uri_unescapes its 1st arg;
+	- style of form controls is changed;
+	- top menu is drawn when $_REQUEST {__edit} is on, but navigation is blocked;
+	- added new standard keycode: Del (46);
+	- added new button preset: delete;
+
+5.1.20:
+
+	- get_mac () & MAC logging introduced;
+	- submit toolbar form on click on date input field;
+
+5.1.18:
+
+	- toolbar search form is resubmitted on [Enter] where there are multiple text inputs;
+	- draw_toolbar_break sub introduced;
+
+5.1.17:
+
+	- '_salt' -> 'salt' everywhere;
+	- preconfirm option introduced in draw_centered_toolbar_button sub, smart cancel confirms are back (was out since 0.9979);
+
 5.1.12:
 
 	- button_preset 'cancel' fixed;
@@ -9,6 +32,7 @@
 	- lpt & exit buttons are moved off the auth toolbar;
 	- documentation fixes;
 	- $conf -> {db_temporality} can be an array, sql_is_temporal_table sub introduced;
+	- $_REQUEST {__dump} introduced
 
 0.9980:
 

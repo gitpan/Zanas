@@ -350,13 +350,9 @@ sub redirect {
 			$options -> {before} = 'alert(' . js_escape ($options -> {label}) . '); ';
 		}
 	
-#		$options -> {target} ||= '_parent';
-#		out_html ({}, qq {<body onLoad="$$options{before}; window.open ('$url&_salt=' + Math.random (), (window.name == 'application_frame' ? '_self' : '$$options{target}'))"></body>});
-
 		my $target = $options -> {target} ? "'$$options{target}'" : "(window.name == 'invisible' ? '_parent' : '_self')";
 
-#		out_html ({}, qq {<body onLoad="document.location.href = '$url&_salt=' + Math.random ()"></body>});
-		out_html ({}, qq {<body onLoad="$$options{before}; window.open ('$url&_salt=' + Math.random (), $target)"></body>});
+		out_html ({}, qq {<body onLoad="$$options{before}; window.open ('$url&salt=' + Math.random (), $target)"></body>});
 		$_REQUEST {__response_sent} = 1;
 		return;
 		
@@ -379,6 +375,7 @@ sub log_action_start {
 		error => $_REQUEST {error}, 
 		ip_fw => $ENV {HTTP_X_FORWARDED_FOR},
 		fake => 0,
+		mac => (!$preconf -> {core_no_log_mac}) ? get_mac () : '',
 	});
 		
 }
@@ -714,6 +711,30 @@ sub select__info {
 
 ################################################################################
 
+sub get_mac {
+
+	my ($ip) = @_;	
+	$ip ||= $ENV {REMOTE_ADDR};
+
+	my $arp = '';
+	eval {$arp = lc `arp -a`};
+	$arp or return '';
+	
+	foreach my $line (split /\n/, $arp) {
+
+		$line =~ /\($ip\)/ or next;
+
+		if ($line =~ /[0-9a-f]{2}\:[0-9a-f]{2}\:[0-9a-f]{2}\:[0-9a-f]{2}\:[0-9a-f]{2}\:[0-9a-f]{2}/) {
+			return $&;
+		}
+	}
+	
+	return '';
+
+}
+
+################################################################################
+
 sub fill_in {
 
    	$conf -> {lang} ||= 'RUS';   	
@@ -733,6 +754,8 @@ sub fill_in {
    			icon   => 'cancel',
    			label  => 'cancel',
    			hotkey => {code => ESC},
+   			confirm => confirm_esc,
+   			preconfirm => 'is_dirty',
    		},
 
    		edit => {
@@ -765,6 +788,12 @@ sub fill_in {
    			hotkey => {code => ENTER, ctrl => 1},
 		},
 
+   		delete => {
+   			icon    => 'delete',
+   			label   => 'delete',
+   			hotkey  => {code => DEL, ctrl => 1},
+   		},
+
    	);
    	
    	fill_in_i18n ('RUS', {
@@ -777,6 +806,7 @@ sub fill_in {
 		ok                       => 'применить', 
 		cancel                   => 'вернуться', 
 		choose                   => 'выбрать', 
+		delete                   => 'удалить', 
 		edit                     => 'редактировать', 
 		'close'                  => 'закрыть',
 		back                     => '&lt;&lt; назад',
@@ -791,6 +821,7 @@ sub fill_in {
 		confirm_open_vocabulary  => 'Открыть окно редактирования справочника?',
 		confirm_close_vocabulary => 'Вы выбрали',
 		session_terminated       => 'Сессия завершена',
+		save_or_cancel           => 'Пожалуйста, сначала сохраните данные (Ctrl-Enter) или отмените ввод (Esc)',
    	});
    	
    	fill_in_i18n ('ENG', {
@@ -803,6 +834,7 @@ sub fill_in {
 		ok                       => 'ok', 
 		cancel                   => 'cancel', 
 		choose                   => 'choose', 
+		delete                   => 'delete', 
 		edit                     => 'edit', 
 		'close'                  => 'close',
 		back                     => '&lt;&lt; back',
@@ -817,6 +849,7 @@ sub fill_in {
 		confirm_open_vocabulary  => 'Open the vocabulary window?',
 		confirm_close_vocabulary => 'Your choice is',
 		session_terminated       => 'Logged off',
+		save_or_cancel           => 'Please save your data (Ctrl-Enter) or cancel pending input (Esc)',
    	});
 	
    	fill_in_i18n ('FRE', {
@@ -829,6 +862,7 @@ sub fill_in {
 		ok                       => 'appliquer', 
 		cancel                   => 'annuler', 
 		choose                   => 'choisir', 
+		delete                   => 'supprimer', 
 		edit                     => 'rediger', 
 		'close'                  => 'fermer',
 		back                     => '&lt;&lt; pas prйcйdent',
@@ -843,6 +877,7 @@ sub fill_in {
 		confirm_open_vocabulary  => 'Ouvrir le vocabulaire?',
 		confirm_close_vocabulary => 'Vous avez choisi',
 		session_terminated       => 'Dйconnetcй',
+		save_or_cancel           => "Veuillez sauvegarder vos donnйes (Ctrl-Enter) ou bien alluler l'opйration (Esc)",
    	});   	
 
 }

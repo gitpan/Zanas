@@ -299,6 +299,12 @@ our $charset = {
 	},
 
 	{
+		name     => 'preconfirm',
+		label_en => "js expression indicating whether to confirm action",
+		label_ru => "js-выражение, определяющее, следует ли запрашивать подтверждение",
+	},
+
+	{
 		name     => 'multiline',
 		label_en => "If true, multiline mode is on",
 		label_ru => "Если true, то отрисовка многострочная",
@@ -647,6 +653,22 @@ EO
 		name     => 'get_version_name',
 		label_en => 'Returns the same as $Zanas::VERSION_NAME.',
 		label_ru => 'Вычисляет (и кэширует) значение $Zanas::VERSION_NAME.',
+	},
+
+					#######################################
+
+	{
+		name     => 'get_mac',
+		label_en => 'Returns the MAC address for the given IP or \$ENV{REMOTE_ADDRESS} unless defined. Uses `arp -a` internally. Returns an empy string if fails.',
+		label_ru => 'Вычисляет MAC-адрес для заданного IP, по умолчанию \$ENV{REMOTE_ADDRESS}. Использует `arp -a`. В случае неудачи возвращает пустую строку.',
+	},
+
+					#######################################
+
+	{
+		name     => 'draw_toolbar_break',
+		label_en => 'Breaks the current toolbar',
+		label_ru => 'Разрывает панельс кнопками и начинает новую строку',
 	},
 
 					#######################################
@@ -1701,7 +1723,7 @@ EOP
 
 	{
 		name     => 'draw_centered_toolbar_button',
-		options  => [qw(off href target/_self confirm onclick label)],
+		options  => [qw(off href target/_self confirm preconfirm onclick label)],
 		label_en => 'Draws a button on a toolbar. Invoked from "draw_centered_toolbar" sub.',
 		label_ru => 'Отрисовывает кнопку на панели снизу от формы ввода. Вызывается из-под "draw_centered_toolbar"',
 		see_also => [qw(draw_centered_toolbar)]
@@ -2938,6 +2960,12 @@ our @conf = (
 );
 
 our @preconf = (
+
+	{
+		name => 'core_no_log_mac',
+		label_en => 'If true, MACs are not logged.',
+		label_ru => 'Если истина, то MAC-адреса не пишутся в log.',
+	},
 
 	{
 		name => 'core_hide_row_buttons',

@@ -610,41 +610,6 @@ a.tabs, a.tabs:link, a.tabs:active, a.tabs:visited, a.tabs:hover {
 	text-decoration: none;
 }
 
-
-.form-passive-label {
-	FONT-WEIGHT: bold; 
-	FONT-SIZE: 11px; 
-	COLOR: #000000; 
-	FONT-FAMILY: Verdana; 
-	background-color: #efefff;
-}
-.form-passive-inputs {
-	FONT-SIZE: 11px; 
-	FONT-FAMILY: Verdana; 
-	background-color: #efefff;
-}
-
-.form-active-label {
-	FONT-WEIGHT: bold; 
-	FONT-SIZE: 11px; 
-	COLOR: #000000; 
-	FONT-FAMILY: Verdana; 
-/*	
-	background-color: #EBFFFA;	
-*/
-	background-color: #efefef
-}
-.form-active-inputs {
-	FONT-SIZE: 11px; 
-	FONT-FAMILY: Verdana; 
-/*	
-	background-color: #EBFFFA;	
-*/
-	background-color: #efefef
-}
-
-
-
 A.path, A.path:link, A.path:active, A.path:hover, A.path:visited {
 	FONT-WEIGHT: normal; 
 	FONT-SIZE: 8pt; 
@@ -655,3 +620,101 @@ A.path, A.path:link, A.path:active, A.path:hover, A.path:visited {
 	FONT-FAMILY: MS Sans Serif; 
 	TEXT-DECORATION: none;
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+.form-passive-label {
+	FONT-WEIGHT: bold; 
+	FONT-SIZE: 10pt; 
+	FONT-FAMILY: Arial; 
+	COLOR: #000000; 
+	background-color: #fafaff;
+	padding-left: 10px;
+	padding-right: 10px;
+	padding-top: 5px;
+	padding-bottom: 5px;
+}
+.form-passive-inputs {
+	FONT-SIZE: 10pt; 
+	FONT-FAMILY: Arial; 
+	background-color: #fafaff;
+	padding-left: 5px;
+	padding-right: 10px;
+}
+A.form-passive-inputs, A.form-passive-inputs:link, A.form-passive-inputs:hover, A.form-passive-inputs:visited {
+	FONT-WEIGHT: normal; 
+	FONT-SIZE: 10pt; 
+	FONT-FAMILY: Arial; 
+	COLOR: #293869; 
+	TEXT-DECORATION: none
+}
+
+
+.form-active-label {
+	FONT-WEIGHT: bold; 
+	FONT-SIZE: 10pt; 
+	FONT-FAMILY: Arial; 
+	COLOR: #000000; 
+	background-color: #efefef;
+	padding-left: 10px;
+	padding-right: 10px;
+	padding-top: 5px;
+	padding-bottom: 5px;
+}
+.form-active-inputs {
+	FONT-SIZE: 10pt; 
+	FONT-FAMILY: Arial; 
+	background-color: #efefef;
+	padding-left: 5px;
+	padding-right: 10px;
+}
+
+A.form-active-inputs, A.form-active-inputs:link, A.form-active-inputs:hover, A.form-active-inputs:visited {
+	FONT-WEIGHT: normal; 
+	FONT-SIZE: 10pt; 
+	FONT-FAMILY: Arial; 
+	COLOR: #293869; 
+	TEXT-DECORATION: none
+	padding-left: 0px;
+}
+
+.form-active-ellipsis {
+	FONT-SIZE: 9pt; 
+	FONT-FAMILY: Arial; 
+	background-color: #ffffff;
+}
+
+input.form-active-inputs, select.form-active-inputs, textarea.form-active-inputs {
+	FONT-SIZE: 10pt; 
+	FONT-FAMILY: Arial; 
+	background-color: #ffffff;
+	border-color: #dededc;
+	padding-left: 1px;
+}
+

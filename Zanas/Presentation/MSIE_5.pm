@@ -73,6 +73,9 @@ sub hotkey {
 	elsif ($def -> {code} =~ /^ESC$/i) {
 		$def -> {code} = 27;
 	}
+	elsif ($def -> {code} =~ /^DEL$/i) {
+		$def -> {code} = 46;
+	}
 	elsif ($def -> {code} =~ /^ENTER$/i) {
 		$def -> {code} = 13;
 	}
@@ -261,7 +264,7 @@ EOH
 #	$_USER -> {role} eq 'admin' and $_REQUEST{id} or my $lpt = $body =~ s{<table[^\>]*lpt\=\"?1\"?[^\>]*\>}{\<table cellspacing\=1 cellpadding\=5 id='scrollable_table' width\=100\%\>}gsm; #"
 	my $lpt = $body =~ s{<table[^\>]*lpt\=\"?1\"?[^\>]*\>}{\<table cellspacing\=1 cellpadding\=2 id='scrollable_table' width\=100\%\> <!--**-->}gsm; #"
 	
-	my $menu = $_REQUEST {__edit} ? '' : draw_menu ($page -> {menu}, $page -> {highlighted_type}, {lpt => $lpt});
+	my $menu = draw_menu ($page -> {menu}, $page -> {highlighted_type}, {lpt => $lpt});
 	
 	$_REQUEST {__scrollable_table_row} ||= 0;
 	
@@ -473,7 +476,7 @@ EOF
 				</script>
 
 				<script for="body" event="onkeydown">
-					if (window.event.keyCode == 88 && window.event.altKey) document.location.href = '$_REQUEST{__uri}?type=_logout&sid=$_REQUEST{sid}&_salt=@{[rand]}';
+					if (window.event.keyCode == 88 && window.event.altKey) document.location.href = '$_REQUEST{__uri}?type=_logout&sid=$_REQUEST{sid}&salt=@{[rand]}';
 					handle_basic_navigation_keys ();
 					@{[ map {&{"handle_hotkey_$$_{type}"} ($_)} @scan2names ]}
 				</script>						
@@ -540,12 +543,15 @@ sub draw_menu {
 		}
 
 		my $onhover = '';
-		if (ref $type -> {items} eq ARRAY) {
+		if (ref $type -> {items} eq ARRAY && !$_REQUEST {__edit}) {
 			$divs .= draw_vert_menu ($type -> {name}, $type -> {items});
 			$onhover = qq {open_popup_menu ('$$type{name}')} unless $type -> {no_page};
 		}
 		
-		if ($type -> {no_page}) {
+		if ($_REQUEST {__edit}) {
+			$type -> {href} = "javaScript:alert('$$i18n{save_or_cancel}')";
+		}
+		elsif ($type -> {no_page}) {
 			$type -> {href} = "javaScript:open_popup_menu('$$type{name}')";
 		} 
 		else {
@@ -553,6 +559,7 @@ sub draw_menu {
 			$type -> {href} .= "&role=$$type{role}" if $type -> {role};
 			check_href ($type);
 		}
+		
 		
 		$tr2 .= <<EOH;
 			<td onmouseover="this.style.borderColor='#FFFFFF'; this.style.borderStyle='groove'; ;$onhover" onmouseout="this.style.borderColor='#D6D3CE'; this.style.borderStyle='solid';" class="main-menu" nowrap>&nbsp;<a class="main-menu" id="main_menu_$$type{name}" href="$$type{href}">&nbsp;$$type{label}&nbsp;</a>&nbsp;</td>
@@ -1216,10 +1223,10 @@ sub draw_toolbar {
 EO
 					<input type=hidden name=sid value=$_REQUEST{sid}>
 				<tr>
-					<td class=bgr0 colspan=15><img height=1 src="$_REQUEST{__uri}0.gif" width=1 border=0></td>
+					<td class=bgr0 colspan=20><img height=1 src="$_REQUEST{__uri}0.gif" width=1 border=0></td>
 				</tr>
 				<tr>
-					<td class=bgr6 colspan=15><img height=1 src="$_REQUEST{__uri}0.gif" width=1 border=0></td>
+					<td class=bgr6 colspan=20><img height=1 src="$_REQUEST{__uri}0.gif" width=1 border=0></td>
 				</tr>
 				<tr>
 					<td class=bgr8 width=30><img height=1 src="$_REQUEST{__uri}0.gif" width=20 border=0></td>
@@ -1227,13 +1234,42 @@ EO
 					<td class=bgr8 width=100%><img height=1 src="$_REQUEST{__uri}0.gif" width=1 border=0></td>
 				</tr>
 				<tr>
-					<td class=bgr8 colspan=15><img height=1 src="$_REQUEST{__uri}0.gif" width=1 border=0></td>
+					<td class=bgr8 colspan=20><img height=1 src="$_REQUEST{__uri}0.gif" width=1 border=0></td>
 				</tr>
 				<tr>
-					<td class=bgr6 colspan=15><img height=1 src="$_REQUEST{__uri}0.gif" width=1 border=0></td>
+					<td class=bgr6 colspan=20><img height=1 src="$_REQUEST{__uri}0.gif" width=1 border=0></td>
 				</tr>
 			</form>
 		</table>
+EOH
+
+}
+
+################################################################################
+
+sub draw_toolbar_break {
+
+	return <<EOH;
+					<td class=bgr8 width=100%><img height=1 src="$_REQUEST{__uri}0.gif" width=1 border=0></td>
+				</tr>
+				<tr>
+					<td class=bgr8 colspan=20><img height=1 src="$_REQUEST{__uri}0.gif" width=1 border=0></td>
+				</tr>
+				<tr>
+					<td class=bgr6 colspan=20><img height=1 src="$_REQUEST{__uri}0.gif" width=1 border=0></td>
+				</tr>
+<!--
+		</table>
+		<table class=bgr8 cellspacing=0 cellpadding=0 width="100%" border=0>
+-->		
+				<tr>
+					<td class=bgr0 colspan=20><img height=1 src="$_REQUEST{__uri}0.gif" width=1 border=0></td>
+				</tr>
+				<tr>
+					<td class=bgr6 colspan=20><img height=1 src="$_REQUEST{__uri}0.gif" width=1 border=0></td>
+				</tr>
+				<tr>
+					<td class=bgr8 width=30><img height=1 src="$_REQUEST{__uri}0.gif" width=20 border=0></td>
 EOH
 
 }
@@ -1258,6 +1294,7 @@ sub draw_toolbar_button {
 		$options -> {target} ||= '_self';
 		my $salt = rand;
 		my $msg = js_escape ($options -> {confirm});
+		$options -> {href} =~ s{\%}{\%25}gsm; 		# wrong, but MSIE uri_unescapes the 1st arg of window.open :-(
 		$options -> {href} = qq [javascript:if (confirm ($msg)) {window.open('$$options{href}', '$$options{target}')}];
 	} 
 
@@ -1308,7 +1345,7 @@ sub draw_toolbar_input_text {
 	}
 		
 	return <<EOH
-		<td nowrap>$$options{label}: <input type=text size=$$options{size} name=$$options{name} value="$value" onFocus="scrollable_table_is_blocked = true; q_is_focused = true" onBlur="scrollable_table_is_blocked = false; q_is_focused = false">$hiddens</td>
+		<td nowrap>$$options{label}: <input onKeyPress="if (window.event.keyCode == 13) {form.submit()}" type=text size=$$options{size} name=$$options{name} value="$value" onFocus="scrollable_table_is_blocked = true; q_is_focused = true" onBlur="scrollable_table_is_blocked = false; q_is_focused = false">$hiddens</td>
 		<td><img height=15 vspace=1 hspace=4 src="/i/toolbars/razd1.gif" width=2 border=0></td>
 EOH
 
@@ -1380,7 +1417,7 @@ sub draw_toolbar_input_datetime {
 	return <<EOH
 		<td nowrap><nobr>
 			$$options{label}: 
-			<input id="input$$options{name}" $attributes onFocus="scrollable_table_is_blocked = true; q_is_focused = true" onBlur="scrollable_table_is_blocked = false; q_is_focused = false" autocomplete="off" type="text" name="$$options{name}" value="$value" $size>
+			<input onKeyPress="if (window.event.keyCode == 13) {form.submit()}" id="input$$options{name}" $attributes onFocus="scrollable_table_is_blocked = true; q_is_focused = true" onBlur="scrollable_table_is_blocked = false; q_is_focused = false" autocomplete="off" type="text" name="$$options{name}" value="$value" $size>
 			<button id="calendar_trigger$$options{name}" class="txt7">...</button>
 			$clear_button
 		</nobr></td>
@@ -1484,6 +1521,7 @@ sub draw_row_button {
 	if ($options -> {confirm}) {
 		my $salt = rand;
 		my $msg = js_escape ($options -> {confirm});
+		$options -> {href} =~ s{\%}{\%25}gsm; 		# wrong, but MSIE uri_unescapes the 1st arg of window.open :-(
 		$options -> {href} = qq [javascript:if (confirm ($msg)) {window.open('$$options{href}', '_self')}];
 	} 
 		
@@ -1740,7 +1778,7 @@ EOH
 	return draw_hr (height => 10) . <<EOH
 		$bottom
 		$path				
-		<table cellspacing=1 cellpadding=5 width="100%">
+		<table cellspacing=1 _cellpadding=5 width="100%">
 			
 			<form name=$name action=$_REQUEST{__uri} method=post enctype=multipart/form-data target=$target>
 				<input type=hidden name=type value=$type> 
@@ -1819,6 +1857,8 @@ sub draw_form_field_string {
 	
 	$s =~ s/\"/\&quot\;/gsm; #";
 	
+	$options -> {attributes} -> {class} ||= 'form-active-inputs';
+	
 	my $attributes = dump_attributes ($options -> {attributes});
 	
 	my $size = $options -> {size} ? "size=$$options{size} maxlength=$$options{size}" : "size=120";	
@@ -1874,7 +1914,7 @@ sub draw_form_field_datetime {
 	$s =~ s/\"/\&quot\;/gsm; #";
 	
 	$options -> {attributes} -> {id} = 'input_' . $options -> {name};
-	
+	$options -> {attributes} -> {class} ||= 'form-active-inputs';	
 	$options -> {no_read_only} or $options -> {attributes} -> {readonly} = 1;
 	
 	my $attributes = dump_attributes ($options -> {attributes});
@@ -1895,7 +1935,7 @@ sub draw_form_field_datetime {
 	return <<EOH
 		<nobr>
 		<input $attributes onFocus="scrollable_table_is_blocked = true; q_is_focused = true" onBlur="scrollable_table_is_blocked = false; q_is_focused = false" autocomplete="off" type="text" name="_$$options{name}" value="$s" $size onKeyPress="if (window.event.keyCode != 27) is_dirty=true" tabindex=$tabindex>
-		<button id="calendar_trigger_$$options{name}" class="txt7">...</button>
+		<button id="calendar_trigger_$$options{name}" class="form-active-ellipsis">...</button>
 		$clear_button
 		</nobr>
 		
@@ -1961,7 +2001,10 @@ sub draw_form_field_text {
 	
 	$tabindex++;
 
-	return qq {<textarea onFocus="scrollable_table_is_blocked = true; q_is_focused = true" onBlur="scrollable_table_is_blocked = false; q_is_focused = false" rows=$rows cols=$cols name="_$$options{name}" value="$value" onKeyPress="if (window.event.keyCode != 27) is_dirty=true" tabindex=$tabindex>$s</textarea>};
+	$options -> {attributes} -> {class} ||= 'form-active-inputs';	
+	my $attributes = dump_attributes ($options -> {attributes});
+
+	return qq {<textarea $attributes onFocus="scrollable_table_is_blocked = true; q_is_focused = true" onBlur="scrollable_table_is_blocked = false; q_is_focused = false" rows=$rows cols=$cols name="_$$options{name}" value="$value" onKeyPress="if (window.event.keyCode != 27) is_dirty=true" tabindex=$tabindex>$s</textarea>};
 }
 
 ################################################################################
@@ -2013,10 +2056,11 @@ sub draw_form_field_static {
 		
 	$static_value = format_picture ($static_value, $options -> {picture}) if $options -> {picture};	
 		
-	if ($options -> {href}) {
+	if ($options -> {href} && !$_REQUEST {__edit}) {
 	
 		check_href ($options);
-		$options -> {a_class} ||= 'lnk4';
+		my $state = $_REQUEST {__read_only} ? 'passive' : 'active';
+		$options -> {a_class} ||= "form-$state-inputs";
 		$static_value = qq{<a href="$$options{href}" target="$$options{target}" class="$$options{a_class}">$static_value</a>}
 	
 	}
@@ -2236,13 +2280,6 @@ sub draw_form_field_select {
 			</div>
 EOH
 		
-#		$options -> {onChange} = <<EOJS;
-#			if (this.options[this.selectedIndex].value == -1 && window.confirm ('$$i18n{confirm_open_vocabulary}')) {
-#				var w = window.open ('${$$options{other}}{href}&select=$$options{name}','_dialog_$$options{name}', 'directories=0,location=0,menubar=0,status=0,titlebar=0,toolbar=0,width=${$$options{other}}{width},height=${$$options{other}}{height}');
-#				w.focus ();
-#			}
-#EOJS
-
 		$options -> {onChange} = <<EOJS;
 			if (this.options[this.selectedIndex].value == -1 && window.confirm ('$$i18n{confirm_open_vocabulary}')) {
 
@@ -2253,14 +2290,12 @@ EOH
 				var d = document.getElementById (dname);
 
 				f.src = '${$$options{other}}{href}&select=$$options{name}';
-//				f.style.display = 'block';
 				
 				d.style.top   = this.offsetTop + this.offsetParent.offsetTop + this.offsetParent.offsetParent.offsetTop;
 				d.style.left  = this.offsetLeft + this.offsetParent.offsetLeft + this.offsetParent.offsetParent.offsetLeft;
 				d.style.display = 'block';
 				this.style.display = 'none';
 				
-//				f.document.body.focus ();
 				d.focus ();
 				
 			}
@@ -2271,8 +2306,11 @@ EOJS
 	
 	$tabindex ++;
 		
+	$options -> {attributes} -> {class} ||= 'form-active-inputs';	
+	my $attributes = dump_attributes ($options -> {attributes});
+
 	return <<EOH;
-		<select name="_$$options{name}" id="_$$options{name}_select" onChange="is_dirty=true; $$options{onChange}" onkeypress="typeAhead()" $multiple  tabindex='$tabindex'>
+		<select $attributes name="_$$options{name}" id="_$$options{name}_select" onChange="is_dirty=true; $$options{onChange}" onkeypress="typeAhead()" $multiple  tabindex='$tabindex'>
 			$html
 		</select>
 		$iframe
@@ -2410,12 +2448,13 @@ sub draw_centered_toolbar_button {
 
 	if ($options -> {preset}) {
 		my $preset = $conf -> {button_presets} -> {$options -> {preset}};
-		$options -> {hotkey}  ||= $preset -> {hotkey};
-		$options -> {icon}    ||= $preset -> {icon};
-		$options -> {label}   ||= $i18n -> {$preset -> {label}};
-		$options -> {label}   ||= $preset -> {label};
-		$options -> {confirm} ||= $i18n -> {$preset -> {confirm}};
-		$options -> {confirm} ||= $preset -> {confirm};
+		$options -> {hotkey}     ||= $preset -> {hotkey};
+		$options -> {icon}       ||= $preset -> {icon};
+		$options -> {label}      ||= $i18n -> {$preset -> {label}};
+		$options -> {label}      ||= $preset -> {label};
+		$options -> {confirm}    ||= $i18n -> {$preset -> {confirm}};
+		$options -> {confirm}    ||= $preset -> {confirm};
+		$options -> {preconfirm} ||= $preset -> {preconfirm};
 	}	
 
 	if ($options -> {hotkey}) {
@@ -2434,7 +2473,9 @@ sub draw_centered_toolbar_button {
 	if ($options -> {confirm}) {
 		my $salt = rand;
 		my $msg = js_escape ($options -> {confirm});
-		$options -> {href} = qq [javascript:if (confirm ($msg)) {window.open('$$options{href}', '$target')}];
+		$options -> {preconfirm} ||= 1;
+		$options -> {href} =~ s{\%}{\%25}gsm; 		# wrong, but MSIE uri_unescapes the 1st arg of window.open :-(
+		$options -> {href} = qq [javascript:if (!($$options{preconfirm}) || ($$options{preconfirm} && confirm ($msg))) {window.open('$$options{href}', '$target')}];
 	} 	
 
 	my ($bra, $ket, $icon) = ();
