@@ -76,7 +76,14 @@ sub sql_select_all_cnt {
 	}
 	$st = $db -> prepare ($sql);
 	$st -> execute (@params);
-	my $cnt = $st -> fetchrow_array ();
+	
+	my $cnt = 0;	
+	if ($sql =~ /GROUP\s+BY/i) {
+		$cnt++ while $st -> fetch ();
+	}
+	else {
+		$cnt = $st -> fetchrow_array ();
+	}
 	
 	return ($result, $cnt);
 
@@ -142,8 +149,15 @@ sub sql_select_col {
 
 sub sql_select_hash {
 
-	my ($sql, @params) = @_;
-	my $st = $db -> prepare ($sql);
+	my ($sql_or_table_name, @params) = @_;
+	
+	if (@params == 0 and $sql_or_table_name !~ /^\s*SELECT/i) {
+	
+		return sql_select_hash ("SELECT * FROM $sql_or_table_name WHERE id = ?", $_REQUEST {id});
+		
+	}
+	
+	my $st = $db -> prepare ($sql_or_table_name);
 	$st -> execute (@params);
 	my $result = $st -> fetchrow_hashref ();
 	$st -> finish;

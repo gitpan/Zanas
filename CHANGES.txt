@@ -1,4 +1,16 @@
+0.72: 28.11.03 16:00
+
+	- added type-ahead facility to all <select> controls (recipe taken from http://www.oreillynet.com/javascript/2003/09/03/examples/jsdhtmlcb_bonus2_example.html);
+	- new magic parameter: __no_navigation. Hides top navigation toolbar and replaces ok_esc_toolbar by close toolbar (for popup windows);
+	- added draw_close_toolbar sub;
+	- added attributes option to draw_form_field_string sub (for attributes like readonly, disabled etc.);
+
+0.71: 27.11.03 16:20
+	- fixed sql_select_all_cnt sub (case: GROUP BY);
+	- added value option draw_form_field_select sub;
+
 0.70: 26.11.03 12:00
+	- added sql_select_scalar sub;
 	- added draw_input_cell sub (by hekima);
 	- fixed MSIE_5_js_ok_escape sub (case: no_ok option is set);
 	- fixed a bug in draw_form_field_static (case: values option defined);

@@ -13,6 +13,13 @@ Presentation.pm - подпрограммы отрисовки элементов ГИП.
 
 ################################################################################
 
+sub dump_attributes {
+	my $attributes = $_[0];	
+	return join ' ', map {"$_='" . $attributes -> {$_} . "'"} keys %$attributes;	
+}
+
+################################################################################
+
 sub trunc_string {
 	my ($s, $len) = @_;
 	return length $s <= $len - 3 ? $s : substr ($s, 0, $len - 3) . '...';
@@ -801,6 +808,9 @@ sub draw_row_buttons {
 				name  => 'name',
 				label => 'Символическое имя',
 				mandatory => 1,
+				attributes => {
+					disabled => '1',
+				}
 			},
 			{
 				name   => 'period',
@@ -1314,6 +1324,20 @@ sub draw_back_next_toolbar {
 	drawer_call ('draw_back_next_toolbar', @_);
 }
 
+################################################################################
+
+=head1 draw_close_toolbar
+
+Нижняя панель с кнопкой "Закрыть". Рисуется автоматически при вызове 
+C<draw_form> при истинном значении параметра C<__no_navigation>.
+
+=cut
+
+################################################################################
+
+sub draw_close_toolbar {
+	drawer_call ('draw_close_toolbar', @_);
+}
 
 ################################################################################
 

@@ -185,6 +185,62 @@ EOH
 					var q_is_focused = false;
 					
 					var scrollable_rows = new Array();
+					
+					var typeAheadInfo = {last:0, 
+						accumString:"", 
+						delay:500,
+						timeout:null, 
+						reset:function() {this.last=0; this.accumString=""}
+					};
+					
+					function typeAhead() { // borrowed from http://www.oreillynet.com/javascript/2003/09/03/examples/jsdhtmlcb_bonus2_example.html
+					   if (window.event && !window.event.ctrlKey) {
+					      var now = new Date();
+					      if (typeAheadInfo.accumString == "" || now - typeAheadInfo.last < typeAheadInfo.delay) {
+						 var evt = window.event;
+						 var selectElem = evt.srcElement;
+						 var charCode = evt.keyCode;
+						 var newChar =  String.fromCharCode(charCode).toUpperCase();
+						 typeAheadInfo.accumString += newChar;
+						 var selectOptions = selectElem.options;
+						 var txt, nearest;
+						 for (var i = 0; i < selectOptions.length; i++) {
+						    txt = selectOptions[i].text.toUpperCase();
+						    nearest = (typeAheadInfo.accumString > txt.substr(0, typeAheadInfo.accumString.length)) ? i : nearest;
+						    if (txt.indexOf(typeAheadInfo.accumString) == 0) {
+						       clearTimeout(typeAheadInfo.timeout);
+						       typeAheadInfo.last = now;
+						       typeAheadInfo.timeout = setTimeout("typeAheadInfo.reset()", typeAheadInfo.delay);
+						       selectElem.selectedIndex = i;
+						       evt.cancelBubble = true;
+						       evt.returnValue = false;
+						       return false;   
+						    }            
+						 }
+						 if (nearest != null) {
+						    selectElem.selectedIndex = nearest;
+						 }
+					      } else {
+						 clearTimeout(typeAheadInfo.timeout);
+					      }
+					      typeAheadInfo.reset();
+					   }
+					   return true;
+					}					
+					
+					function activate_link (href) {
+					
+						if (href.indexOf ('javascript:') == 0) {
+							var code = href.substr (11).replace (/%20/g, ' ');
+							eval (code);
+						}
+						else {
+							document.location.href = href + '&_salt=@{[rand]}';
+						}
+						
+					}
+					
+					
 										
 				</script>
 				<SCRIPT language="javascript" src="/i/rte/fckeditor.js"></SCRIPT>
@@ -333,16 +389,7 @@ EOF
 						if (window.event.keyCode == 13) {
 							
 							var children = scrollable_rows [scrollable_table_row].cells [scrollable_table_row_cell].getElementsByTagName ('a');
-							if (children != null && children.length > 0) {
-								var href = children [0].href;
-								if (href.indexOf ('javascript:') == 0) {
-									var code = href.substr (11).replace (/%20/g, ' ');
-									eval (code);
-								}
-								else {
-									document.location.href = children [0].href + '&_salt=@{[rand]}';
-								}
-							}
+							if (children != null && children.length > 0) activate_link (children [0].href);
 							return false;
 							
 						}
@@ -387,6 +434,8 @@ sub MSIE_5_draw_menu {
 	my ($types, $cursor) = @_;
 	
 	@$types or return '';
+	
+	$_REQUEST {__no_navigation} and return '';
 
 	my ($tr1, $tr2, $tr3) = ('', '', '');
 
@@ -471,8 +520,8 @@ sub MSIE_5_draw_input_cell {
 	
 	$txt ||= '';
 	
-	my $attributes = join ' ', map {"$_='" . $data -> {attributes} -> {$_} . "'"} keys %{$data -> {attributes}};
-	
+	my $attributes = dump_attributes ($data -> {attributes});
+		
 	return qq {<td $attributes><nobr><input type="text" name="$$data{name}" value="$txt" maxlength="$$data{max_len}" size="$$data{size}"></nobr></td>};
 
 }
@@ -488,7 +537,7 @@ sub MSIE_5_draw_checkbox_cell {
 	$data -> {attributes} ||= {};
 	$data -> {attributes} -> {class} ||= 'txt4';
 
-	my $attributes = join ' ', map {"$_='" . $data -> {attributes} -> {$_} . "'"} keys %{$data -> {attributes}};
+	my $attributes = dump_attributes ($data -> {attributes});
 
 	return qq {<td $attributes>&nbsp;} if $data -> {off};	
 
@@ -541,7 +590,7 @@ sub MSIE_5_draw_text_cell {
 		$txt = qq { <a title="$$data{label}" class=$$data{a_class} $target href="$$data{href}" onFocus="blur()">$txt</a> };
 	}
 	
-	my $attributes = join ' ', map {"$_='" . $data -> {attributes} -> {$_} . "'"} keys %{$data -> {attributes}};
+	my $attributes = dump_attributes ($data -> {attributes});
 	
 	return qq {<td $attributes><nobr>$txt</nobr></td>};
 
@@ -889,6 +938,7 @@ sub MSIE_5_draw_toolbar_pager {
 	$label .= ($start + 1) . ' - ' . ($start + $$options{cnt}) . ' из ' . $$options{total};
 	
 	if ($start + $$options{cnt} < $$options{total}) {
+	
 		MSIE_5_register_hotkey ({label => '&>'}, 'href', '_pager_next');
 		$url = create_url (start => $start + $options -> {portion});
 		$label .= qq {&nbsp;<a href="$url" class=lnk0 id="_pager_next" onFocus="blur()"><b><u>&gt;</u></b></a>&nbsp;};
@@ -1031,6 +1081,7 @@ sub MSIE_5_draw_form {
 	
 	my $bottom_toolbar = 
 		$options -> {bottom_toolbar} ? $options -> {bottom_toolbar} :		
+		$_REQUEST {__no_navigation} ? draw_close_toolbar ($options) :
 		$options -> {back} ? draw_back_next_toolbar ($options) :
 		$options -> {no_ok} ? draw_esc_toolbar ($options) :
 		draw_ok_esc_toolbar ($options);
@@ -1068,7 +1119,7 @@ sub MSIE_5_js_ok_escape {
 		<script for="body" event="onkeypress">
 		
 			if (window.event.keyCode == 27 && (!is_dirty || window.confirm ('”йти без сохранени€ данных?'))) {
-				window.location.href = document.getElementById ('esc').href + '&_salt=@{[rand]}';
+				activate_link (document.getElementById ('esc').href);
 			}
 			
 			@{[ $options -> {no_ok} ? '' : <<EOOK ]}
@@ -1097,8 +1148,10 @@ sub MSIE_5_draw_form_field_string {
 	$s ||= $$data{$$options{name}};
 	$s =~ s/\"/\&quot\;/gsm; #";
 	
+	my $attributes = dump_attributes ($options -> {attributes});
+	
 	my $size = $options -> {size} ? "size=$$options{size} maxlength=$$options{size}" : "size=120";	
-	return qq {<input onFocus="scrollable_table_is_blocked = true; q_is_focused = true" onBlur="scrollable_table_is_blocked = false; q_is_focused = false" autocomplete="off" type="text" maxlength="$$options{max_len}" name="_$$options{name}" value="$s" $size onKeyPress="if (window.event.keyCode != 27) is_dirty=true">};
+	return qq {<input $attributes onFocus="scrollable_table_is_blocked = true; q_is_focused = true" onBlur="scrollable_table_is_blocked = false; q_is_focused = false" autocomplete="off" type="text" maxlength="$$options{max_len}" name="_$$options{name}" value="$s" $size onKeyPress="if (window.event.keyCode != 27) is_dirty=true">};
 }
 
 ################################################################################
@@ -1122,8 +1175,13 @@ sub MSIE_5_draw_form_field_hidden {
 ################################################################################
 
 sub MSIE_5_draw_form_field_hgroup {
+
 	my ($options, $data) = @_;
+	
+	map {$_ -> {label} .= '&nbsp;*' if $_ -> {mandatory}} @{$options -> {items}};
+	
 	return join '&nbsp;&nbsp;', map {$_ -> {label} . ($_->{label} ? ': ' : '') . &{'draw_form_field_' . ($_ -> {type} ? $_ -> {type} : 'string')}($_, $data)} @{$options -> {items}};
+	
 }
 
 ################################################################################
@@ -1245,13 +1303,14 @@ sub MSIE_5_draw_form_field_select {
 	unshift @{$options -> {values}}, {id => 0, label => $options -> {empty}} if exists $options -> {empty};
 
 	foreach my $value (@{$options -> {values}}) {
-		my $selected = $data -> {$options -> {name}} eq $value -> {id} ? 'selected' : '';		
+		
+		my $selected = (($value -> {id} eq $data -> {$options -> {name}}) or ($value -> {id} eq $options -> {value})) ? 'selected' : '';
 		my $label = trunc_string ($value -> {label}, $options -> {max_len});						
 		$html .= qq {<option value="$$value{id}" $selected>$label</option>};
 	}
 		
 	return <<EOH;
-		<select name="_$$options{name}" onChange="is_dirty=true">
+		<select name="_$$options{name}" onChange="is_dirty=true" onkeypress="typeAhead()">
 			$html
 		</select>
 EOH
@@ -1299,6 +1358,21 @@ sub MSIE_5_draw_ok_esc_toolbar {
 			label => 'вернутьс€', 
 			href => $options -> {href}, 
 			id => 'esc'
+		},
+	 ])
+	
+}
+
+################################################################################
+
+sub MSIE_5_draw_close_toolbar {
+	
+	draw_centered_toolbar ({}, [
+		{
+			icon => 'ok',     
+			label => 'закрыть', 
+			href => 'javascript:window.close()',
+			id => 'esc',
 		},
 	 ])
 	
@@ -1403,7 +1477,9 @@ EOH
 
 sub MSIE_5_draw_auth_toolbar {
 
-	my ($options) = @_;
+	$_REQUEST {__no_navigation} and return '';
+
+	my ($options) = @_;		
 	
 	my $calendar = <<EOH;
 		<td class=bgr1><img height=22 src="/i/0.gif" width=4 border=0></td>
