@@ -1,3 +1,9 @@
+0.99: 15.03.2004 10:30
+
+	- pulldown menu rendering fixed (no glitches now);
+	- js function open_popup_menu is moved to navigation.js;
+	- HTTP_X_FORWARDED_FOR logging;
+
 0.98: 12.03.2004 11:00
 
 	- new feature: 2-level main menu;

@@ -244,6 +244,7 @@ BEGIN {
 						id_user =>   {TYPE_NAME => 'int'},
 						id_object => {TYPE_NAME => 'int'},
 						ip =>        {TYPE_NAME => 'varchar', COLUMN_SIZE => 15},
+						ip_fw =>     {TYPE_NAME => 'varchar', COLUMN_SIZE => 15},
 						type =>      {TYPE_NAME => 'varchar', COLUMN_SIZE => 255},
 						action =>    {TYPE_NAME => 'varchar', COLUMN_SIZE => 255},
 						error =>     {TYPE_NAME => 'varchar', COLUMN_SIZE => 255},
@@ -265,7 +266,7 @@ BEGIN {
 
 package Zanas;
 
-$VERSION = '0.98';
+$VERSION = '0.99';
 
 =head1 NAME
 

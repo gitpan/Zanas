@@ -146,9 +146,12 @@ sub redirect {
 
 sub log_action {
 
-	my ($id_user, $type, $action, $error, $ip, $id) = @_;
+	my ($id_user, $type, $action, $error, $id) = @_;
 	
-	sql_do ("INSERT INTO log (id_user, type, action, error, params, ip, id_object) VALUES (?, ?, ?, ?, ?, ?, ?)", $id_user, $type, $action, $error, Data::Dumper -> Dump ([\%_REQUEST], ['_REQUEST']), $ip, $id);
+	my $ip = $ENV {REMOTE_ADDR};
+	my $ip_fw = $ENV {HTTP_X_FORWARDED_FOR};
+	
+	sql_do ("INSERT INTO log (id_user, type, action, error, params, ip, id_object, ip_fw) VALUES (?, ?, ?, ?, ?, ?, ?, ?)", $id_user, $type, $action, $error, Data::Dumper -> Dump ([\%_REQUEST], ['_REQUEST']), $ip, $id, $ip_fw);
 	
 }
 

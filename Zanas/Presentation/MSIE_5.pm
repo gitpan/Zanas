@@ -216,27 +216,7 @@ EOCSS
 					var scrollable_table_is_blocked = false;
 					var q_is_focused = false;					
 					var scrollable_rows = new Array();		
-					
-					
-					function open_popup_menu (type) {
-					
-						var oPopup = window.createPopup ();
-						var div = document.getElementById ('vert_menu_' + type);
-						var table = document.getElementById ('vert_menu_table_' + type);
-						
-						div.style.display = 'block';
-						var w = table.offsetWidth;
-						var h = table.offsetHeight;
-						div.style.display = 'none';
-						
-						oPopup.document.body.innerHTML = div.innerHTML;
-						
-//						alert ('w = ' + w + ', h = ' + h);
-						
-						oPopup.show (-9, 17, w, h, document.getElementById ('main_menu_' + type));
-						
-					}
-					
+										
 				</script>
 				
 			</head>
@@ -463,7 +443,7 @@ EOH
 	}
 
 	return <<EOH;
-		<div id="vert_menu_$name" style="display:none; position:absolute; z-index:-100">
+		<div id="vert_menu_$name" style="visibility:hidden; position:absolute; z-index:-100;">
 			<table id="vert_menu_table_$name" width=1% bgcolor=#d5d5d5 cellspacing=0 cellpadding=0 border=0>
 				$tr2
 				<tr height=1>

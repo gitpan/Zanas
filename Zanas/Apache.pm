@@ -10,17 +10,9 @@ sub handler {
 	
 	my  $use_cgi = $ENV {SCRIPT_NAME} =~ m{index\.pl} || $ENV {GATEWAY_INTERFACE} =~ m{^CGI/} || $conf -> {use_cgi} || $preconf -> {use_cgi} || !$INC{'Apache/Request.pm'};
 	
-#print STDERR "\%ENV = ", Dumper (\%ENV);
-
-#print STDERR "\$use_cgi = $use_cgi\n";
-	
 	our $r   = $use_cgi ? new Zanas::Request () : $_[0];
 
-#print STDERR "\$r = ", Dumper ($r);
-
 	our $apr = $use_cgi ? $r : Apache::Request -> new ($r);
-
-#print STDERR "\$apr = ", Dumper ($apr);
 		
 	my $parms = $apr -> parms;
 	our %_REQUEST = %{$parms};
@@ -66,18 +58,7 @@ EOH
 	
 	eval "our \$_CALENDAR = new ${_PACKAGE}Calendar (\\\%_REQUEST)";
 
-#	if (!$_USER and $_REQUEST {type} ne 'logon' and $_REQUEST {type} ne '_static_files') {
-		
-#		redirect ("/\?type=logon&_frame=$_REQUEST{_frame}");
-		
-#	}
-
 	if (!$_USER and $_REQUEST {type} ne 'logon' and $_REQUEST {type} ne '_static_files') {
-#		$_REQUEST {return_type}   = $_REQUEST {type} unless ($_REQUEST {return_type});
-#		$_REQUEST {return_id}     = $_REQUEST {id} unless ($_REQUEST {return_id});
-#		$_REQUEST {return_action} = $_REQUEST {action} unless ($_REQUEST {return_action});
-#		delete $_REQUEST {id};
-#		delete $_REQUEST {action};
 
 		delete $_REQUEST {sid};
 		delete $_REQUEST {salt};
@@ -86,8 +67,6 @@ EOH
 		delete $_REQUEST {__include_css};
 
 		redirect ('/?type=logon&redirect_params=' . uri_escape (Dumper (\%_REQUEST)));
-
-#		redirect (create_url ( type => 'logon', _frame => $_REQUEST{_frame}));
 		
 	}
 
@@ -168,8 +147,8 @@ EOH
 				}
 				
 			}
-
-			log_action ($_USER -> {id}, $$page{type}, $action, $_REQUEST {error}, $r -> connection -> remote_ip, $_REQUEST {id});
+			
+			log_action ($_USER -> {id}, $$page{type}, $action, $_REQUEST {error}, $_REQUEST {id});
 
 		}
 		else {
@@ -191,9 +170,7 @@ EOH
 sub out_html {
 
 	my ($options, $html) = @_;
-	
-#print STDERR "out_html: \$html = $html\n";
-	
+		
 	$html or return;
 	
 	if ($_REQUEST {dbf}) {
