@@ -100,6 +100,30 @@ sub sql_select_array {
 
 ################################################################################
 
+sub sql_select_path {
+	
+	my ($table_name, $id, $options) = @_;
+	
+	$options -> {name} ||= 'name';
+	$options -> {type} ||= $table_name;
+	$options -> {id_param} ||= 'id';
+
+	my ($parent) = $id;
+
+	my @path = ();
+
+	while ($parent) {	
+		my $r = sql_select_hash ("SELECT id, parent, $$options{name} as name, '$$options{type}' as type, '$$options{id_param}' as id_param FROM $table_name WHERE id = ?", $parent);
+		unshift @path, $r;		
+		$parent = $r -> {parent};	
+	}
+
+	return \@path;
+
+}
+
+################################################################################
+
 sub sql_last_insert_id {
 	return 0 + sql_select_array ("SELECT LAST_INSERT_ID()");
 }
@@ -113,7 +137,6 @@ sub sql_do_update {
 	$stay_fake or $sql .= ', fake = 0';
 	$sql = "UPDATE $table_name SET $sql WHERE id = ?";	
 	my @params = @_REQUEST {(map {"_$_"} @$field_list), 'id'};	
-	
 	sql_do ($sql, @params);
 	
 }
@@ -140,6 +163,13 @@ sub sql_do_insert {
 	
 	return sql_last_insert_id ();
 	
+}
+
+################################################################################
+
+sub sql_do_delete {
+	my ($table_name) = @_;
+	sql_do ("DELETE FROM $table_name WHERE id = ?", $_REQUEST{id});
 }
 
 1;

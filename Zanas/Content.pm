@@ -34,7 +34,7 @@ sub get_user {
 	sql_do ("DELETE FROM sessions WHERE ts < now() - INTERVAL ? MINUTE", $conf -> {session_timeout});
 	sql_do ("UPDATE sessions SET ts = NULL WHERE id = ? ", $_REQUEST {sid});
 
-	return sql_select_hash (<<EOS, $_REQUEST {sid});
+	my $user = sql_select_hash (<<EOS, $_REQUEST {sid});
 		SELECT
 			users.*
 			, roles.name AS role
@@ -45,6 +45,10 @@ sub get_user {
 		WHERE
 			sessions.id = ?
 EOS
+
+	$user -> {label} ||= $user -> {name} if $user;
+	
+	return $user;
 
 }
 

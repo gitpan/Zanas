@@ -65,7 +65,7 @@ sub MSIE_5_js_escape {
 	my ($s) = @_;	
 	$s =~ s/\"/\'/gsm;
 	$s =~ s{[\n\r]+}{ }gsm;
-	$s =~ s{\'}{\\\'}g;
+	$s =~ s{\'}{\\\'}g; #'
 	return "'$s'";	
 }
 
@@ -82,6 +82,29 @@ sub MSIE_5_draw_page {
 	my ($selector, $renderrer);
 	
 	our @scan2names = ();
+	
+	unless ($_REQUEST {error}) {
+	
+		if ($_REQUEST {id}) {
+			$selector  = 'get_item_of_' . $page -> {type};
+			$renderrer = 'draw_item_of_' . $page -> {type};
+		} 
+		elsif ($_REQUEST {dbf}) {
+			$selector  = 'select_' . $page -> {type};
+			$renderrer = 'dbf_write_' . $page -> {type};
+		} 
+		else {
+			$selector  = 'select_' . $page -> {type};
+			$renderrer = 'draw_' . $page -> {type};
+		}
+		
+		eval {
+			$body = call_for_role ($renderrer, call_for_role ($selector));
+		};
+		
+		$_REQUEST {error} = $@ if $@;
+		
+	}
 
 	if ($_REQUEST {error}) {
 	
@@ -97,24 +120,6 @@ EOH
 
 		return $html;
 		
-	}
-	else {
-	
-		if ($_REQUEST {id}) {
-			$selector  = 'get_item_of_' . $page -> {type};
-			$renderrer = 'draw_item_of_' . $page -> {type};
-		} 
-		elsif ($_REQUEST {dbf}) {
-			$selector  = 'select_' . $page -> {type};
-			$renderrer = 'dbf_write_' . $page -> {type};
-		} 
-		else {
-			$selector  = 'select_' . $page -> {type};
-			$renderrer = 'draw_' . $page -> {type};
-		}
-		
-		$body = call_for_role ($renderrer, call_for_role ($selector));
-
 	}
 	
 	if ($_REQUEST{dbf}) {	
@@ -156,6 +161,7 @@ EOH
 					var is_dirty = false;					
 					var scrollable_table_is_blocked = false;
 				</script>
+				<SCRIPT language="javascript" src="/i/rte/fckeditor.js"></SCRIPT>
 			</head>
 			<body bgcolor=white leftMargin=0 topMargin=0 marginwidth="0" marginheight="0" name="body" id="body">
 
@@ -350,7 +356,7 @@ sub MSIE_5_draw_text_cell {
 	my $txt = $data -> {label};
 	
 	if ($data -> {href}) {
-		$data -> {href} =~ /sid\=\d/ or $data -> {href} .= "\&sid=$_REQUEST{sid}";
+		check_href ($data);
 		my $target = $data -> {target} ? "target='$$data{target}'" : '';
 		$txt = qq { <a class=lnk4 $target href="$$data{href}" onFocus="blur()">$txt</a> };
 	}
@@ -376,6 +382,9 @@ sub MSIE_5_draw_one_cell_table {
 	my ($options, $body) = @_;
 	
 	return <<EOH
+	
+		@{[ $options -> {js_ok_escape} ? MSIE_5_js_ok_escape () : '' ]}
+		
 		<table cellspacing=0 cellpadding=0 width="100%">
 				<form name=form action=/ method=post enctype=multipart/form-data target=invisible>
 					<tr><td class=bgr8>$body
@@ -550,8 +559,10 @@ sub MSIE_5_draw_toolbar_button {
 	
 	MSIE_5_register_hotkey ($options, 'href', $options);
 	
+	check_href ($options);
+	
 	return <<EOH
-		<td nowrap>&nbsp;<a class=lnk0 href="$$options{href}&sid=$_REQUEST{sid}" id="$options"><b>[$$options{label}]</b></a></td>
+		<td nowrap>&nbsp;<a class=lnk0 href="$$options{href}" id="$options"><b>[$$options{label}]</b></a></td>
 		<td><img height=15 hspace=4 src="/i/toolbars/razd1.gif" width=2 border=0></td>
 EOH
 
@@ -564,9 +575,6 @@ sub MSIE_5_draw_toolbar_input_text {
 	my ($options) = @_;
 	
 	return <<EOH
-<!--	
-		<td><a href="$$options{href}&sid=$_REQUEST{sid}"><input type=image hspace=3 src="/i/buttons/$$options{icon}.gif" border=0></a></td>
--->		
 		<td nowrap>$$options{label}: <input type=text name=$$options{name} value="$_REQUEST{$$options{name}}" onFocus="scrollable_table_is_blocked = true" onBlur="scrollable_table_is_blocked = false"><input type=hidden name=search value=1><input type=hidden name=type value="$_REQUEST{type}"></td>
 		<td><img height=15  hspace=4 src="/i/toolbars/razd1.gif" width=2 border=0></td>
 EOH
@@ -617,13 +625,13 @@ sub MSIE_5_draw_row_button {
 	
 	return '' if $options -> {off};
 	
+	check_href ($options);
+	
 	if ($options -> {confirm}) {
 		my $salt = rand;
 		my $msg = js_escape ($options -> {confirm});
-		$options -> {href} = qq [javascript:if (confirm ($msg)) {window.open('$$options{href}&_salt=$salt&sid=$_REQUEST{sid}', '_self')}];
-	} else {
-		$options -> {href} .= "&sid=$_REQUEST{sid}";
-	}
+		$options -> {href} = qq [javascript:if (confirm ($msg)) {window.open('$$options{href}', '_self')}];
+	} 
 
 	return qq {<a class=lnk0 title="$$options{label}" href="$$options{href}" onFocus="blur()">\&nbsp;<b>[$$options{label}]</b>\&nbsp;</a>};
 
@@ -687,19 +695,9 @@ EOH
 
 	return <<EOH
 $path<table cellspacing=1 cellpadding=5 width="100%">
-			
-			<script for="body" event="onkeypress">
-			
-				if (window.event.keyCode == 27 && (!is_dirty || window.confirm ('Уйти без сохранения данных?'))) {
-					window.location.href = document.getElementById ('esc').href + '&_salt=@{[rand]}';
-				}
-			
-				if (window.event.keyCode == 10 && window.confirm ('Сохранить данные?')) {					
-					document.form.submit ();					
-				}
-														
-			</script>
 
+			@{[ MSIE_5_js_ok_escape () ]}
+			
 			<form name=form action=/ method=post enctype=multipart/form-data target=invisible>
 				<input type=hidden name=type value=$type> 
 				<input type=hidden name=id value=$id> 
@@ -708,6 +706,28 @@ $path<table cellspacing=1 cellpadding=5 width="100%">
 				$trs
 			</form>
 		</table>$bottom_toolbar
+EOH
+
+}
+
+################################################################################
+
+sub MSIE_5_js_ok_escape {
+
+	return <<EOH
+	
+		<script for="body" event="onkeypress">
+		
+			if (window.event.keyCode == 27 && (!is_dirty || window.confirm ('Уйти без сохранения данных?'))) {
+				window.location.href = document.getElementById ('esc').href + '&_salt=@{[rand]}';
+			}
+		
+			if (window.event.keyCode == 10 && window.confirm ('Сохранить данные?')) {
+				document.form.submit ();
+			}
+													
+		</script>
+		
 EOH
 
 }
@@ -874,9 +894,7 @@ sub MSIE_5_draw_centered_toolbar_button {
 
 	my ($options) = @_;
 	
-	if ($options -> {href} !~ /^(\#|java)/ and $options -> {href} !~ /\&sid=/) {	
-		$options -> {href} .= "\&sid=$_REQUEST{sid}";
-	}
+	check_href ($options);
 	
 	return <<EOH
 		<!--<td><a onclick="$$options{onclick}" href="$$options{href}" target="$$options{target}"><img hspace=3 src="/i/buttons/$$options{icon}.gif" border=0></a></td>-->
@@ -1010,5 +1028,44 @@ EOEXIT
 EOH
 
 }
+
+################################################################################
+
+sub MSIE_5_draw_form_field_image {
+	my ($options, $data) = @_;
+	my $s = $$data{$$options{name}};
+	$s =~ s/\"/\&quot\;/gsm; #"
+	return <<EOS;
+<input type="hidden" name="_$$options{name}" value="$$options{id_image}">
+<img src="$$options{src}" id="$$options{name}_preview" width = "$$options{width}" height = "$$options{height}">
+&nbsp;
+<input type="button" value="Выбрать" onClick="window.open('$$options{new_image_url}', 'selectImage' , '');">
+EOS
+
+}
+
+################################################################################
+
+sub MSIE_5_draw_form_field_htmleditor {
+	my ($options, $data) = @_;
+	my $s = $$data{$$options{name}};
+		
+	$s =~ s{\"}{\\\"}gsm;
+	$s =~ s{\'}{\\\'}gsm;
+	$s =~ s{[\n\r]+}{\\n}gsm;
+
+	return <<EOS;
+		<SCRIPT language="javascript">
+<!--
+var oFCKeditor_$$options{name} ;
+oFCKeditor_$$options{name} = new FCKeditor('_$$options{name}') ;
+oFCKeditor_$$options{name}.Value = '$s';
+oFCKeditor_$$options{name}.Create() ;
+//-->
+		</SCRIPT>
+EOS
+}
+
+
 
 1;

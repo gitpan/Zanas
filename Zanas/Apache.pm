@@ -35,6 +35,7 @@ sub handler {
 		$_USER -> {drawer_name} = 
 			$user_agent =~ /MSIE [56]/  ? 'MSIE_5':
 			$user_agent =~ /Mozilla\/3/ ? 'Mozilla_3':
+			$user_agent =~ /Mozilla\/5/ ? 'MSIE_5':
 			'Unsupported';
 		
 		require_fresh ("${_PACKAGE}Content::menu");

@@ -1,3 +1,7 @@
+0.54: 30.09.03 10:28
+	- added check_href sub;
+	- new field types: 'image' & 'htmleditor';
+	
 0.53: 26.09.03 13:18
 	- added error reporting when reloading modules;
 	- fixed hidden inputs rendering;
