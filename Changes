@@ -1,3 +1,8 @@
+0.86: 29.01.04 16:30
+
+	- added 'confirm' option to draw_centered_toolbar_button sub
+	- added 'target' option to draw_toolbar_button sub
+
 0.85: 22.01.04 11:52
 
 	- 0.gif is relocated to the root

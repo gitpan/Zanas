@@ -761,6 +761,8 @@ sub MSIE_5_draw_toolbar_button {
 	
 	return '' if $options -> {off};
 	
+	$options -> {target} ||= '_self';
+	
 	MSIE_5_register_hotkey ($options, 'href', $options);
 	
 	check_href ($options);
@@ -768,7 +770,7 @@ sub MSIE_5_draw_toolbar_button {
 	if ($options -> {confirm}) {
 		my $salt = rand;
 		my $msg = js_escape ($options -> {confirm});
-		$options -> {href} = qq [javascript:if (confirm ($msg)) {window.open('$$options{href}', '_self')}];
+		$options -> {href} = qq [javascript:if (confirm ($msg)) {window.open('$$options{href}', '$$options{target}')}];
 	} 
 	
 	return <<EOH
@@ -1368,6 +1370,12 @@ sub MSIE_5_draw_centered_toolbar_button {
 	return '' if $options -> {off};
 	
 	check_href ($options);
+
+	if ($options -> {confirm}) {
+		my $salt = rand;
+		my $msg = js_escape ($options -> {confirm});
+		$options -> {href} = qq [javascript:if (confirm ($msg)) {window.open('$$options{href}', '$$options{target}')}];
+	} 	
 	
 	return <<EOH
 		<!--<td><a onclick="$$options{onclick}" href="$$options{href}" target="$$options{target}"><img hspace=3 src="/i/buttons/$$options{icon}.gif" border=0></a></td>-->
