@@ -1,6 +1,6 @@
 ################################################################################
 
-sub MSIE_5_register_hotkey {
+sub register_hotkey {
 
 	my ($hashref, $type, $data) = @_;
 
@@ -38,7 +38,7 @@ sub MSIE_5_register_hotkey {
 
 ################################################################################
 
-sub MSIE_5_handle_hotkey_focus {
+sub handle_hotkey_focus {
 
 	my ($r) = @_;
 	
@@ -53,7 +53,7 @@ EOJS
 
 ################################################################################
 
-sub MSIE_5_handle_hotkey_href {
+sub handle_hotkey_href {
 
 	my ($r) = @_;
 	
@@ -67,7 +67,7 @@ EOJS
 
 ################################################################################
 
-sub MSIE_5_js_escape {
+sub js_escape {
 	my ($s) = @_;	
 	$s =~ s/\"/\'/gsm;
 	$s =~ s{[\n\r]+}{ }gsm;
@@ -77,7 +77,7 @@ sub MSIE_5_js_escape {
 
 ################################################################################
 
-sub MSIE_5_draw_page {
+sub draw_page {
 
 	my ($page) = @_;
 	
@@ -180,8 +180,9 @@ EOH
 		<iframe name=keepalive src="/?keepalive=$_REQUEST{sid}" width=0 height=0>
 		</iframe>
 EOH
-	
-	
+
+	my $win_dirty_hack = $^O eq 'MSWin32' ? '/i' : '';
+		
 	return <<EOH;
 		<html>
 			<head>
@@ -189,12 +190,12 @@ EOH
 				<meta name="Generator" content="Zanas/MSIE5 $Zanas::VERSION">
 				$meta_refresh
 				
-				<LINK href="/zanas.css" type=text/css rel=STYLESHEET>
+				<LINK href="$win_dirty_hack/zanas.css" type=text/css rel=STYLESHEET>
 				@{[ map {<<EOJS} @{$_REQUEST{__include_css}} ]}
 					<LINK href="/i/$_.css" type=text/css rel=STYLESHEET>
 EOJS
 
-					<script src="/navigation.js">
+					<script src="$win_dirty_hack/navigation.js">
 					</script>
 				@{[ map {<<EOCSS} @{$_REQUEST{__include_js}} ]}
 					<script type="text/javascript" src="/i/${_}.js">
@@ -208,9 +209,9 @@ EOCSS
 					var is_dirty = false;					
 					var scrollable_table_is_blocked = false;
 					var q_is_focused = false;					
-					var scrollable_rows = new Array();									
-										
+					var scrollable_rows = new Array();		
 				</script>
+				
 			</head>
 			<body bgcolor=white leftMargin=0 topMargin=0 marginwidth="0" marginheight="0" name="body" id="body">
 
@@ -288,7 +289,7 @@ EOF
 				<script for="body" event="onkeydown">												
 					if (window.event.keyCode == 88 && window.event.altKey) document.location.href = '/?_salt=@{[rand]}';					
 					handle_basic_navigation_keys ();
-					@{[ map {&{"MSIE_5_handle_hotkey_$$_{type}"} ($_)} @scan2names ]}							
+					@{[ map {&{"handle_hotkey_$$_{type}"} ($_)} @scan2names ]}							
 				</script>						
 				<div id="bodyArea">
 					$auth_toolbar			
@@ -306,7 +307,7 @@ EOH
 
 ################################################################################
 
-sub MSIE_5_draw_form_field_button {
+sub draw_form_field_button {
 	my ($options, $data) = @_;
 	my $s = $$data{$$options{name}};
 	$s ||= $$options{value};
@@ -317,7 +318,7 @@ sub MSIE_5_draw_form_field_button {
 
 ################################################################################
 
-sub MSIE_5_draw_menu {
+sub draw_menu {
 
 	my ($types, $cursor) = @_;	
 	
@@ -329,7 +330,7 @@ sub MSIE_5_draw_menu {
 
 	foreach my $type (@$types)	{
 	
-		MSIE_5_register_hotkey ($type, 'href', 'main_menu_' . $type -> {name});
+		register_hotkey ($type, 'href', 'main_menu_' . $type -> {name});
 	
 		$tr1 .= <<EOH;
 			<td class=bgr8 rowspan=2><img src="/i/toolbars/n_left.gif" border=0></td>
@@ -382,7 +383,7 @@ EOH
 
 ################################################################################
 
-sub MSIE_5_draw_hr {
+sub draw_hr {
 
 	my (%options) = @_;
 	
@@ -399,7 +400,7 @@ EOH
 
 ################################################################################
 
-sub MSIE_5_draw_input_cell {
+sub draw_input_cell {
 
 	my ($data) = @_;
 	
@@ -427,7 +428,7 @@ sub MSIE_5_draw_input_cell {
 
 ################################################################################
 
-sub MSIE_5_draw_checkbox_cell {
+sub draw_checkbox_cell {
 
 	my ($data) = @_;
 	my $value = $data -> {value} || 1;
@@ -447,18 +448,18 @@ sub MSIE_5_draw_checkbox_cell {
 
 ################################################################################
 
-sub MSIE_5_draw_text_cells {
+sub draw_text_cells {
 
 	my $options = (ref $_[0] eq HASH) ? shift () : {};
 		
-	return join '', map { MSIE_5_draw_text_cell ($_, $options) } @{$_[0]};
+	return join '', map { draw_text_cell ($_, $options) } @{$_[0]};
 	
 }
 
 
 ################################################################################
 
-sub MSIE_5_draw_text_cell {
+sub draw_text_cell {
 
 	my ($data, $options) = @_;
 	
@@ -490,7 +491,8 @@ sub MSIE_5_draw_text_cell {
 	
 	$txt ||= '&nbsp;';
 	
-	$data -> {href} ||= $options -> {href};
+	$data -> {href}   ||= $options -> {href};
+	$data -> {target} ||= $options -> {target};
 	if ($data -> {href}) {
 		check_href ($data);
 		$data -> {title} ||= $data -> {label};
@@ -506,7 +508,7 @@ sub MSIE_5_draw_text_cell {
 
 ################################################################################
 
-sub MSIE_5_draw_tr {
+sub draw_tr {
 
 	my ($options, @tds) = @_;
 	
@@ -516,13 +518,13 @@ sub MSIE_5_draw_tr {
 
 ################################################################################
 
-sub MSIE_5_draw_one_cell_table {
+sub draw_one_cell_table {
 
 	my ($options, $body) = @_;
 	
 	return <<EOH
 	
-		@{[ $options -> {js_ok_escape} ? MSIE_5_js_ok_escape () : '' ]}
+		@{[ $options -> {js_ok_escape} ? js_ok_escape () : '' ]}
 		
 		<table cellspacing=0 cellpadding=0 width="100%">
 				<form name=form action=/ method=post enctype=multipart/form-data target=invisible>
@@ -535,13 +537,13 @@ EOH
 
 ################################################################################
 
-sub MSIE_5_draw_table_header {
+sub draw_table_header {
 
 	my ($cell) = @_;
 	
 	if (ref $cell eq ARRAY) {
 	
-		my $line = join '', (map {MSIE_5_draw_table_header ($_)} @$cell);
+		my $line = join '', (map {draw_table_header ($_)} @$cell);
 		
 		return (ref $cell -> [0] eq ARRAY ? '' : '<tr>') . $line;
 							
@@ -565,7 +567,7 @@ sub MSIE_5_draw_table_header {
 
 ################################################################################
 
-sub MSIE_5_draw_table {
+sub draw_table {
 
 	my $headers = [];
 
@@ -577,7 +579,7 @@ sub MSIE_5_draw_table {
 	
 	return '' if $options -> {off};
 		
-	my $ths = @$headers ? '<thead>' . MSIE_5_draw_table_header ($headers) . '</thead>' : '';
+	my $ths = @$headers ? '<thead>' . draw_table_header ($headers) . '</thead>' : '';
 	
 	my $trs = '';
 
@@ -629,7 +631,7 @@ EOH
 
 	return <<EOH
 		
-		@{[ $options -> {js_ok_escape} ? MSIE_5_js_ok_escape ({name => $options -> {name}, no_ok => $options -> {no_ok}}) : '' ]}
+		@{[ $options -> {js_ok_escape} ? js_ok_escape ({name => $options -> {name}, no_ok => $options -> {no_ok}}) : '' ]}
 		
 		<table cellspacing=0 cellpadding=0 width="100%"><tr><td class=bgr8>
 		
@@ -657,7 +659,7 @@ EOH
 
 ################################################################################
 
-sub MSIE_5_draw_path {
+sub draw_path {
 
 	$_REQUEST{lpt} and return '';
 
@@ -739,7 +741,7 @@ EOH
 
 ################################################################################
 
-sub MSIE_5_draw_window_title {
+sub draw_window_title {
 
 	my ($options) = @_;
 	
@@ -753,7 +755,7 @@ EOH
 
 ################################################################################
 
-sub MSIE_5_draw_toolbar {
+sub draw_toolbar {
 
 	my ($options, @buttons) = @_;
 	
@@ -810,7 +812,7 @@ EOH
 
 ################################################################################
 
-sub MSIE_5_draw_toolbar_button {
+sub draw_toolbar_button {
 
 	my ($options) = @_;
 	
@@ -818,7 +820,7 @@ sub MSIE_5_draw_toolbar_button {
 	
 	$options -> {target} ||= '_self';
 	
-	MSIE_5_register_hotkey ($options, 'href', $options);
+	register_hotkey ($options, 'href', $options);
 	
 	check_href ($options);
 
@@ -837,7 +839,7 @@ EOH
 
 ################################################################################
 
-sub MSIE_5_draw_toolbar_input_text {
+sub draw_toolbar_input_text {
 
 	my ($options) = @_;
 	
@@ -862,7 +864,7 @@ EOH
 
 ################################################################################
 
-sub MSIE_5_draw_toolbar_pager {
+sub draw_toolbar_pager {
 
 	my ($options) = @_;
 	
@@ -878,7 +880,7 @@ sub MSIE_5_draw_toolbar_pager {
 	}
 
 	if ($start > 0) {
-		MSIE_5_register_hotkey ({label => '&<'}, 'href', '_pager_prev');
+		register_hotkey ({label => '&<'}, 'href', '_pager_prev');
 		$url = create_url (start => $start - $options -> {portion});
 		$label .= qq {&nbsp;<a href="$url" class=lnk0 id="_pager_prev" onFocus="blur()"><b><u>&lt;</u></b></a>&nbsp;};
 	}
@@ -889,7 +891,7 @@ sub MSIE_5_draw_toolbar_pager {
 	
 	if ($start + $$options{cnt} < $$options{total}) {
 	
-		MSIE_5_register_hotkey ({label => '&>'}, 'href', '_pager_next');
+		register_hotkey ({label => '&>'}, 'href', '_pager_next');
 		$url = create_url (start => $start + $options -> {portion});
 		$label .= qq {&nbsp;<a href="$url" class=lnk0 id="_pager_next" onFocus="blur()"><b><u>&gt;</u></b></a>&nbsp;};
 	}
@@ -903,7 +905,7 @@ EOH
 
 ################################################################################
 
-sub MSIE_5_draw_row_button {
+sub draw_row_button {
 
 	my ($options) = @_;	
 	
@@ -934,7 +936,7 @@ sub MSIE_5_draw_row_button {
 
 ################################################################################
 
-sub MSIE_5_draw_row_buttons {
+sub draw_row_buttons {
 
 	my ($options, $buttons) = @_;
 
@@ -946,7 +948,7 @@ sub MSIE_5_draw_row_buttons {
 
 ################################################################################
 
-sub MSIE_5_draw_form_field {
+sub draw_form_field {
 
 	my ($field, $data) = @_;
 		
@@ -958,7 +960,7 @@ sub MSIE_5_draw_form_field {
 			my $subfield = $field -> [$i];					
 			$subfield -> {is_slave} = 1;
 			$subfield -> {colspan} = $i == @$field - 1 ? $_REQUEST {__max_cols} - 2 * $i - 1 : 1;
-			$html .= MSIE_5_draw_form_field ($subfield, $data);		
+			$html .= draw_form_field ($subfield, $data);		
 		}
 		
 		return $html;
@@ -973,7 +975,7 @@ sub MSIE_5_draw_form_field {
 	
 	my $html = &{"draw_form_field_$type"} ($field, $data);
 	
-	MSIE_5_register_hotkey ($field, 'focus', '_' . $field -> {name});	
+	register_hotkey ($field, 'focus', '_' . $field -> {name});	
 
 	$field -> {label} .= '&nbsp;*' if $field -> {mandatory};
 	
@@ -994,7 +996,7 @@ EOH
 
 ################################################################################
 
-sub MSIE_5_draw_form {
+sub draw_form {
 
 	my ($options, $data, $fields) = @_;
 	
@@ -1028,8 +1030,10 @@ sub MSIE_5_draw_form {
 					
 		next if ref $field eq HASH and $field -> {off};
 		next if ref $field eq ARRAY and @$field == 0;
+		
+		my $id_tr = ref $field eq HASH ? "tr_$$field{name}" : '';
 					
-		$trs .= '<tr>' . MSIE_5_draw_form_field ($field, $data) . '</tr>';
+		$trs .= "<tr id=\"$id_tr\">" . draw_form_field ($field, $data) . '</tr>';
 	
 	}
 	
@@ -1045,7 +1049,7 @@ sub MSIE_5_draw_form {
 	return <<EOH
 $path<table cellspacing=1 cellpadding=5 width="100%">
 
-			@{[ MSIE_5_js_ok_escape ($options) ]}
+			@{[ js_ok_escape ($options) ]}
 			
 			<form name=$name action=/ method=post enctype=multipart/form-data target=$target>
 				<input type=hidden name=type value=$type> 
@@ -1061,7 +1065,7 @@ EOH
 
 ################################################################################
 
-sub MSIE_5_js_ok_escape {
+sub js_ok_escape {
 	
 	my ($options) = @_;
 	
@@ -1093,7 +1097,7 @@ EOH
 
 ################################################################################
 
-sub MSIE_5_draw_form_field_string {
+sub draw_form_field_string {
 
 	my ($options, $data) = @_;
 	
@@ -1119,7 +1123,7 @@ sub MSIE_5_draw_form_field_string {
 
 ################################################################################
 
-sub MSIE_5_draw_form_field_datetime {
+sub draw_form_field_datetime {
 
 	my ($options, $data) = @_;
 	
@@ -1142,8 +1146,8 @@ sub MSIE_5_draw_form_field_datetime {
 	
 	}
 	
-	$options -> {format}  ||= $options -> {no_time} ? $conf -> {format_d} : $conf -> {format_dt};
-
+	$options -> {onClose} ||= 'null';
+	
 	my $s = $options -> {value};
 	$s ||= $$data{$$options{name}};
 	$s =~ s/\"/\&quot\;/gsm; #";
@@ -1169,9 +1173,10 @@ sub MSIE_5_draw_form_field_datetime {
 			Calendar.setup(
 				{
 					inputField : "input_$$options{name}",
-					ifFormat : "%d.%m.%Y %k:%M",
-					showsTime : $shows_time,
-					button : "calendar_trigger_$$options{name}"
+					ifFormat   : "$$options{format}",
+					showsTime  : $shows_time,
+					button     : "calendar_trigger_$$options{name}",
+					onClose    : $$options{onClose}
 				}
 			);
 		</script>
@@ -1182,7 +1187,7 @@ EOH
 
 ################################################################################
 
-sub MSIE_5_draw_form_field_file {
+sub draw_form_field_file {
 	my ($options, $data) = @_;	
 	$options -> {size} ||= 60;
 	return qq {<input onFocus="scrollable_table_is_blocked = true; q_is_focused = true" onBlur="scrollable_table_is_blocked = false; q_is_focused = false" type="file" name="_$$options{name}" size=$$options{size} onKeyPress="if (window.event.keyCode != 27) is_dirty=true">};
@@ -1190,7 +1195,7 @@ sub MSIE_5_draw_form_field_file {
 
 ################################################################################
 
-sub MSIE_5_draw_form_field_hidden {
+sub draw_form_field_hidden {
 	my ($options, $data) = @_;
 	my $s = $$data{$$options{name}};
 	$s ||= $$options{value};
@@ -1200,15 +1205,16 @@ sub MSIE_5_draw_form_field_hidden {
 
 ################################################################################
 
-sub MSIE_5_draw_form_field_hgroup {
+sub draw_form_field_hgroup {
 	my ($options, $data) = @_;
 	map {$_ -> {label} .= '&nbsp;*' if $_ -> {mandatory}} @{$options -> {items}};
+	map {$_ -> {label} = '' if $_ -> {off}} @{$options -> {items}};
 	return join '&nbsp;&nbsp;', map {$_ -> {label} . ($_ -> {label} ? ': ' : '') . ($_ -> {off} ? '' : &{'draw_form_field_' . (($_REQUEST {__read_only} || $options -> {read_only} || $_ -> {read_only}) ? 'static' : $_ -> {type} ? $_ -> {type} : 'string')}($_, $data))} @{$options -> {items}};
 }
 
 ################################################################################
 
-sub MSIE_5_draw_form_field_text {
+sub draw_form_field_text {
 	my ($options, $data) = @_;
 	my $s = $$data{$$options{name}};
 	$s =~ s/\"/\&quot\;/gsm; #"
@@ -1227,14 +1233,14 @@ sub MSIE_5_draw_form_field_text {
 
 ################################################################################
 
-sub MSIE_5_draw_form_field_password {
+sub draw_form_field_password {
 	my ($options, $data) = @_;
 	return qq {<input type="password" name="_$$options{name}" size=120 onKeyPress="if (window.event.keyCode != 27) is_dirty=true">};
 }
 
 ################################################################################
 
-sub MSIE_5_draw_form_field_static {
+sub draw_form_field_static {
 
 	my ($options, $data) = @_;
 	
@@ -1267,7 +1273,7 @@ sub MSIE_5_draw_form_field_static {
 
 ################################################################################
 
-sub MSIE_5_draw_form_field_radio {
+sub draw_form_field_radio {
 
 	my ($options, $data) = @_;
 	
@@ -1284,7 +1290,7 @@ sub MSIE_5_draw_form_field_radio {
 
 ################################################################################
 
-sub MSIE_5_draw_form_field_checkbox {
+sub draw_form_field_checkbox {
 
 	my ($options, $data) = @_;
 	
@@ -1300,7 +1306,7 @@ sub MSIE_5_draw_form_field_checkbox {
 
 ################################################################################
 
-sub MSIE_5_draw_form_field_checkboxes {
+sub draw_form_field_checkboxes {
 
 	my ($options, $data) = @_;
 	
@@ -1317,7 +1323,7 @@ sub MSIE_5_draw_form_field_checkboxes {
 
 ################################################################################
 
-sub MSIE_5_draw_form_field_select {
+sub draw_form_field_select {
 
 	my ($options, $data) = @_;
 	
@@ -1335,7 +1341,7 @@ sub MSIE_5_draw_form_field_select {
 	}
 		
 	return <<EOH;
-		<select name="_$$options{name}" onChange="is_dirty=true" onkeypress="typeAhead()">
+		<select name="_$$options{name}" onChange="is_dirty=true; $$options{onChange}" onkeypress="typeAhead()">
 			$html
 		</select>
 EOH
@@ -1344,7 +1350,7 @@ EOH
 
 ################################################################################
 
-sub MSIE_5_draw_esc_toolbar {
+sub draw_esc_toolbar {
 
 	my ($options) = @_;
 		
@@ -1361,7 +1367,7 @@ sub MSIE_5_draw_esc_toolbar {
 
 ################################################################################
 
-sub MSIE_5_draw_ok_esc_toolbar {
+sub draw_ok_esc_toolbar {
 
 	my ($options) = @_;		
 	
@@ -1395,7 +1401,7 @@ sub MSIE_5_draw_ok_esc_toolbar {
 
 ################################################################################
 
-sub MSIE_5_draw_close_toolbar {
+sub draw_close_toolbar {
 	
 	my ($options) = @_;		
 
@@ -1413,7 +1419,7 @@ sub MSIE_5_draw_close_toolbar {
 
 ################################################################################
 
-sub MSIE_5_draw_back_next_toolbar {
+sub draw_back_next_toolbar {
 
 	my ($options) = @_;
 	
@@ -1433,7 +1439,7 @@ sub MSIE_5_draw_back_next_toolbar {
 
 ################################################################################
 
-sub MSIE_5_draw_centered_toolbar_button {
+sub draw_centered_toolbar_button {
 
 	my ($options) = @_;
 	
@@ -1460,7 +1466,7 @@ EOH
 
 ################################################################################
 
-sub MSIE_5_draw_centered_toolbar {
+sub draw_centered_toolbar {
 
 	$_REQUEST{lpt} and return '';
 
@@ -1518,7 +1524,7 @@ EOH
 
 ################################################################################
 
-sub MSIE_5_draw_auth_toolbar {
+sub draw_auth_toolbar {
 
 	$_REQUEST {__no_navigation} and return '';
 
@@ -1592,7 +1598,7 @@ EOH
 
 ################################################################################
 
-sub MSIE_5_draw_form_field_image {
+sub draw_form_field_image {
 	my ($options, $data) = @_;
 	my $s = $$data{$$options{name}};
 	$s =~ s/\"/\&quot\;/gsm; #"
@@ -1607,7 +1613,7 @@ EOS
 
 ################################################################################
 
-sub MSIE_5_draw_form_field_htmleditor {
+sub draw_form_field_htmleditor {
 	
 	my ($options, $data) = @_;
 	

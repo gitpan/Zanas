@@ -289,16 +289,14 @@ sub sql_do_insert {
 
 	my ($table_name, $pairs) = @_;
 		
-#	my $fields = 'fake';
-#	my $args   = '?';
-#	my @params = $_REQUEST {sid};
-
 	my $fields = '';
 	my $args   = '';
 	my @params = ();
 
-	$pairs -> {fake} ||= $_REQUEST {sid};
+#	$pairs -> {fake} ||= $_REQUEST {sid};
 	
+	$pairs -> {fake} = $_REQUEST {sid} unless exists $pairs -> {fake};
+
 	while (my ($field, $value) = each %$pairs) {	
 		my $comma = @params ? ', ' : '';	
 		$fields .= "$comma $field";

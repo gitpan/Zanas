@@ -26,12 +26,13 @@ sub shell {
 		$appname_uc = uc $appname;	
 
 		while (1) {
-			$instpath = $term -> readline ("Installation path [/var/projects/$appname]: ");
-			$instpath = "/var/projects/$appname" if $instpath eq '';
+			my $default_instpath = $^O eq 'MSWin32' ? "G:\\do_work\\$appname" : "/var/projects/$appname";
+			$instpath = $term -> readline ("Installation path [$default_instpath]: ");
+			$instpath = $default_instpath if $instpath eq '';
 			last if $instpath =~ /[\w\/]+/
 		}
 
-		while (1) {
+		while ($^O ne 'MSWin32') {
 			$group = $term -> readline ("Users group [nogroup]: ");
 			$group = "nogroup" if $group eq '';
 			last if $group =~ /\w+/
@@ -86,24 +87,49 @@ EOT
 	
 	print "ok\n";
 
-	print "Creating application directory... ";
-	`mkdir $instpath`;
+	print "Creating application directory... ";	
+	if ($^O eq 'MSWin32') {
+		`md $instpath`;
+	}
+	else {
+		`mkdir $instpath`;
+	}	
 	print "ok\n";
 
 	print "Copying application files... ";
-	`tar xzvf $path --directory=$instpath/`;
+	if ($^O eq 'MSWin32') {
+		chdir $instpath;
+		eval 'require Archive::Tar;';
+		my $tar = Archive::Tar -> new ();
+		$tar -> read ($path, 1);
+		$tar -> extract ($tar -> list_files ());
+	}
+	else {
+		`tar xzvf $path --directory=$instpath/`;
+	}	
 	print "ok\n";
 
 	print "Renaming application files... ";
-	`mv $instpath/lib/SAMPLE $instpath/lib/$appname_uc`;
-	`mv $instpath/lib/SAMPLE.pm $instpath/lib/$appname_uc.pm`;
+	if ($^O eq 'MSWin32') {
+		rename "$instpath\\lib\\SAMPLE", "$instpath\\lib\\$appname_uc";
+		rename "$instpath\\lib\\SAMPLE.pm", "$instpath\\lib\\$appname_uc.pm";
+	}
+	else {
+		`mv $instpath/lib/SAMPLE $instpath/lib/$appname_uc`;
+		`mv $instpath/lib/SAMPLE.pm $instpath/lib/$appname_uc.pm`;
+	}	
 	print "ok\n";
 	
 	our %substitutions = (
 		SAMPLE => $appname_uc,
 	);
 	
-	find (\&fix, "$instpath/lib");
+	if ($^O eq 'MSWin32') {
+		find (\&fix, "$instpath\\lib");
+	}
+	else {
+		find (\&fix, "$instpath/lib");
+	}	
 
 	our %substitutions = (
 		sample => $appname,
@@ -112,10 +138,17 @@ EOT
 		"'z'" => "'$password'",
 	);
 	
-	find (\&fix, "$instpath/conf");
+	if ($^O eq 'MSWin32') {
+		find (\&fix, "$instpath\\conf");
+	}
+	else {
+		find (\&fix, "$instpath/conf");
+	}	
 	
-	`chgrp -R $group $instpath`;
-	`chmod -R a+w $instpath`;
+	if ($^O ne 'MSWin32') {
+		`chgrp -R $group $instpath`;	
+		`chmod -R a+w $instpath`;
+	}
 
 	print <<EOT;
 

@@ -42,15 +42,25 @@ function typeAhead() { // borrowed from http://www.oreillynet.com/javascript/200
    return true;
 }					
 
-function activate_link (href) {					
+function activate_link (href, target) {
+
 	if (href.indexOf ('javascript:') == 0) {
 		var code = href.substr (11).replace (/%20/g, ' ');
 		eval (code);
 	}
 	else {
-		document.location.href = href + '&_salt=@{[rand]}';
-	}						
+	
+		href = href + '&_salt=' + Math.random ();
+		if (target == null || target == '') target = '_self';
+		window.open (href, target, 'toolbar=no,resizable=yes');
+	
+	}
+
 }
+
+function setVisible (id, isVisible) { 
+	document.getElementById (id).style.display = isVisible ? 'block' : 'none'
+};
 
 function blur_all_inputs () {
 	var inputs = document.body.getElementsByTagName ('input');
@@ -165,7 +175,7 @@ function handle_basic_navigation_keys () {
 		if (window.event.keyCode == 13) {
 
 			var children = scrollable_rows [scrollable_table_row].cells [scrollable_table_row_cell].getElementsByTagName ('a');
-			if (children != null && children.length > 0) activate_link (children [0].href);
+			if (children != null && children.length > 0) activate_link (children [0].href, children [0].target);
 			return false;
 
 		}

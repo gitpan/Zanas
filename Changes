@@ -1,7 +1,13 @@
-	- code cleanup: get rid of multibrowser support;
-	- added 'onChange' option to draw_form_field_select sub;
-	- added 'onClose' option to draw_form_field_datetime sub;
-	- fixed a dt format bug in draw_form_field_datetime;
+0.93: 26.02.04 12:50
+
+	- targets are now in use with activate_link js function;
+	- target option is now passed in draw_text_cells;	
+	- don't show labels for hrgoups items tat are off;	
+	- <tr> are now marked as id="tr_$$field{name}" in draw_form;
+	- added setVisible js function;
+	- added onChange option to draw_form_field_select sub;
+	- added onClose option to draw_form_field_datetime sub;
+	- fixed a bug with calendar format;
 
 0.92: 19.02.04 10:40
 
