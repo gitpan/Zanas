@@ -25,17 +25,30 @@ sub fill_in_i18n {
 
 #################################################################################
 
+sub get_request {
+
+	if ($connection) {
+		our $r   = new Zanas::InternalRequest ($connection, $request);
+		our $apr = $r;
+		return;
+	}
+
+	our $use_cgi = $ENV {SCRIPT_NAME} =~ m{index\.pl} || $ENV {GATEWAY_INTERFACE} =~ m{^CGI/} || $conf -> {use_cgi} || $preconf -> {use_cgi} || !$INC{'Apache/Request.pm'};
+
+	our $r   = $use_cgi ? new Zanas::Request () : $_[0];
+	our $apr = $use_cgi ? $r : Apache::Request -> new ($r);
+
+}
+
+
+#################################################################################
+
 sub handler {
 
 	our $_PACKAGE = __PACKAGE__ . '::';
 	
-	my  $use_cgi = $ENV {SCRIPT_NAME} =~ m{index\.pl} || $ENV {GATEWAY_INTERFACE} =~ m{^CGI/} || $conf -> {use_cgi} || $preconf -> {use_cgi} || !$INC{'Apache/Request.pm'};
-	
-	our $r   = $use_cgi ? new Zanas::Request () : $_[0];
-	our $apr = $use_cgi ? $r : Apache::Request -> new ($r);
+	get_request (@_);
 
-	return wx_handler (@_) if $r -> header_in ('User-Agent') =~ /^Zanas/;
-		
 	my $parms = $apr -> parms;
 	our %_REQUEST = %{$parms};
 	
@@ -44,6 +57,7 @@ sub handler {
 	$_REQUEST {__uri} =~ s{/cgi-bin/.*}{/};
 	$_REQUEST {__uri} =~ s{\/\w+\.\w+$}{};
 	$_REQUEST {__uri} =~ s{\?.*}{};
+	$_REQUEST {__uri} =~ s{^/+}{/};
 	
 	$number_format or our $number_format = Number::Format -> new (%{$conf -> {number_format}});
 	
@@ -311,6 +325,11 @@ sub out_html {
 		$r -> content_type ($_REQUEST {__content_type});
 		$r -> header_out ('X-Powered-By' => 'Zanas/' . $Zanas::VERSION);
 
+		if ($] > 5.007) {
+			require Encode;
+			$html = Encode::encode ('windows-1252', $html);
+		}
+
 		if (($conf -> {core_gzip} or $preconf -> {core_gzip}) && ($r -> header_in ('Accept-Encoding') =~ /gzip/)) {
 			$r -> content_encoding ('gzip');
 			unless ($_REQUEST {__is_gzipped}) {
@@ -331,8 +350,10 @@ sub out_html {
 			)      
 			
 		}
+
+
+		$r -> send_http_header;
 		
-		$r -> send_http_header;		
 		$r -> header_only or print $html;
 		
 	}	
@@ -345,17 +366,14 @@ sub pub_handler {
 
 	our $_PACKAGE = __PACKAGE__ . '::';
 	
-	my  $use_cgi = $ENV {SCRIPT_NAME} =~ m{index\.pl} || $ENV {GATEWAY_INTERFACE} =~ m{^CGI/} || $conf -> {use_cgi} || $preconf -> {use_cgi} || !$INC{'Apache/Request.pm'};
-
-	our $r   = $use_cgi ? new Zanas::Request () : $_[0];
-	our $apr = $use_cgi ? $r : Apache::Request -> new ($r);
+	get_request ();
 	
-	if ($use_cgi) {
-		require CGI;
-		require CGI::Cookie;
+	if (ref $apr eq 'Apache::Request') {
+		require Apache::Cookie;
 	}
 	else {
-		require Apache::Cookie;
+		require CGI;
+		require CGI::Cookie;
 	}
 
 	my $parms = $apr -> parms;
@@ -366,9 +384,11 @@ sub pub_handler {
 	$_REQUEST {__uri} =~ s{\/\w+\.\w+$}{};
 
 	$_REQUEST {__uri_chomped} = $_REQUEST {__uri};
-	$_REQUEST {__uri_chomped} =~ s{/$}{};
+	$_REQUEST {__uri_chomped} =~ s{/+$}{};
+	
+print STDERR "\$_REQUEST{__uri_chomped} = $_REQUEST{__uri_chomped}\n";
 
-	our %_COOKIES = $use_cgi ? CGI::Cookie -> fetch : Apache::Cookie -> fetch;
+	our %_COOKIES = $apr eq 'Apache::Request' ? Apache::Cookie -> fetch : CGI::Cookie -> fetch;
 	my $c = $_COOKIES {psid};
 	$_REQUEST {sid} = $c -> value if $c;
 	

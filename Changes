@@ -1,7 +1,24 @@
+0.9954:
+
+	- Zanas::Server introduced;
+	- fixed (?) an encoding bug for mod_perl 1 and Perl 5.8;
+	- type=_info;
+
+0.9953:
+
+	- stripping HTML in check_title;
+
+0.9952:
+
+	- sid uniqueness enforced;
+	- HTML is srtipped out in ALT tag in draw_toolbar_button;
+
 0.9951:
 
 	- transaction related operations are enclosed in eval blocks;
 	- $SQL_VERSION introduced;
+	- cookie authorization introduced;
+	- support for SQL_CALC_FOUND_ROWS added;
 
 0.9950:
 

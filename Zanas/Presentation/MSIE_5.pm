@@ -1097,7 +1097,9 @@ sub draw_toolbar_button {
 
 	my ($bra, $ket) = ();
 	if ($conf -> {core_show_icons} && $options -> {icon}) {	
-		$bra = qq|<img src="/i/buttons/$$options{icon}.gif" alt="$$options{label}" border=0 hspace=0 vspace=1 align=absmiddle>&nbsp;|
+		my $label = $options -> {label};
+		$label =~ s{\<.*?\>}{}g;
+		$bra = qq|<img src="/i/buttons/$$options{icon}.gif" alt="$label" border=0 hspace=0 vspace=1 align=absmiddle>&nbsp;|
 	}
 	else {
 		$bra = '<b>[';

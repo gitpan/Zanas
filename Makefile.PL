@@ -11,6 +11,8 @@ WriteMakefile(
 	'Storable'		=> '',
 	'MIME::Base64'		=> '',
 	'Time::HiRes'		=> '',
+	'Config::ApacheFormat'  => '',
+	'File::Temp'		=> '',
     },
     ($] >= 5.005 ?    
 	(ABSTRACT_FROM => 'Zanas.pm', 

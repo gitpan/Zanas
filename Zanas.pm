@@ -9,6 +9,7 @@ use Zanas::Content;
 use Zanas::Apache;
 use Zanas::SQL;
 use Zanas::Request;
+use Zanas::InternalRequest;
 
 ################################################################################
 
@@ -256,7 +257,7 @@ print STDERR "\rZanas.pm: loading ("  . __PACKAGE__ .  ") ok.\n";
 
 package Zanas;
 
-$VERSION = '0.9951';
+$VERSION = '0.9954';
 
 =head1 NAME
 

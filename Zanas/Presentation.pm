@@ -115,6 +115,8 @@ sub check_title {
 	my ($options) = @_;
 
 	$options -> {title} ||= $options -> {label};
+	$options -> {title} =~ s{\<.*?\>}{}g;	
+	$options -> {title} =~ s{^(\&nbsp\;)+}{};	
 	$options -> {title} =~ s{\"}{\&quot\;}g;	
 	$options -> {title} = qq{title="$$options{title}"} if length $options -> {title};
 
@@ -157,6 +159,35 @@ sub check_href {
 	}		
 
 
+}
+
+################################################################################
+
+sub draw__info {
+
+	my ($data) = @_;
+	
+	draw_table (
+	
+		sub {
+			draw_text_cells ({}, [
+				$i -> {id},
+				{label => $i -> {label}, max_len => 10000000},
+			])
+		},
+		
+		$data,
+		
+		{		
+			
+			title => {label => 'Информация о версиях'},
+			
+			lpt => 1,
+			
+		},
+	
+	);
+	
 }
 
 1;

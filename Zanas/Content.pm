@@ -64,14 +64,9 @@ sub get_user {
 
 	return if $_REQUEST {type} eq '_static_files';
 	
-print STDERR "get_user: \$_REQUEST {sid}   = $_REQUEST{sid}\n";
-print STDERR "get_user: \$ENV{HTTP_COOKIE} = $ENV{HTTP_COOKIE}\n";
-
 	if ($preconf -> {core_auth_cookie} && $ENV{HTTP_COOKIE} =~ /[^p]sid=(\d+)/ && !defined $_REQUEST {sid}) {
 		$_REQUEST {sid} ||= $1;
 	}
-
-print STDERR "get_user: \$_REQUEST {sid}   = $_REQUEST{sid}\n";
 	
 	sql_do_refresh_sessions ();
 
@@ -140,7 +135,10 @@ EOS
 			if ($id_session) {
 				$_REQUEST {sid} = $id_session;
 			} else {
-				$_REQUEST {sid} = int (rand() * 10000000000);
+				while (1) {
+					$_REQUEST {sid} = int (time () * rand ());
+					last if 0 == sql_select_scalar ('SELECT COUNT(*) FROM sessions WHERE id = ?', $_REQUEST {sid});
+				}
 				sql_do ("INSERT INTO sessions (id, id_user, id_role) VALUES (?, ?, ?)", $_REQUEST {sid}, $user -> {id}, $id_role);
 				sql_do_refresh_sessions ();
 			}
@@ -200,6 +198,8 @@ sub redirect {
 	
 	$options ||= {};
 	$options -> {kind} ||= 'internal';
+
+#print STDERR "redirect ($url): " . Dumper ($options);
 	
 	if ($options -> {kind} eq 'internal') {
 		$r -> internal_redirect ($url);
@@ -267,7 +267,7 @@ sub select__static_files {
 	$ENV{PATH_INFO} =~ /\w+\.\w+/ or $r -> filename =~ /\w+\.\w+/;
 	
 	my $filename = $&;
-
+	
 	my $content_type = 
 		$filename =~ /\.js/ ? 'application/x-javascript' :
 		$filename =~ /\.css/ ? 'text/css' :
@@ -414,8 +414,150 @@ sub set_cookie {
 	else {
 		require CGI::Cookie;
 		my $cookie = CGI::Cookie -> new (@_);
-		$r -> header_out ('cookie', $cookie);
+		$r -> header_out ('cookie', $cookie -> as_string);
 	}
+
+}
+
+################################################################################
+
+sub select__info {
+	
+	my $os_name = $^O;
+	if ($^O eq 'MSWin32') {
+		
+		eval {
+			require Win32;
+			my ($string, $major, $minor, $build, $id) = Win32::GetOSVersion ();
+			my $imm = $id . $major . $minor;
+			$os_name = 'MS Windows ' . (
+				$imm == 140 ? '95 ' :
+				$imm == 1410 ? '98 ' :
+				$imm == 1490 ? 'Me ' :
+				$imm == 2351 ? 'NT 3.51 ' :
+				$imm == 240 ? 'NT 4.0 ' :
+				$imm == 250 ? '2000 ' :
+				$imm == 251 ? 'XP ' :
+				"Unknown ($id . $major . $minor)"
+			) . $string . " Build $build"
+		};	
+	}
+		
+	my @z = grep {/\d/} split /(\d)/, $Zanas::VERSION;
+	
+	my $word = '';
+	my @c = qw(b d f g k l m n p q r s t v x z);
+	my @v = qw(a e i o u);
+	my $n = $Zanas::VERSION * 10000;
+	$n = ($n * 1973 + 112) % 11111;
+	$word .= uc $c [$n % @c];
+	$n = ($n * 1973 + 112) % 11111;
+	$word .= $v [$n % @v];
+	$n = ($n * 1973 + 112) % 11111;
+	$word .= $c [$n % @c];
+	$n = ($n * 1973 + 112) % 11111;
+	$word .= $v [$n % @v];
+	$n = ($n * 1973 + 112) % 11111;
+	$word .= $c [$n % @c];
+
+	return [
+	
+		{
+			id    => 'OS',
+			label => $os_name,
+		},
+
+		{
+			id    => 'Perl',
+			label => (sprintf "%vd", $^V),
+		},
+	
+		{
+			id    => 'DBMS',
+			label => $SQL_VERSION -> {string},
+		},
+
+		{
+			id    => 'DB driver',
+			label => 'DBD::' . $SQL_VERSION -> {driver} . ' ' . ${'DBD::' . $SQL_VERSION -> {driver}.'::VERSION'},
+		},
+
+		{			
+			id    => '&nbsp;&nbsp;&nbsp;loaded from',
+			label => '&nbsp;&nbsp;&nbsp;' . $INC {'DBD/' . $SQL_VERSION -> {driver} . '.pm'},
+		},
+
+		{
+			id    => 'DB maintainer',
+			label => 'DBIx::ModelUpdate ' . $DBIx::ModelUpdate::VERSION,
+		},
+
+		{			
+			id    => '&nbsp;&nbsp;&nbsp;loaded from',
+			label => '&nbsp;&nbsp;&nbsp;' . $INC {'DBIx/ModelUpdate.pm'},
+		},
+
+		{
+			
+			id    => 'WEB server',
+			label => $ENV {SERVER_SOFTWARE},
+		
+		},	
+		
+		{			
+			id    => 'Parameters module',
+			label => ref $apr,
+		},
+		
+		{			
+			id    => 'Engine',
+			label => $Zanas::VERSION,
+		},
+
+		{			
+			id    => 'Engine [commercial]',
+			label => "Zanas $z[2].$z[3]$z[4] ($word)",
+		},
+
+		{			
+			id    => 'Engine [a la M$]',
+			label => "Zanas 200" . ($z[1] - 4) . " Amazing Server SP $z[4] Build $z[4]$z[3]$z[2]",
+		},
+
+		{			
+			id    => 'Engine [a la orcl]',
+			label => "Zanas Enterprise " . ($z[1] + 4) . "z (" . ($z[1] + 4) . ".$z[2].$z[3].$z[4].0)",
+		},
+
+		{			
+			id    => 'Engine [automotive]',
+			label => "Zanas ${word}ia GLX Turbo",
+		},
+
+		{			
+			id    => 'Application package',
+			label => ($_PACKAGE =~ /(\w+)/),
+		},
+				
+		{			
+			id    => '&nbsp;&nbsp;&nbsp;loaded from',
+			label => '&nbsp;&nbsp;&nbsp;' . $PACKAGE_ROOT,
+		},
+		
+#		{			
+#			id    => '$preconf',
+#			label => '<pre>' . Dumper ($preconf),
+#		},
+
+#		{			
+#			id    => '$conf',
+#			label => '<pre>' . Dumper ($conf),
+#		},
+		
+
+#		map {{id => $_, label => $ENV {$_}}} sort keys %ENV
+
+	]	
 
 }
 
