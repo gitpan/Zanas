@@ -82,6 +82,31 @@ function setVisible (id, isVisible) {
 	document.getElementById (id).style.display = isVisible ? 'block' : 'none'
 };
 
+function setSelectOption (name, id, label) { 
+	var selects = document.getElementsByName (name);
+	if (selects == null || selects.length == 0) {
+		return;
+	}
+	var select = selects [0];
+	
+	for (var i = 0; i < select.options.length; i++) {
+		if (select.options [i].value == id) {
+			select.selectedIndex = i;
+			window.focus ();
+			select.focus ();
+			return;
+		}
+	}	
+	
+	var option = document.createElement ("OPTION");
+	select.options.add (option);
+	option.innerText = label;
+	option.value = id;
+	select.selectedIndex = select.options.length - 1;
+	window.focus ();
+	select.focus ();
+};
+
 function blur_all_inputs () {
 	var inputs = document.body.getElementsByTagName ('input');
 	if (!inputs) return 1;

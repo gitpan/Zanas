@@ -2,6 +2,14 @@ no warnings;
 
 ################################################################################
 
+sub js_set_select_option {
+	my ($name, $item) = @_;	
+	my $question = js_escape ($i18n -> {confirm_close_vocabulary} . ' ' . $item -> {label} . '?');
+	return 'javaScript:if (window.confirm(' . $question . ')) {window.opener.setSelectOption(' . js_escape ($name) . ', '	. $item -> {id} . ', ' . js_escape ($item -> {label}) . '); window.close();}';
+}
+
+################################################################################
+
 sub register_hotkey {
 
 	my ($hashref, $type, $data, $options) = @_;
@@ -53,7 +61,7 @@ sub hotkey {
 
 	my ($def) = $_[0];
 	
-	return if $def -> {off};
+#	return if $def -> {off};
 	
 	$def -> {type} ||= 'href';
 	if ($def -> {code} =~ /^F(\d+)/) {
@@ -90,9 +98,16 @@ sub handle_hotkey_href {
 	my $ctrl = $r -> {ctrl} ? '' : '!';
 	my $alt  = $r -> {alt}  ? '' : '!';
 
+	$r -> {off} and return <<EOJS;
+		if (window.event.keyCode == $$r{code} && $alt window.event.altKey && $ctrl window.event.ctrlKey) {
+			event.keyCode      = 0;
+			event.returnValue  = false;
+			event.cancelBubble = true;
+		}
+EOJS
+
 	<<EOJS
 		if (window.event.keyCode == $$r{code} && $alt window.event.altKey && $ctrl window.event.ctrlKey) {
-//			window.location.href = document.getElementById ('$$r{data}').href + '&_salt=@{[rand]}';
 			var a = document.getElementById ('$$r{data}');
 			activate_link (a.href, a.target);
 			event.keyCode      = 0;
@@ -174,12 +189,17 @@ sub draw_page {
 
 	if ($_REQUEST {error}) {
 	
+		my $focus = '';		
+		if ($_REQUEST {error} =~ s{^\#(\w+)\#\:}{}) {
+			$focus = "var e = window.parent.document.getElementsByName('$1'); e[0].focus();";
+		}
+
 		my $message = js_escape ($_REQUEST {error});
 				
 		my $html = <<EOH;
 			<html>
 				<head></head>
-				<body onLoad="history.go (-1); alert($message);">
+				<body onLoad="$focus history.go (-1); alert($message);">
 				</body>
 			</html>				
 EOH
@@ -384,7 +404,7 @@ EOF
 							inputs [i].blur ();
 						}					
 					}
-
+					
 EOF
 				</script>
 
@@ -454,20 +474,15 @@ sub draw_menu {
 			<td class=bgr8 rowspan=2><img src="/i/toolbars/n_right.gif" border=0></td>
 EOH
 	
-#		my $aclass = $$type{name} eq $cursor ? 'lnk1' : 'lnk0';
-#		my $tclass = $$type{name} eq $cursor ? 'bgr4' : 'bgr8';
-
-		my ($aclass, $tclass);
+		my $is_active = $type -> {is_active};
 		if ($type -> {role}) {
-			$aclass = "$$type{name}_for_$$type{role}" eq $cursor ? 'lnk1' : 'lnk0';
-			$tclass = "$$type{name}_for_$$type{role}" eq $cursor ? 'bgr4' : 'bgr8';
+			$is_active ||= ($cursor && "$$type{name}_for_$$type{role}" eq $cursor);
 		} else {
-			$aclass = $$type{name} eq $cursor ? 'lnk1' : 'lnk0';
-			$tclass = $$type{name} eq $cursor ? 'bgr4' : 'bgr8';
+			$is_active ||= ($cursor && $$type{name} eq $cursor);
 		}
 
-#			<td class=$tclass nowrap>&nbsp;&nbsp;<a class=$aclass id="main_menu_$$type{name}" href="/?type=$$type{name}&sid=$_REQUEST{sid}@{[$_REQUEST{period} ? '&period=' . $_REQUEST {period} : '']}">$$type{label}</a>&nbsp;&nbsp;</td>
-
+		my $aclass = $is_active ? 'lnk1' : 'lnk0';
+		my $tclass = $is_active ? 'bgr4' : 'bgr8';
 
 		my $onhover = '';
 		if (ref $type -> {items} eq ARRAY) {
@@ -544,8 +559,7 @@ EOH
 			$type -> {href} .= "&role=$$type{role}" if $type -> {role};
 			check_href ($type);	
 			
-			my $onclick = $type -> {href} =~ /^javascript\:/ ? $' : "parent.location.href='$$type{href}'";
-#			my $onclick = $type -> {href} =~ /^javascript\:/ ? $' : "open('$$type{href}', '_top')";
+			my $onclick = $type -> {href} =~ /^javascript\:/i ? $' : "parent.location.href='$$type{href}'";
 			$onclick =~ s{[\n\r]}{}gsm;
 			$onclick =~ s{window\.open\('(.*?)'\, '_self'\)}{parent.location.href='$1'};
 					
@@ -902,7 +916,7 @@ EOH
 			undef $_FLAG_ADD_LAST_QUERY_STRING;
 			
 			my $oncontextmenu = '';
-			if (@__types) {
+			if (@__types && $conf -> {core_hide_row_buttons} > -1) {
 				$menus .= draw_vert_menu ($i, \@__types);
 				$oncontextmenu  = qq{ oncontextmenu="open_popup_menu('$i'); window.event.keyCode = 0; window.event.cancelBubble = true; window.event.returnValue = false;"};
 			}
@@ -1166,8 +1180,10 @@ sub draw_toolbar_button {
 	$vert_line -> {label} =~ s{[\[\]]}{}g;
 	push @__global_types, $vert_line;
 	
+	my $id = $options -> {id} || $options;
+	
 	return <<EOH
-		<td nowrap>&nbsp;<a class=lnk0 href="$$options{href}" id="$options" target="$$options{target}">${bra}$$options{label}${ket}</b></a></td>
+		<td nowrap>&nbsp;<a class=lnk0 href="$$options{href}" id="$id" target="$$options{target}">${bra}$$options{label}${ket}</b></a></td>
 		<td><img height=15 hspace=4 src="/i/toolbars/razd1.gif" width=2 border=0></td>
 EOH
 
@@ -1349,8 +1365,11 @@ sub draw_form_field {
 
 	return '' if $field -> {off};
 	
-	my $type = $field -> {type};
-	$type = 'static' if ($_REQUEST {__read_only} or $field -> {read_only}) and $type ne 'hgroup';	
+	my $type = $field -> {type};	
+	if (($_REQUEST {__read_only} or $field -> {read_only}) and $type ne 'hgroup') {
+		$field -> {value} = $data -> {$field -> {name}} ? $i18n -> {yes} : $i18n -> {no} if ($field -> {type} eq 'checkbox');
+		$type = 'static';
+	}	
 	$type ||= 'string';
 	
 	my $html = &{"draw_form_field_$type"} ($field, $data);
@@ -1379,21 +1398,29 @@ EOH
 
 ################################################################################
 
+sub esc_href {
+	my $esc_query_string = $_REQUEST {__last_query_string};
+	$esc_query_string =~ y{-_.}{+/=};
+	my $query_string = MIME::Base64::decode ($esc_query_string);
+	my $salt = time (); #rand ();
+	$query_string =~ s{salt\=[\d\.]+}{salt=$salt}g;
+	$query_string =~ s{sid\=[\d\.]+}{sid=$_REQUEST{sid}}g;
+	return $_REQUEST {__uri} . '?' . $query_string;
+}
+
+################################################################################
+
 sub draw_form {
 
 	my ($options, $data, $fields) = @_;
 	
 	if ($conf -> {core_auto_esc} && $_REQUEST {__last_query_string}) {
-		my $esc_query_string = $_REQUEST {__last_query_string};
-		$esc_query_string =~ y{-_.}{+/=};
-		my $query_string = MIME::Base64::decode ($esc_query_string);
-		my $salt = time (); #rand ();
-		$query_string =~ s{salt\=[\d\.]+}{salt=$salt}g;
-		$query_string =~ s{sid\=[\d\.]+}{sid=$_REQUEST{sid}}g;
-		$options -> {esc} = $_REQUEST {__uri} . '?' . $query_string;
+		$options -> {esc} = esc_href ();
 	}	
 
-	my $action = exists $options -> {action} ? $options -> {action} : 'update';
+	my $menu = $options -> {menu} ? draw_menu ($options -> {menu}) : '';
+
+	my $action = exists $options -> {action} ? $options -> {action} : 'update';	
 	
 	my $type = $options -> {type};
 	$type ||= $_REQUEST{type};
@@ -1457,7 +1484,12 @@ $path<table cellspacing=1 cellpadding=5 width="100%">
 EO
 				$trs
 			</form>
-		</table>$bottom_toolbar
+		</table>
+		
+		$bottom_toolbar
+		
+		$menu
+		
 EOH
 
 }
@@ -1521,7 +1553,9 @@ sub draw_form_field_string {
 	
 	$tabindex++;
 	
-	return qq {<input $attributes onFocus="scrollable_table_is_blocked = true; q_is_focused = true" onBlur="scrollable_table_is_blocked = false; q_is_focused = false" autocomplete="off" type="text" maxlength="$$options{max_len}" name="_$$options{name}" value="$s" $size onKeyPress="if (window.event.keyCode != 27) is_dirty=true" tabindex=$tabindex>};
+	my $autocomplete = $options -> {autocomplete} ? "vcard_name='vCard.$$options{autocomplete}'" : "autocomplete='off'";
+	
+	return qq {<input $attributes onFocus="scrollable_table_is_blocked = true; q_is_focused = true" onBlur="scrollable_table_is_blocked = false; q_is_focused = false" $autocomplete type="text" maxlength="$$options{max_len}" name="_$$options{name}" value="$s" $size onKeyPress="if (window.event.keyCode != 27) is_dirty=true" tabindex=$tabindex>};
 	
 }
 
@@ -1725,11 +1759,25 @@ sub draw_form_field_radio {
 	
 	my $html = '';
 		
+	$html .= '<table border=0 cellspacing=2 cellpadding=0>';
 	foreach my $value (@{$options -> {values}}) {
 		$tabindex++;
 		my $checked = $data -> {$options -> {name}} == $value -> {id} ? 'checked' : '';
-		$html .= qq {<input onFocus="scrollable_table_is_blocked = true; q_is_focused = true" onBlur="scrollable_table_is_blocked = false; q_is_focused = false" type="radio" name="_$$options{name}" value="$$value{id}" $checked onClick="is_dirty=true" tabindex=$tabindex>&nbsp;$$value{label} <br>};
+		$html .= qq {<tr><td><input id="$value" onFocus="scrollable_table_is_blocked = true; q_is_focused = true" onBlur="scrollable_table_is_blocked = false; q_is_focused = false" type="radio" name="_$$options{name}" value="$$value{id}" $checked onClick="is_dirty=true" tabindex=$tabindex>&nbsp;$$value{label}};
+		
+		if ($value -> {values}) {
+			my $s = draw_form_field_select ({
+				values => $value -> {values},
+				name   => $value -> {name},
+				empty  => $value -> {empty},
+			}, $data);
+			$s =~ s{\<select}{<select style="display:expression(getElementById('$value').checked ? 'block' : 'none')"};
+			$html .= '<td>';	
+			$html .= $s;
+		}
+		
 	}
+	$html .= '</table>';
 		
 	return $html;
 	
@@ -1898,6 +1946,19 @@ sub draw_form_field_select {
 		$html .= qq {<option value="$$value{id}" $selected>$label</option>\n};
 	}
 	
+	if (defined $options -> {other}) {
+		check_href ($options -> {other});
+		$options -> {other} -> {width}  ||= 600;
+		$options -> {other} -> {height} ||= 400;
+		$html .= qq {<option value=-1>${$$options{other}}{label}</option>};
+		$options -> {onChange} = <<EOJS;
+			if (this.options[this.selectedIndex].value == -1 && window.confirm ('$$i18n{confirm_open_vocabulary}')) {
+				var w = window.open ('${$$options{other}}{href}','_dialog_$$options{name}', 'directories=0,location=0,menubar=0,status=0,titlebar=0,toolbar=0,width=${$$options{other}}{width},height=${$$options{other}}{height}');
+				w.focus ();
+			}
+EOJS
+	}
+
 	my $multiple = $options -> {rows} > 1 ? "multiple size=$$options{rows}" : '';
 	
 	$tabindex ++;
@@ -1921,6 +1982,7 @@ sub draw_esc_toolbar {
 	check_href ($options);
 
 	draw_centered_toolbar ($options, [
+		@{$options -> {left_buttons}},
 		@{$options -> {additional_buttons}},
 		{
 			icon => 'cancel', 
@@ -1928,6 +1990,7 @@ sub draw_esc_toolbar {
 			href => $options -> {href}, 
 			id => 'esc'
 		},
+		@{$options -> {right_buttons}},
 	])
 	
 }
@@ -1949,6 +2012,7 @@ sub draw_ok_esc_toolbar {
 	$options -> {label_cancel} ||= $i18n -> {cancel};
 
 	draw_centered_toolbar ($options, [
+		@{$options -> {left_buttons}},
 		{
 			icon => 'ok',     
 			label => $options -> {label_ok}, 
@@ -1964,6 +2028,7 @@ sub draw_ok_esc_toolbar {
 			href => $options -> {href}, 
 			id => 'esc'
 		},
+		@{$options -> {right_buttons}},
 	 ])
 	
 }
@@ -1975,6 +2040,7 @@ sub draw_close_toolbar {
 	my ($options) = @_;		
 
 	draw_centered_toolbar ({}, [
+		@{$options -> {left_buttons}},
 		@{$options -> {additional_buttons}},
 		{
 			icon => 'ok',     
@@ -1982,6 +2048,7 @@ sub draw_close_toolbar {
 			href => 'javascript:window.close()',
 			id => 'esc',
 		},
+		@{$options -> {right_buttons}},
 	 ])
 	
 }
@@ -2002,9 +2069,11 @@ sub draw_back_next_toolbar {
 	$name ||= 'form';
 
 	draw_centered_toolbar ($options, [
+		@{$options -> {left_buttons}},
 		{icon => 'back', label => $i18n -> {back}, href => $back, id => 'esc'},
 		@{$options -> {additional_buttons}},
 		{icon => 'next', label => $i18n -> {'next'}, href => '#', onclick => "document.$name.submit()"},
+		@{$options -> {right_buttons}},
 	])
 	
 }
@@ -2250,6 +2319,66 @@ sub draw_select_cell {
 	my $multiple = $data -> {rows} > 1 ? "multiple size=$$options{rows}" : '';
 
 	return qq {<td $attributes><nobr><select name="$$data{name}" onChange="is_dirty=true; $$options{onChange}" onkeypress="typeAhead()" $multiple>$html</select></nobr></td>};
+	
+}
+
+################################################################################
+
+sub draw_form_field_popup {
+
+	my ($options, $data) = @_;
+	
+	$options -> {max_len} ||= $conf -> {max_len};	
+	$options -> {max_len} ||= $options -> {size};
+	$options -> {max_len} ||= 30;		
+	
+	my $s = $options -> {value};
+	$s ||= $$data{$$options{name} . '_label'};
+	if ($options -> {picture}) {
+		$s = format_picture ($s , $options -> {picture});
+		$s =~ s/^\s+//g; 
+	}
+	
+	$s =~ s/\"/\&quot\;/gsm; #";
+	
+	my $attributes = dump_attributes ($options -> {attributes});
+	
+	my $size = $options -> {size} ? "size=$$options{size} maxlength=$$options{size}" : "size=120";
+	
+	$tabindex++;
+		
+	check_href ($options);
+
+	return <<EOH
+		<input type="hidden" name="_$$options{name}" value="$$data{$$options{name}}">
+		<nobr>
+			<input 
+				readonly
+				$attributes 
+				onFocus="scrollable_table_is_blocked = true; q_is_focused = true" 
+				onBlur="scrollable_table_is_blocked = false; q_is_focused = false" 
+				type="text" 
+				maxlength="$$options{max_len}" 
+				name="__$$options{name}_label" 
+				value="$s" 
+				$size 
+				onactivate="if (document.readyState == 'complete') {_$$options{name}_handler ()}"
+				onKeyPress="if (window.event.keyCode != 27) is_dirty=true" 
+				onHelp="_$$options{name}_handler ()"
+				onClick="_$$options{name}_handler ()"
+				tabindex=$tabindex
+			>&nbsp;(F1)
+		<nobr>
+		
+		<script>
+			function _$$options{name}_handler () {
+				var w = window.open ('$$options{href}','_dialog_$$options{name}', 'directories=0,location=0,menubar=0,status=0,titlebar=0,toolbar=0,width=600,height=400');
+				w.focus ();
+				event.returnValue  = false;
+				event.cancelBubble = true;
+			}
+		</script>
+EOH
 	
 }
 

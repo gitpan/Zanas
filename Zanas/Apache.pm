@@ -108,6 +108,10 @@ sub handler {
 		Print                    => 'Печать',
 		F1                       => 'F1: Справка',
 		Select                   => 'Выбрать',
+		yes                      => 'Да', 
+		no                       => 'Нет', 
+		confirm_open_vocabulary  => 'Открыть окно редактирования справочника?',
+		confirm_close_vocabulary => 'Вы выбрали',
    	});
    	
    	fill_in_i18n ('ENG', {
@@ -127,6 +131,10 @@ sub handler {
 		Print                    => 'Print',
 		F1                       => 'F1: Help',
 		Select                   => 'Select',
+		yes                      => 'Yes', 
+		no                       => 'No', 
+		confirm_open_vocabulary  => 'Open the vocabulary window?',
+		confirm_close_vocabulary => 'Your choice is',
    	});
 	
    	fill_in_i18n ('FRE', {
@@ -146,6 +154,10 @@ sub handler {
 		Print                    => 'Imprimer',
 		F1                       => 'F1: Aide',
 		Select                   => 'Sйlection',
+		yes                      => 'Oui', 
+		no                       => 'Non', 
+		confirm_open_vocabulary  => 'Ouvrir le vocabulaire?',
+		confirm_close_vocabulary => 'Vous avez choisi',
    	});   	
    	   	
 	$_REQUEST {type} = '_static_files' if $r -> uri =~ m{/(navigation\.js|0\.html|0\.gif|zanas\.css)};

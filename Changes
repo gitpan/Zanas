@@ -1,3 +1,17 @@
+0.9972:
+
+	- added nested <select> for radio;
+	- input highlighting after validation fail: '#_my_field#: Blah-blah-blah ...';
+	- added menu option in draw_form;
+	- added autocomplete option in draw_form_field_string sub;
+	- added left_buttons & right_buttons options in draw_form;
+	- new input field type: popup;
+	- added 'other' option for select form input;
+	- draw_vert_menu fixed for case insensitivity with 'javaScript:' match (by pashka);
+	- core_hide_row_buttons => -1 allowed (no popup menus at all);
+	- added esc_href sub;
+	- added js_set_select_option;
+
 0.9971:
 
 	- draw_row_button fixed for the case where $conf -> {core_hide_row_buttons} == 2 and off is true;
