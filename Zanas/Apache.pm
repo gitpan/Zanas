@@ -29,9 +29,9 @@ sub handler {
 	
 	$number_format or our $number_format = Number::Format -> new (%{$conf -> {number_format}});
 	
-	require_fresh ($_PACKAGE . '::Config');
-
    	sql_reconnect ();
+
+	require_fresh ($_PACKAGE . '::Config');
 
    	$conf -> {dbf_dsn} and our $dbf = DBI -> connect ($conf -> {dbf_dsn}, {RaiseError => 1});
 	

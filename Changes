@@ -1,3 +1,8 @@
+0.97: 10.03.2004 
+
+	- sql_reconnect and Config reloading order fixed;
+	- target option added in draw_toolbar_button sub;
+
 0.96: 09.03.2004 17:00
 
 	- target option added in draw_toolbar sub;

@@ -840,7 +840,7 @@ sub draw_toolbar_button {
 	} 
 	
 	return <<EOH
-		<td nowrap>&nbsp;<a class=lnk0 href="$$options{href}" id="$options"><b>[$$options{label}]</b></a></td>
+		<td nowrap>&nbsp;<a class=lnk0 href="$$options{href}" id="$options" target="$$options{target}"><b>[$$options{label}]</b></a></td>
 		<td><img height=15 hspace=4 src="/i/toolbars/razd1.gif" width=2 border=0></td>
 EOH
 
