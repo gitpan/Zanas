@@ -105,6 +105,12 @@ function focus_on_first_input (td) {
 	return 0;
 }
 
+function blockEvent () {
+	window.event.keyCode = 0;	
+	window.event.cancelBubble = true;
+	window.event.returnValue = false;
+}
+
 function handle_basic_navigation_keys () {
 
 	if (scrollable_table && !scrollable_table_is_blocked) {
@@ -141,58 +147,92 @@ function handle_basic_navigation_keys () {
 
 		}
 
+// down arrow
+
 		if (window.event.keyCode == 40 && scrollable_table_row < scrollable_rows.length - 1) {
 
 			var effective_scrollable_cell = Math.min (scrollable_table_row_cell, scrollable_rows [scrollable_table_row].cells.length - 1);
 			scrollable_rows [scrollable_table_row].cells [effective_scrollable_cell].className = scrollable_table_row_cell_old_style;
 			scrollable_table_row ++;
 			effective_scrollable_cell = Math.min (scrollable_table_row_cell, scrollable_rows [scrollable_table_row].cells.length - 1);
-			scrollable_table_row_cell_old_style = scrollable_rows [scrollable_table_row].cells [effective_scrollable_cell].className;
-			scrollable_rows [scrollable_table_row].cells [effective_scrollable_cell].className = 'txt6';
-			scrollable_rows [scrollable_table_row].cells [effective_scrollable_cell].scrollIntoView (false);
-			window.event.keyCode = 0;	
-			window.event.cancelBubble = true;
-			window.event.returnValue = false;
-			focus_on_first_input (scrollable_rows [scrollable_table_row].cells [effective_scrollable_cell]);
+			var cell = scrollable_rows [scrollable_table_row].cells [effective_scrollable_cell];
+			scrollable_table_row_cell_old_style = cell.className;
+			cell.className = 'row-cell-hilite';
+			cell.scrollIntoView (false);
+			blockEvent ();
+			focus_on_first_input (cell);
 			return false;
 
 		}
 
-		if (window.event.keyCode == 38 && scrollable_table_row > 0) {
+// up arrow
+
+		if (window.event.keyCode == 38 && scrollable_table_row > 0) { 
 
 			var effective_scrollable_cell = Math.min (scrollable_table_row_cell, scrollable_rows [scrollable_table_row].cells.length - 1);
-			scrollable_rows [scrollable_table_row].cells [effective_scrollable_cell].className = scrollable_table_row_cell_old_style;
+
+			if (select_rows) {
+				for (var i = 0; i < scrollable_rows [scrollable_table_row].cells.length - 1; i++) {
+					scrollable_rows [scrollable_table_row].cells [i].className = scrollable_table_row_cell_old_styles [i];
+				}
+			}
+			else {
+				scrollable_rows [scrollable_table_row].cells [effective_scrollable_cell].className = scrollable_table_row_cell_old_style;
+			}
+
 			scrollable_table_row --;
-			effective_scrollable_cell = Math.min (scrollable_table_row_cell, scrollable_rows [scrollable_table_row].cells.length - 1);
-			scrollable_table_row_cell_old_style = scrollable_rows [scrollable_table_row].cells [effective_scrollable_cell].className;
-			scrollable_rows [scrollable_table_row].cells [effective_scrollable_cell].className = 'txt6';
-			scrollable_rows [scrollable_table_row].cells [effective_scrollable_cell].scrollIntoView (false);
-			window.event.keyCode = 0;	
-			window.event.cancelBubble = true;
-			window.event.returnValue = false;
-			focus_on_first_input (scrollable_rows [scrollable_table_row].cells [effective_scrollable_cell]);
+
+			if (select_rows) {
+			
+				scrollable_table_row_cell_old_styles = new Array ();
+				for (var i = 0; i < scrollable_rows [scrollable_table_row].cells.length - 1; i++) {
+					scrollable_table_row_cell_old_styles [i] = scrollable_rows [scrollable_table_row].cells [i].className;
+					scrollable_rows [scrollable_table_row].cells [i].className = 'row-cell-hilite';
+				}
+				var cell = scrollable_rows [scrollable_table_row].cells [0];
+				focus_on_first_input (cell);
+//				if (cell.offsetTop + cell.offsetParent.offsetTop < document.body.scrollTop) {
+					cell.scrollIntoView (true);
+					blockEvent ();
+//				}
+			}
+			else {
+				effective_scrollable_cell = Math.min (scrollable_table_row_cell, scrollable_rows [scrollable_table_row].cells.length - 1);
+				var cell = scrollable_rows [scrollable_table_row].cells [effective_scrollable_cell];
+				scrollable_table_row_cell_old_style = cell.className;
+				cell.className = 'row-cell-hilite';
+				focus_on_first_input (cell);
+//				if (cell.offsetTop + cell.offsetParent.offsetTop < document.body.scrollTop) {
+					cell.scrollIntoView (true);
+					blockEvent ();
+//				}
+			}
+			
+
+
+
 			return false;
 
 		}
 
-		if (window.event.keyCode == 37 && scrollable_table_row_cell > 0) {
+		if (window.event.keyCode == 37 && scrollable_table_row_cell > 0 && !select_rows) {
 			effective_scrollable_cell = Math.min (scrollable_table_row_cell, scrollable_rows [scrollable_table_row].cells.length - 1);
 			if (effective_scrollable_cell > 0) {
 				scrollable_rows [scrollable_table_row].cells [scrollable_table_row_cell].className = scrollable_table_row_cell_old_style;
 				scrollable_table_row_cell --;
 				scrollable_table_row_cell_old_style = scrollable_rows [scrollable_table_row].cells [scrollable_table_row_cell].className;
-				scrollable_rows [scrollable_table_row].cells [scrollable_table_row_cell].className = 'txt6';
+				scrollable_rows [scrollable_table_row].cells [scrollable_table_row_cell].className = 'row-cell-hilite';
 				focus_on_first_input (scrollable_rows [scrollable_table_row].cells [scrollable_table_row_cell]);
 				return false;
 			}
 		}
 
-		if (window.event.keyCode == 39 && scrollable_table_row_cell < scrollable_rows [scrollable_table_row].cells.length - 1) {
+		if (window.event.keyCode == 39 && scrollable_table_row_cell < scrollable_rows [scrollable_table_row].cells.length - 1 && !select_rows) {
 
 			scrollable_rows [scrollable_table_row].cells [scrollable_table_row_cell].className = scrollable_table_row_cell_old_style;
 			scrollable_table_row_cell ++;
 			scrollable_table_row_cell_old_style = scrollable_rows [scrollable_table_row].cells [scrollable_table_row_cell].className;
-			scrollable_rows [scrollable_table_row].cells [scrollable_table_row_cell].className = 'txt6';
+			scrollable_rows [scrollable_table_row].cells [scrollable_table_row_cell].className = 'row-cell-hilite';
 			focus_on_first_input (scrollable_rows [scrollable_table_row].cells [scrollable_table_row_cell]);
 			return false;
 

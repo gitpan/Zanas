@@ -475,3 +475,65 @@ OPTION {
 TEXTAREA {
 	FONT-SIZE: 11px; COLOR: #000000; FONT-FAMILY: Verdana
 }
+
+
+
+
+
+
+
+.row-cell {
+	FONT-FAMILY: Arial; 
+	FONT-WEIGHT: normal; 
+	FONT-SIZE: 10pt; 
+	COLOR: #000000; 
+	BACKGROUND-COLOR: #ffffff;
+	padding-top: 3px;
+	padding-bottom: 2px;
+}
+.row-button {
+	FONT-FAMILY: Arial; 
+	FONT-WEIGHT: normal; 
+	FONT-SIZE: 10pt; 
+	COLOR: #000000; 
+	BACKGROUND-COLOR: #efefef;
+	padding-top: 3px;
+	padding-bottom: 2px;
+}
+.row-cell-total {
+	FONT-FAMILY: Arial; 
+	FONT-WEIGHT: bold;   
+	FONT-SIZE: 10pt; 
+	COLOR: #000000; 
+	BACKGROUND-COLOR: #efefef;
+	padding-top: 5px;
+	padding-bottom: 5px;
+}
+.row-cell-hilite {
+	FONT-FAMILY: Arial; 
+	FONT-SIZE: 10pt; 
+	COLOR: #000000; 
+	BACKGROUND-COLOR: #dededc;
+	padding-top: 3px;
+	padding-bottom: 2px;
+}
+
+A.row-cell, A.row-cell:link, A.row-cell:active, A.row-cell:hover, A.row-cell:visited {
+	FONT-FAMILY: Arial; 
+	FONT-SIZE: 10pt; 
+	COLOR: #293869; 
+	TEXT-DECORATION: none;
+	BACKGROUND-COLOR: transparent;
+}
+A.row-button, A.row-button:link, A.row-button:active, A.row-button:hover, A.row-button:visited {
+	FONT-FAMILY: Arial; 
+	FONT-SIZE: 10pt; 
+	COLOR: #000000; 
+	TEXT-DECORATION: none;
+	BACKGROUND-COLOR: transparent;
+}
+checkbox.row-cell,
+	padding: 1px;
+	BACKGROUND-COLOR: transparent;
+}
+

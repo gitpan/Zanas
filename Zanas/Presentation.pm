@@ -127,9 +127,13 @@ sub check_href {
 	
 	if ($options -> {href} !~ /^(\#|java|\/i\/)/ and $options -> {href} !~ /[\&\?]sid=/) {
 		$options -> {href} .= "\&sid=$_REQUEST{sid}";
-		$options -> {href} .= '&_salt=' . rand;
 	}	
 	
+	if ($options -> {href} !~ /^(\#|java|\/i\/)/) {	
+		$options -> {href} =~ s/[\&\?]_?salt=[\d\.]+//g;
+		$options -> {href} .= '&salt=' . (rand * time);
+	}	
+
 	if ($_REQUEST{period} and $options -> {href} !~ /^(\#|java)/ and $options -> {href} !~ /\&period=/) {
 		$options -> {href} .= "\&period=$_REQUEST{period}";
 	}

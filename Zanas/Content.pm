@@ -7,8 +7,7 @@ sub b64u_freeze {
 	b64u_encode (
 		$Storable::VERSION ? 
 			Storable::freeze ($_[0]) : 
-			Dumper ($_[0]
-		)
+			Dumper ($_[0])
 	);
 	
 }
@@ -349,14 +348,16 @@ sub redirect {
 ################################################################################
 
 sub log_action_start {
+
+	our $__log_id = $_REQUEST {id};
+	our $__log_user = $_USER -> {id};
 	
 	$_REQUEST {_id_log} = sql_do_insert ('log', {
 		id_user => $_USER -> {id}, 
-		type => $_OLD_REQUEST {type}, 
-		action => $_OLD_REQUEST {action}, 
+		type => $_REQUEST {type}, 
+		action => $_REQUEST {action}, 
 		ip => $ENV {REMOTE_ADDR}, 
 		error => $_REQUEST {error}, 
-		id_object => $_REQUEST {id} || $_OLD_REQUEST {id}, 
 		ip_fw => $ENV {HTTP_X_FORWARDED_FOR},
 		fake => 0,
 	});
@@ -369,8 +370,10 @@ sub log_action_finish {
 	
 	$_REQUEST {_params} = $_REQUEST {params} = Data::Dumper -> Dump ([\%_OLD_REQUEST], ['_REQUEST']);	
 	$_REQUEST {_error}  = $_REQUEST {error};
+	$_REQUEST {_id_object} = $__log_id || $_REQUEST {id} || $_OLD_REQUEST {id};
+	$_REQUEST {_id_user} = $__log_user || $_USER -> {id};
 	
-	sql_do_update ('log', ['params', 'error'], {id => $_REQUEST {_id_log}, lobs => ['params']});
+	sql_do_update ('log', ['params', 'error', 'id_object', 'id_user'], {id => $_REQUEST {_id_log}, lobs => ['params']});
 	delete $_REQUEST {params};
 	delete $_REQUEST {_params};
 	

@@ -1,6 +1,14 @@
+0.9970:
+	
+	- Arial 10pt for tables;
+	- check_href fixed for salt appending;
+	- logging fixed: id of created objects & logon;
+
 0.9969:
 
 	- SQL/mysql.pm: sql_do fixed for temporality (UPDATE watching);
+	- context menus and $conf -> {core_hide_row_buttons} option added;
+	- draw_cell sub added;
 
 0.9968:
 

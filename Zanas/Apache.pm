@@ -221,7 +221,6 @@ EOH
 		};
 		
 		if ($action) {
-		
 			
 			eval { $db -> {AutoCommit} = 0; };
 	

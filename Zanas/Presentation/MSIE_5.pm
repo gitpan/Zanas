@@ -222,7 +222,7 @@ EOH
 	}
 	
 #	$_USER -> {role} eq 'admin' and $_REQUEST{id} or my $lpt = $body =~ s{<table[^\>]*lpt\=\"?1\"?[^\>]*\>}{\<table cellspacing\=1 cellpadding\=5 id='scrollable_table' width\=100\%\>}gsm; #"
-	my $lpt = $body =~ s{<table[^\>]*lpt\=\"?1\"?[^\>]*\>}{\<table cellspacing\=1 cellpadding\=5 id='scrollable_table' width\=100\%\>}gsm; #"
+	my $lpt = $body =~ s{<table[^\>]*lpt\=\"?1\"?[^\>]*\>}{\<table cellspacing\=1 cellpadding\=2 id='scrollable_table' width\=100\%\> <!--**-->}gsm; #"
 	
 	my $menu = draw_menu ($page -> {menu}, $page -> {highlighted_type});
 	
@@ -240,7 +240,9 @@ EOH
 	$mod_perl ||= 'NO mod_perl AT ALL';
 	
 	my $timeout = 1000 * (60 * $conf -> {session_timeout} - 1);
-				
+	
+	$_REQUEST {__select_rows} += 0;
+					
 	return <<EOH;
 		<html>		
 			<head>
@@ -261,6 +263,7 @@ EOJS
 EOCSS
 			
 				<script>
+					var select_rows = $_REQUEST{__select_rows};
 					var scrollable_table = null;
 					var scrollable_table_row = 0;
 					var scrollable_table_row_cell = 0;						
@@ -281,7 +284,7 @@ EOCSS
 						scrollable_table_row = new_scrollable_table_row;
 						scrollable_table_row_cell = new_scrollable_table_row_cell;
 						scrollable_table_row_cell_old_style = scrollable_rows [scrollable_table_row].cells [scrollable_table_row_cell].className;
-						scrollable_rows [scrollable_table_row].cells [scrollable_table_row_cell].className = 'txt6';
+						scrollable_rows [scrollable_table_row].cells [scrollable_table_row_cell].className = 'row-cell-hilite';
 						focus_on_first_input (scrollable_rows [scrollable_table_row].cells [scrollable_table_row_cell]);
 						return false;
 					}
@@ -345,7 +348,7 @@ EOF
 								scrollable_table_row = scrollable_rows.length - 1;
 							}
 							scrollable_table_row_cell_old_style = scrollable_rows [scrollable_table_row].cells [scrollable_table_row_cell].className;
-							scrollable_rows [scrollable_table_row].cells [scrollable_table_row_cell].className = 'txt6';
+							scrollable_rows [scrollable_table_row].cells [scrollable_table_row_cell].className = 'row-cell-hilite';
 						}
 						else {
 							scrollable_table = null;
@@ -653,7 +656,7 @@ sub draw_checkbox_cell {
 	my $checked = $data -> {checked} ? 'checked' : '';
 
 	$data -> {attributes} ||= {};
-	$data -> {attributes} -> {class} ||= 'txt4';
+	$data -> {attributes} -> {class} ||= 'row-cell';
 
 	my $attributes = dump_attributes ($data -> {attributes});
 
@@ -661,7 +664,7 @@ sub draw_checkbox_cell {
 
 	check_title ($data);
 
-	return qq {<td $$data{title} $attributes><input type=checkbox name=$$data{name} $checked value='$value'></td>};
+	return qq {<td $$data{title} $attributes><input type=checkbox class="row-cell" name=$$data{name} $checked value='$value'></td>};
 	
 }
 
@@ -712,10 +715,10 @@ sub draw_text_cell {
 	$data -> {max_len} ||= $data -> {size} || $conf -> {size}  || $conf -> {max_len} || 30;
 	
 	$data -> {attributes} ||= {};
-	$data -> {attributes} -> {class} ||= $options -> {is_total} ? 'header5' : 'txt4';
+	$data -> {attributes} -> {class} ||= $options -> {is_total} ? 'row-cell-total' : 'row-cell';
 	$data -> {attributes} -> {align} ||= 'right' if $options -> {is_total};
 			
-	$options -> {a_class} ||= 'lnk4';
+	$options -> {a_class} ||= 'row-cell';
 	$data -> {a_class} ||= $options -> {a_class};
 	
 	my $txt;
@@ -727,12 +730,14 @@ sub draw_text_cell {
 	else {
 		$txt = trunc_string ($data -> {label}, $data -> {max_len});
 	}
-	
+		
+	$txt =~ s{^\s+}{};
+	$txt =~ s{\s+$}{};
+	$txt = "\&nbsp;$txt\&nbsp;";
+
 	unless ($data -> {no_nobr}) {
 		$txt = '<nobr>' . $txt . '</nobr>';
 	}
-	
-	$txt ||= '&nbsp;';
 	
 	$data -> {href}   ||= $options -> {href} unless $options -> {is_total};
 	$data -> {target} ||= $options -> {target};
@@ -798,7 +803,7 @@ sub draw_table_header {
 	}
 	elsif (!ref $cell && ($cell || !$no_empty_cells)) {
 	
-		return "<th class=bgr4>$cell\&nbsp;";
+		return "<th class='row-cell-total'>\&nbsp;$cell\&nbsp;</th>";
 		
 	}
 	
@@ -812,11 +817,11 @@ sub draw_table_header {
 	check_title ($cell);
 	
 	$cell -> {attributes} ||= {};
-	$cell -> {attributes} -> {class} ||= 'bgr4';
+	$cell -> {attributes} -> {class} ||= 'row-cell-total';
 	
 	my $attributes = dump_attributes ($cell -> {attributes});
 	
-	return "<th $attributes colspan=$$cell{colspan} $cell{title}>$$cell{label}\&nbsp;";
+	return "<th $attributes colspan=$$cell{colspan} $cell{title}>\&nbsp;$$cell{label}\&nbsp;</th>";
 
 }
 
@@ -947,7 +952,7 @@ EOH
 				<input type=hidden name=sid value=$_REQUEST{sid}>
 				$hiddens
 		$div_bra
-				<table cellspacing=1 cellpadding=5 width="100%" id="scrollable_table" lpt=$$options{lpt}>
+				<table cellspacing=1 cellpadding=2 width="100%" id="scrollable_table" lpt=$$options{lpt}> <!----------->
 					$ths					
 						<tbody>
 							$trs
@@ -1288,7 +1293,7 @@ sub draw_row_button {
 		return '';
 	}
 	else {
-		return qq {<td $$options{title} class=bgr4 valign=top nowrap width="1%"><a class=lnk0 href="$$options{href}" onFocus="blur()" target="$$options{target}">$$options{label}</a>};
+		return qq {<td $$options{title} class="row-button" valign=top nowrap width="1%"><a class="row-button" href="$$options{href}" onFocus="blur()" target="$$options{target}">$$options{label}</a>};
 	}
 
 }
