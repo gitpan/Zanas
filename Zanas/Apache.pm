@@ -15,6 +15,8 @@ sub fill_in_i18n {
 		$conf -> {i18n} -> {$lang} -> {$key} ||= $value;
 	}
 	
+	$conf -> {i18n} -> {$lang} -> {_page_title} ||= $conf -> {page_title};
+
 	$conf -> {i18n} -> {$lang} -> {_is_filled} = 1;
 
 };

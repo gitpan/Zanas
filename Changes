@@ -1,3 +1,10 @@
+0.9914: 
+	
+	- fixed minor bug in i18n ($$i18n{toolbar_pager_empty_list} wasn't interpolated);
+	- i18n for page_title implemented ($conf -> {$lang} -> {_page_title});
+	- new form field type introduced: 'iframe';
+	- onChange option for form field type 'file';
+
 0.9913: 
 
 	- new option in draw_form_field_htmleditor: toolbar (by pashka);

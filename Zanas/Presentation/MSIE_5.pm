@@ -201,7 +201,7 @@ EOH
 		return <<EOH;
 			<html xmlns:x="urn:schemas-microsoft-com:office/excel" xmlns:o="urn:schemas-microsoft-com:office:office">
 				<head>
-					<title>$$conf{page_title}</title>
+					<title>$$i18n{_page_title}</title>
 					$_REQUEST{_xml}
 					<style>
 						TD {
@@ -241,7 +241,7 @@ EOH
 	return <<EOH;
 		<html>		
 			<head>
-				<title>$$conf{page_title}</title>
+				<title>$$i18n{_page_title}</title>
 				<meta name="Generator" content="Zanas.pm ver.$Zanas::VERSION; parameters are fetched with $request_package; gateway_interface is $ENV{GATEWAY_INTERFACE}; $mod_perl is in use">
 				$meta_refresh
 				
@@ -1066,7 +1066,7 @@ sub draw_toolbar_pager {
 		$label .= qq {&nbsp;<a href="$url" class=lnk0 id="_pager_prev" onFocus="blur()"><b><u>&lt;</u></b></a>&nbsp;};
 	}
 	
-	$options -> {total} or return '<td nowrap>$$i18n{toolbar_pager_empty_list}<td><img height=15  hspace=4 src="/i/toolbars/razd1.gif" width=2 border=0></td>';
+	$options -> {total} or return qq {<td nowrap>$$i18n{toolbar_pager_empty_list}<td><img height=15  hspace=4 src="/i/toolbars/razd1.gif" width=2 border=0></td>};
 	
 	$label .= ($start + 1) . ' - ' . ($start + $$options{cnt}) . $$i18n{toolbar_pager_of} . $$options{total};
 	
@@ -1373,7 +1373,7 @@ EOH
 sub draw_form_field_file {
 	my ($options, $data) = @_;	
 	$options -> {size} ||= 60;
-	return qq {<input onFocus="scrollable_table_is_blocked = true; q_is_focused = true" onBlur="scrollable_table_is_blocked = false; q_is_focused = false" type="file" name="_$$options{name}" size=$$options{size} onKeyPress="if (window.event.keyCode != 27) is_dirty=true">};
+	return qq {<input onFocus="scrollable_table_is_blocked = true; q_is_focused = true" onBlur="scrollable_table_is_blocked = false; q_is_focused = false" type="file" name="_$$options{name}" size=$$options{size} onKeyPress="if (window.event.keyCode != 27) is_dirty=true" onChange="is_dirty=true; $$options{onChange}">};
 }
 
 ################################################################################
@@ -1638,10 +1638,9 @@ sub draw_form_field_select {
 	unshift @{$options -> {values}}, {id => 0, label => $options -> {empty}} if exists $options -> {empty};
 
 	foreach my $value (@{$options -> {values}}) {
-		
 		my $selected = (($value -> {id} eq $data -> {$options -> {name}}) or ($value -> {id} eq $options -> {value})) ? 'selected' : '';
 		my $label = trunc_string ($value -> {label}, $options -> {max_len});						
-		$html .= qq {<option value="$$value{id}" $selected>$label</option>};
+		$html .= qq {<option value="$$value{id}" $selected>$label</option>\n};
 	}
 	
 	my $multiple = $options -> {rows} > 1 ? "multiple size=$$options{rows}" : '';
@@ -1914,6 +1913,23 @@ sub draw_form_field_image {
 &nbsp;
 <input type="button" value="$$i18n{Select}" onClick="window.open('$$options{new_image_url}', 'selectImage' , '');">
 EOS
+
+}
+
+################################################################################
+
+sub draw_form_field_iframe {
+	
+	my ($options, $data) = @_;
+
+	check_href ($options);
+	
+	$options -> {width} ||= '100%';
+	$options -> {height} ||= '100%';
+
+	return <<EOH;
+		<iframe name="$$options{name}" src="$$options{href}" width="$$options{width}" height="$$options{height}"></iframe>
+EOH
 
 }
 

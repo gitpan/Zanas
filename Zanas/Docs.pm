@@ -593,7 +593,7 @@ EO
 		syn      => <<EO,	
 	my \$file = upload_file ({
 		name             => 'photo',
-		dir		 => 'i/upload/user_photos'
+		dir		 => 'user_photos'
 	});
 	
 #	{
