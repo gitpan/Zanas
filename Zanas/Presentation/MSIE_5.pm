@@ -435,7 +435,7 @@ EOH
 			$type -> {href} = '#';
 		} 
 		else {
-			$type -> {href} = "/?type=$$type{name}";
+			$type -> {href} ||= "/?type=$$type{name}";
 			$type -> {href} .= "&role=$$type{role}" if $type -> {role};
 			check_href ($type);
 		}
@@ -494,7 +494,7 @@ EOH
 		}
 		else {
 		
-			$type -> {href} = "/?type=$$type{name}";
+			$type -> {href} ||= "/?type=$$type{name}";
 			$type -> {href} .= "&role=$$type{role}" if $type -> {role};
 			check_href ($type);		
 		

@@ -9,6 +9,11 @@ use B::Deparse;
 
 our $deparse = B::Deparse -> new ();	
 
+our $charset = {
+	en => 'windows-1252',
+	ru => 'windows-1251',
+};
+
 @langs = qw(en ru);
 
 ################################################################################
@@ -2625,6 +2630,7 @@ EOF
 		<HTML>
 			<HEAD>
 				<TITLE>Zanas.pm documentation: parameter $$s{name}</TITLE>
+				<meta http-equiv="Content-Type" content="text/html; charset=$$charset{$lang}" />
 				<link rel="STYLESHEET" href="../../css/z.css" type="text/css">
 			</HEAD>
 			<BODY>
@@ -2672,6 +2678,7 @@ EOF
 		<HTML>
 			<HEAD>
 				<TITLE>Zanas.pm documentation: \$conf option $$s{name}</TITLE>
+				<meta http-equiv="Content-Type" content="text/html; charset=$$charset{$lang}" />
 				<link rel="STYLESHEET" href="../../css/z.css" type="text/css">
 			</HEAD>
 			<BODY>
@@ -2719,6 +2726,7 @@ EOF
 		<HTML>
 			<HEAD>
 				<TITLE>Zanas.pm documentation: \$conf option $$s{name}</TITLE>
+				<meta http-equiv="Content-Type" content="text/html; charset=$$charset{$lang}" />
 				<link rel="STYLESHEET" href="../../css/z.css" type="text/css">
 			</HEAD>
 			<BODY>
@@ -2818,6 +2826,7 @@ EOF
 		<HTML>
 			<HEAD>
 				<TITLE>Zanas.pm documentation: $$s{name}</TITLE>
+				<meta http-equiv="Content-Type" content="text/html; charset=$$charset{$lang}" />
 				<link rel="STYLESHEET" href="../css/z.css" type="text/css">
 			</HEAD>
 			<BODY>
@@ -2879,6 +2888,7 @@ sub generate_left {
 		<HTML>
 			<HEAD>
 				<TITLE>Zanas.pm documentation</TITLE>
+				<meta http-equiv="Content-Type" content="text/html; charset=$$charset{$lang}" />
 				<STYLE>
 					body {
 					    background: #FFFFFF;
@@ -2943,6 +2953,7 @@ sub generate_index {
 		<HTML>
 			<HEAD>
 				<TITLE>Zanas.pm documentation</TITLE>
+				<meta http-equiv="Content-Type" content="text/html; charset=$$charset{$lang}" />
 			</HEAD>
 			<FRAMESET cols="300,*">
 				<FRAME name="left" src="left.html" target="main">

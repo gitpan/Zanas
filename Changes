@@ -1,3 +1,9 @@
+0.9933: 
+
+	- charset in html documentation;
+	- wx_handler introduced (early alpha);
+	- direct hrefs in main menu;
+
 0.9932: 
 
 	- size option in draw_form_field_password;

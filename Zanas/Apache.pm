@@ -25,6 +25,51 @@ sub fill_in_i18n {
 
 #################################################################################
 
+sub wx_handler {
+
+	our $_PACKAGE = __PACKAGE__ . '::';
+	
+	my  $use_cgi = $ENV {SCRIPT_NAME} =~ m{index\.pl} || $ENV {GATEWAY_INTERFACE} =~ m{^CGI/} || $conf -> {use_cgi} || $preconf -> {use_cgi} || !$INC{'Apache/Request.pm'};
+	
+	our $r   = $use_cgi ? new Zanas::Request () : $_[0];
+	our $apr = $use_cgi ? $r : Apache::Request -> new ($r);
+
+	my $parms = $apr -> parms;
+	our %_REQUEST = %{$parms};
+	
+	$_REQUEST {type} =~ s/_for_.*//;
+
+   	sql_reconnect ();
+	
+	require_fresh ($_PACKAGE . '::Config');
+
+   	$conf -> {dbf_dsn} and our $dbf = DBI -> connect ($conf -> {dbf_dsn}, {RaiseError => 1});
+
+	my $action = $_REQUEST {action};
+	
+	our $_USER = sql_select_hash ('SELECT users.*, roles.name AS role FROM users INNER JOIN roles ON users.id_role = roles.id WHERE login = ? AND password = PASSWORD(?)', $_REQUEST {login}, $_REQUEST {password});
+
+	require_fresh ("${_PACKAGE}Content::$_REQUEST{type}");
+	
+	if ($_REQUEST {type} eq 'menu') {
+		my $menu = call_for_role ('get_menu');
+		out_html ({}, Dumper ($menu));
+	} elsif ($_REQUEST {id}) {
+		my $content = call_for_role ("get_item_of_$_REQUEST{type}");
+		out_html ({}, Dumper ($content));
+	} else {
+		my $content = call_for_role ("select_$_REQUEST{type}");
+		out_html ({}, Dumper ($content));
+	}
+
+   	$db -> disconnect;
+	
+	return OK;
+
+}
+
+#################################################################################
+
 sub handler {
 
 	our $_PACKAGE = __PACKAGE__ . '::';
