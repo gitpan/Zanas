@@ -529,6 +529,23 @@ our $charset = {
 					#######################################
 
 	{
+		name     => 'async',
+		syn      => <<EO,
+			
+		async 'send_mail', ({
+			to           => 'foo@bar.com',
+			subject      => 'Spam',
+			text         => 'You win!!!',
+		});		
+
+EO
+		label_en => 'Launches a sub with given args in async mode',
+		label_ru => 'Запуск процедуры с заданным набором параметров в асинхронном режиме',
+	},
+
+					#######################################
+
+	{
 		name     => 'send_mail',
 		syn      => <<EO,
 	
@@ -3014,6 +3031,12 @@ our @conf = (
 );
 
 our @preconf = (
+
+	{
+		name => 'core_keep_textarea',
+		label_en => 'If true, "text" field are shown as &lt;textarea readonly=1&gt; when $_REQUEST {__read_only}.',
+		label_ru => 'Если истина, text-поля в $_REQUEST {__read_only}-режиме показываются не как static, а как &lt;textarea readonly=1&gt;.',
+	},
 
 	{
 		name => 'core_no_log_mac',

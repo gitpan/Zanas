@@ -15,8 +15,8 @@ use constant OK => 200;
 
 BEGIN {	
 
-	$Zanas::VERSION = '5.2.25';
-	$Zanas::VERSION_NAME = 'Aphex';
+	$Zanas::VERSION = '5.3.9';
+	$Zanas::VERSION_NAME = 'Asyn';
 	
 	eval {
 		require Storable;
@@ -45,7 +45,8 @@ BEGIN {
 	$| = 1;
 
 	$SIG {__DIE__} = \&Carp::confess;
-
+	$SIG {CHLD}    = 'IGNORE';
+	
 	get_version_name ();
 	
 	unless ($PACKAGE_ROOT) {

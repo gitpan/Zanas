@@ -348,6 +348,7 @@ sub sql_do_insert {
 	$pairs -> {fake} = $_REQUEST {sid} unless exists $pairs -> {fake};
 	
 	if ($conf -> {core_recycle_ids} && __last_insert_id) {
+		sql_do ("DELETE FROM $table_name WHERE id = ?", $__last_insert_id);
 		$pairs -> {id} = $__last_insert_id;
 	}
 

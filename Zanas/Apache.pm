@@ -207,7 +207,7 @@ EOH
 			}
 			
 			eval {
-				$db -> commit unless $_REQUEST {error};
+				$db -> commit unless $_REQUEST {error} || $db -> {AutoCommit};
 				$db -> {AutoCommit} = 1;
 			};
 

@@ -2,6 +2,33 @@ no warnings;
 
 ################################################################################
 
+sub async ($@) {
+
+	my ($sub, @args) = @_;
+	
+	sql_disconnect ();
+
+	defined (my $child_pid = fork) or die "Cannot fork: $!\n";
+	
+	sql_reconnect ();
+
+	return $child_pid if $child_pid;
+	
+	chdir '/' or die "Can't chdir to /: $!";
+	close STDIN;
+	close STDOUT;
+	close STDERR;	
+	
+	eval { &$sub (@args); };
+	
+	sql_disconnect ();
+
+	CORE::exit ();
+
+}
+
+################################################################################
+
 sub send_mail {
 
 	my ($options) = @_;

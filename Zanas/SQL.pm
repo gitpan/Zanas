@@ -194,7 +194,9 @@ sub sql_reconnect {
 		
 	our %sts = ();
 
-	sql_assert_core_tables () unless $driver_name eq 'Oracle';
+# print STDERR "sql_reconnect: calling sql_assert_core_tables\n";
+
+	sql_assert_core_tables (); # unless $driver_name eq 'Oracle';
 
 }   	
 
