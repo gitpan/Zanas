@@ -231,7 +231,7 @@ EOH
 	my $auth_toolbar = draw_auth_toolbar ({lpt => $lpt});
 
 	my $keepalive = $_REQUEST{sid} ? <<EOH : '';
-		<iframe name=keepalive src="$_REQUEST{__uri}?keepalive=$_REQUEST{sid}" width=0 height=0>
+		<iframe name=keepalive src="$_REQUEST{__uri}?keepalive=$_REQUEST{sid}&virgin=1" width=0 height=0>
 		</iframe>
 EOH
 
@@ -336,6 +336,9 @@ EOF
 						scrollable_table_row_cell = 0;
 
 						if (scrollable_rows.length > 0) {
+							if (scrollable_table_row > scrollable_rows.length - 1) {
+								scrollable_table_row = scrollable_rows.length - 1;
+							}
 							scrollable_table_row_cell_old_style = scrollable_rows [scrollable_table_row].cells [scrollable_table_row_cell].className;
 							scrollable_rows [scrollable_table_row].cells [scrollable_table_row_cell].className = 'txt6';
 						}

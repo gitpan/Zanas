@@ -32,8 +32,13 @@ print STDERR "sql_prepare (pid=$$): $sql\n";
 ################################################################################
 
 sub sql_do_refresh_sessions {
+
+	$db -> {AutoCommit} = 0;
 	sql_do ("DELETE FROM sessions WHERE ts < sysdate - ? / 1440", $conf -> {session_timeout});
 	sql_do ("UPDATE sessions SET ts = sysdate WHERE id = ?", $_REQUEST {sid});
+	$db -> commit;
+	$db -> {AutoCommit} = 1;
+	
 }
 
 ################################################################################
@@ -269,7 +274,7 @@ sub sql_do_update {
 	
 	foreach my $lob_field (@{$options -> {lobs}}) {
 	
-#print STDERR "Going to write a LOB in ${table_name}.${lob_field}, id = $$options{id}...\n";
+print STDERR "Going to write a LOB in ${table_name}.${lob_field}, id = $$options{id}...\n";
 	
 #		$db -> {AutoCommit} = 0;
 	
@@ -286,7 +291,7 @@ sub sql_do_update {
 		
 			my @args = ($lob_locator, $value);
 
-#print STDERR Dumper (\@args);
+print STDERR Dumper (\@args);
 		
 			$db -> ora_lob_append (@args);
 		}

@@ -128,7 +128,7 @@ sub handler {
    	
 	if ($_REQUEST {keepalive}) {
 		my $timeout = 60 * $conf -> {session_timeout} - 1;
-		keep_alive ($_REQUEST {keepalive});
+		$_REQUEST {virgin} or keep_alive ($_REQUEST {keepalive});
 		$r -> content_type ('text/html');
 		$r -> send_http_header;
 		print <<EOH;
@@ -434,14 +434,27 @@ sub pub_handler {
 
 		require_fresh ("${_PACKAGE}Content::${type}");
 		
-		my $error_code = uri_escape (call_for_role ("validate_${action}_${type}"));
+		$_REQUEST {error} = call_for_role ("validate_${action}_${type}");
 		
-		if ($error_code) {
-			redirect ("?error=$error_code", {kind => 'http'});
+		if ($_REQUEST {error}) {
+		
+#			redirect ("?error=$error_code", {kind => 'http'});
+
+			redirect (
+				($_REQUEST {__uri_chomped} . '/?' . join '&', map {"$_=" . uri_escape ($_REQUEST {$_})} grep {/^_[^_]/} keys %_REQUEST) . "&error=$_REQUEST{error}",
+				{kind => 'http'},
+			);
+
 		}
 		else {
+
+			$db -> {AutoCommit} = 0;
 			call_for_role ("do_${action}_${type}");
+			$db -> commit unless $_REQUEST {error};
+			$db -> {AutoCommit} = 1;
+
 			$_REQUEST {__response_sent} or redirect ({action => ''}, {kind => 'http'});
+			
 		}
 		
 	}

@@ -1,3 +1,10 @@
+0.9944:
+
+	- pub_handler changed: now passing all form input values after validation fail;
+	- js fix: scrollable_table_row limited;
+	- sql_do_refresh_sessions/Oracle transaction related fix;
+	- no more immediate keepalive requests ('virgin' parameter added);
+
 0.9943:
 
 	- create_url fixed for compatibility with $conf -> {core_auto_esc};
