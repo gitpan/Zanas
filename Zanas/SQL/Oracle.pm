@@ -9,7 +9,7 @@ sub sql_prepare {
 
 	my ($sql) = @_;
 	
-print STDERR "sql_prepare (pid=$$): $sql\n";
+#print STDERR "sql_prepare (pid=$$): $sql\n";
 	
 	unless (exists $sts {$sql}) {
 		

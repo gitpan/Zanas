@@ -1,3 +1,9 @@
+0.9945:
+
+	- alpha support for height option in draw_table;
+	- core_auto_esc facility fixed for the '..' case;
+	- log_action fix: id_object => $_REQUEST {id} || $_OLD_REQUEST {id};	
+
 0.9944:
 
 	- pub_handler changed: now passing all form input values after validation fail;

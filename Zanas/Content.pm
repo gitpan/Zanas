@@ -230,7 +230,7 @@ sub log_action {
 		action => $_OLD_REQUEST {action}, 
 		ip => $ENV {REMOTE_ADDR}, 
 		error => $_REQUEST {error}, 
-		id_object => $_REQUEST {id}, 
+		id_object => $_REQUEST {id} || $_OLD_REQUEST {id}, 
 		ip_fw => $ENV {HTTP_X_FORWARDED_FOR},
 		fake => 0,
 	});

@@ -395,7 +395,7 @@ EOHELP
 				
 				
 				
-				<div id="bodyArea">
+				<div id="bodyArea" _style='height:100%; padding:0px; margin:0px'>
 					$auth_toolbar			
 					$menu
 					$body
@@ -808,6 +808,8 @@ sub draw_table {
 	if ($options -> {'..'} && !$_REQUEST{lpt}) {
 	
 		my $url = $_REQUEST {__path} -> [-2];
+		
+		$scrollable_row_id ++;
 	
 		$trs = <<EOH;
 			<script for="body" event="onkeypress">
@@ -857,6 +859,12 @@ EOH
 		$hiddens .= qq {<input type=hidden name=$key value="$_REQUEST{$key}">};
 	}
 	
+	my ($div_bra, $div_ket, $sliding_table) = ('', '');
+	if ($options -> {height}) {
+		$div_bra = "<div style='height:$$options{height}; overflow-y:scroll; padding:0px; margin:0px' id='$options'>";
+		$div_ket = '</div>';
+	}	
+	
 	return <<EOH
 	
 		$$options{title}
@@ -873,12 +881,14 @@ EOH
 				<input type=hidden name=action value=$$options{action}> 
 				<input type=hidden name=sid value=$_REQUEST{sid}>
 				$hiddens
+		$div_bra
 				<table cellspacing=1 cellpadding=5 width="100%" id="scrollable_table" lpt=$$options{lpt}>
 					$ths					
 						<tbody>
 							$trs
 						</tbody>
 				</table>
+		$div_ket
 				$$options{toolbar}
 			
 			</form>
