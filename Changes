@@ -1,3 +1,8 @@
+0.9907: 
+
+	- magic %_REQUEST params documented;
+	- trees in 'checkboxes' are supported;
+
 0.9906: 
 
 	- new $conf options: kb_options_menu, kb_options_buttons, kb_options_pager and kb_options_focus;

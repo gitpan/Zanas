@@ -364,8 +364,8 @@ package main;
 
 	{
 		name     => 'values',
-		label_en => "Data dictionnary for a field: arrayref of hashrefs with fields 'id' (possible field value) and 'label' (displayed)",
-		label_ru => "Словарь данных для поля редактирования: список хэшей с ключами 'id' (возможное значение поля) и 'label' (видимая метка)",
+		label_en => "Data dictionnary for a field: arrayref of hashrefs with fields 'id' (possible field value) and 'label' (displayed). In 'checkboxes' field, hashrefs can contain 'items' elements referring to similar arrays, in this case, the tree is displayed.",
+		label_ru => "Словарь данных для поля редактирования: список хэшей с ключами 'id' (возможное значение поля) и 'label' (видимая метка). Для поля типа 'checkboxes' хэши могут содержать элементы 'items' со ссылками на аналогичные массивы: в этом случае отрисовывается дерево.",
 	},
 
 	{
@@ -1460,6 +1460,214 @@ EO
 
 ################################################################################
 
+@params = (
+
+	{
+		name => 'type',
+		label_en => 'Screen type for the current request. Determines (with id and action) what callbacks (e.g. "select_$type", "draw_item_of_$type", "do_$action_$type") are to be invoked.',
+		label_ru => 'Текущий тип экрана. Определяет (совместно с id и action), какие подпрограммы (например, "select_$type", "draw_item_of_$type", "do_$action_$type") должны быть вызваны.',
+		default => 'logon',
+	},
+
+	{
+		name => 'action',
+		label_en => 'Action name. If set, "validate_$action_$type" and "do_$action_$type" callbackcs are invoked, then the user is redirected to the URL with an empty action.',
+		label_ru => 'Имя действия. Если задан, то вызываются подапрограммы "validate_$action_$type" и "do_$action_$type", после чего пользователь перенаправляется на URL с пустым action',
+	},
+
+	{
+		name => '__include_js',
+		label_en => 'ARRAYREF of names of custom javaScript files located in application_root/doc_root/i/.',
+		label_ru => 'Ссылка на список дополнительных javaScript-файлов, расположенных в директории  application_root/doc_root/i/.',
+		default => '[\'js\']',
+	},
+
+	{
+		name => '__include_css',
+		label_en => 'ARRAYREF of names of custom CSS files located in application_root/doc_root/i/.',
+		label_ru => 'Ссылка на список дополнительных CSS-файлов, расположенных в директории  application_root/doc_root/i/.',
+	},
+
+	{
+		name => 'keepalive',
+		label_en => 'If set, extends the lifetime for the session which number is his value. Internal paramerter, not to be used in application developpment.',
+		label_ru => 'Если задан, то продлевает время жизни сессии, чей номер совпадает с его значением. Внутренний параметр, не должен использоваться напрямую.',
+	},
+
+	{
+		name => 'sid',
+		label_en => 'Session ID. If set, determines the current session => current user, otherwise the client is redirecred to the logon screen (type=logon).',
+		label_ru => 'Если задан, то определяет ID сессии => текущего пользователя, в противном случае клиент перенаправляется на входную форму (type=logon).',
+	},
+
+	{
+		name => 'salt',
+		label_en => 'Fake parameter with random values. Used for preventing browser from using local HTML cache.',
+		label_ru => 'Фиктивный параметр со случайными значениями. Используется для предотвращения кэширования HTML на стороне клиента.',
+	},
+
+	{
+		name => '_frame',
+		label_en => 'Reserved for browsers not suppotring IFRAME tag.',
+		label_ru => 'Зарезервировано для браузеров без поддержки тега IFRAME.',
+	},
+
+	{
+		name => 'error',
+		label_en => 'Error message text. Must not be set directly, it\'s calulated from "validate_$action_$type" return value.',
+		label_ru => 'Текст сообщения об ошибке. Не должен задаваться явно, так как вычисляется на основе значения, возвращаемого подпрограммой "validate_$action_$type".',
+	},
+
+	{
+		name => '__response_sent',
+		label_en => 'If set, no "draw_$type" or "draw_item_of_$type" sub is called and no HTML is sent to the client.',
+		label_ru => 'Если задан, то процедура "draw_$type" или "draw_item_of_$type" не вызывается и сгенерированный HTML не пересылается клиенту.',
+	},
+
+	{
+		name => 'redirect_params',
+		label_en => 'Set this parameter to Data::Dumper($some_hashref) if you want to restore %$some_hashref as %_REQUEST after the next logon. Normally must appear only at logon screen as a hidden input.',
+		label_ru => 'Установите значение этого параметра в Data::Dumper($some_hashref), если хотите, чтобы %$some_hashref был восстановлен как %_REQUEST после следующего входа в систему. В норме должен присутствовать только на ворме входа в виде скрытого поля ввода.',
+	},
+
+	{
+		name => 'id',
+		label_en => 'If set, "get_item_of_$type" and "draw_item_of_$type" will be called instead of "select_$type" and "draw_$type".',
+		label_ru => 'Если установлен, то "get_item_of_$type" и "draw_item_of_$type" будут вызваны вместо "select_$type" and "draw_$type".',
+	},
+
+	{
+		name => 'dbf',
+		label_en => 'Obsoleted by __response_sent.',
+		label_ru => 'Атавизм. Следует использовать __response_sent.'
+	},
+
+	{
+		name => 'xls',
+		label_en => 'If set, the table with lpt attribute set to 1 is cropped from the output and sent to the client as an Excel worksheet.',
+		label_ru => 'Если установлен, то из HTML страницы вызезается таблица с атрибутом lpt=1 и возвращается на клиент в виде рабочего листа Excel.'
+	},
+
+	{
+		name => 'lpt',
+		label_en => 'If set, the table with lpt attribute set to 1 is cropped from the output and sent to the client in the printer friendly form.',
+		label_ru => 'Если установлен, то из HTML страницы вызезается таблица с атрибутом lpt=1 и возвращается на клиент в виде, пригодном для распечатки.'
+	},
+	
+	{
+		name => 'role',
+		label_en => 'Current role ID. Used in multirole alpplications only.',
+		label_ru => 'ID текущей роли. Имеет смысл только в приложениях, где один пользователь может работать в нескольких ролях.'
+	},
+
+	{
+		name => 'order',
+		label_en => 'Name of the sort column. Set in hrefs produced by headers sub, used in SQL generated by order sub.',
+		label_ru => 'Имя столбца, по которому производится сортировка. Устанавливается в ссылках, сгенерироанных headers, используется в SQL, сгенерированном order.',
+	},
+	
+	{
+		name => 'desc',
+		label_en => 'If true, the sort order is descending. Set in hrefs produced by headers sub, used in SQL generated by order sub.',
+		label_ru => 'Если истина, то порядок сортировки обратный. Устанавливается в ссылках, сгенерироанных headers, используется в SQL, сгенерированном order.',
+	},
+
+	{
+		name => '__content_type',
+		label_en => 'MIME type of the HTTP responce sent to the client.',
+		label_ru => 'MIME-тип HTTP-ответа',
+		default => 'text/html; charset=windows-1251',
+	},
+	
+	{
+		name => 'period',
+		label_en => 'Always tranferred by <a href=../check_href.html>check_href</a> sub. Reserved for calendar-like applications.',
+		label_ru => 'Всегда передаётся по ссылкам через <a href=../check_href.html>check_href</a>. Зарезервировано для календарных приложений.',
+	},
+	
+	{
+		name => '__read_only',
+		label_en => 'If true, all input fields are disabled.',
+		label_ru => 'Если истина, все поля ввода превращаются в надписи.',
+	},
+
+	{
+		name => '__pack',
+		label_en => 'If true, the browser window is packed around the main form/table. Used in popup windows.',
+		label_ru => 'Если истина, окно браузера сжимается до минимума, охватывающего страницу. Используется во всплывающих окнах.',
+	},
+	
+	{
+		name => '__popup',
+		label_en => 'If true, set all of __read_only, __pack and __no_navigation to true.',
+		label_ru => 'Если истина, то истинны также __read_only, __pack и __no_navigation.',
+	},
+
+	{
+		name => '__no_navigation',
+		label_en => 'If true, no top navigation bar (user name/calendar/logout) is shown. Used in popup windows.',
+		label_ru => 'Если истина, то не показывается верняя панель навигации (пользователь/календарь/выход). Используется во всплывающих окнах.',
+	},
+
+	{
+		name => '_xml',
+		label_en => 'If set, is surrounded with XML tags and placed in HEAD section. Used for MS Office 2000 HTML emulation.',
+		label_ru => 'Если непуст, то окружается тегами XML и помещается в раздел HEAD. Используется для эмуляции MS Office 2000 HTML.',
+	},
+
+	{
+		name => '__scrollable_table_row',
+		label_en => 'Numer of table row highlighted by the slider at page load.',
+		label_ru => 'Номер строки таблицы, на которой располагается слайдер при загрузке страницы.',
+		default => '0',
+	},
+
+	{
+		name => '__meta_refresh',
+		label_en => 'The value for &lt;META HTTP-EQUIV=Refresh ... &gt; tag.',
+		label_ru => 'Значение для тега &lt;META HTTP-EQUIV=Refresh ... &gt;.',
+	},
+	
+	{
+		name => '__focused_input',
+		label_en => 'The NAME of the input to be focused at page load. Unless set, the first text inpyt is focused.',
+		label_ru => 'Значение атрибута NAME поля ввода, на котором должен стоять фокус ввода при загрузке страницы. Если не установлен, фокусируется первое текстовое поле.',
+	},
+
+	{
+		name => '__blur_all',
+		label_en => 'If true, no input is focused.',
+		label_ru => 'Если установлен, ни одно поле ввода не имеет фокуса.',
+	},
+
+	{
+		name => '__help_url',
+		label_en => 'URL to be activated on F1 press or [Help] link.',
+		label_ru => 'URL, активизируемый при нажатии на F1 или ссылку [Справка].',
+	},
+
+	{
+		name => '__path',
+		label_en => 'Set internally by <a href=../draw_path.html>draw_path</a> for implement \'..\' facility in <a href=../draw_table.html>draw_table</a>.',
+		label_ru => 'Устанавливается внутри <a href=../draw_path.html>draw_path</a>, чтобы реализовать опцию \'..\' в <a href=../draw_table.html>draw_table</a>.',
+	},
+
+	{
+		name => '__toolbars_number',
+		label_en => 'Set internally by <a href=../draw_toolbar.html>draw_toolbar</a> for proper toolbar indexing.',
+		label_ru => 'Устанавливается внутри <a href=../draw_toolbar.html>draw_toolbar</a> для индексации панелей управления.',
+	},
+	
+	{
+		name => 'start',
+		label_en => 'Number of first displayed record in multipage recordsets.',
+		label_ru => 'Номер первой записи выборки, показываемой на странице (при наличии нарезки).',
+	},
+
+);
+
+################################################################################
+
 %i18n = (
 	NAME => {
 		en => 'NAME',
@@ -1485,11 +1693,62 @@ EO
 		en => 'SEE ALSO',
 		ru => 'СМ. ТАКЖЕ',
 	},	
+	DEFAULT => {
+		en => 'DEFAULT VALUE',
+		ru => 'ПО УМОЛЧАНИЮ',
+	},	
 	'API Reference' => {
 		en => 'API Reference',
 		ru => 'Подпрограммы',
 	},
 );
+
+################################################################################
+
+sub generate_param {
+
+	my ($lang, $s) = @_;		
+	
+	my $see_also = '';
+	foreach my $sa (sort @{$s -> {see_also}}) {
+		$see_also .= qq{<li><a href="$sa.html">$sa</a>};
+	}
+	
+	$see_also and $see_also = <<EOF;
+					<dt>${$i18n{SEE_ALSO}}{$lang}
+					<dd><ul>$see_also</ul>
+EOF
+		
+	open (F, ">$lang/params/$$s{name}.html");
+	print F <<EOF;
+		<HTML>
+			<HEAD>
+				<TITLE>Zanas.pm documentation: parameter $$s{name}</TITLE>
+				<link rel="STYLESHEET" href="../../css/z.css" type="text/css">
+			</HEAD>
+			<BODY>
+				<dl>
+					<dt>${$i18n{NAME}}{$lang}
+					<dd>\$_REQUEST {$$s{name}}
+					
+					@{[ $$s{default} ? <<EOD : '' ]}
+						<dt>${$i18n{DEFAULT}}{$lang}
+						<pre>$$s{default}</pre>
+EOD
+
+					<dt>${$i18n{DESCRIPTION}}{$lang}
+					<dd>$$s{"label_$lang"}
+					
+					$see_also
+
+				</dl>
+			</BODY>
+		</HTML>
+EOF
+
+	close (F);
+
+}
 
 ################################################################################
 
@@ -1572,6 +1831,12 @@ sub generate_left {
 		generate_sub ($lang, $s);
 	}
 		
+	my $params = '';
+	foreach my $s (sort {$a -> {name} cmp $b -> {name}} @params) {
+		$params .= qq{<a href="params/$$s{name}.html" target="main">$$s{name}</a><br>};
+		generate_param ($lang, $s);
+	}
+		
 	open (F, ">$lang/left.html");
 	print F <<EOF;
 		<HTML>
@@ -1607,6 +1872,9 @@ sub generate_left {
 EO
 				<h1>${$i18n{'API Reference'}}{$lang}</h1>
 				$subs
+
+				<h1>%_REQUEST</h1>
+				$params
 			</BODY>
 		</HTML>
 EOF
@@ -1637,6 +1905,7 @@ EOF
 sub generate_for_lang {
 	my ($lang) = @_;
 	mkdir $lang;
+	mkdir "$lang/params";
 	generate_index ($lang);
 	generate_left  ($lang);
 }

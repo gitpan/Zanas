@@ -1491,8 +1491,39 @@ sub draw_form_field_checkboxes {
 	if (ref $v eq ARRAY) {
 	
 		foreach my $value (@{$options -> {values}}) {
+				
 			my $checked = 0 + (grep {$_ eq $value -> {id}} @$v) ? 'checked' : '';
-			$html .= qq {<input type="checkbox" name="_$$options{name}_$$value{id}" value="1" $checked onChange="is_dirty=true">&nbsp;$$value{label} <br>};
+
+			my $id = 'div_' . $value;
+			my $subhtml = '';
+			my $subattr = '';
+			
+			if ($value -> {items} && @{$value -> {items}} > 0) {
+			
+			
+				foreach my $subvalue (@{$value -> {items}}) {
+									
+					my $subchecked = 0 + (grep {$_ eq $subvalue -> {id}} @$v) ? 'checked' : '';
+					
+					
+					$subhtml .= qq {&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<input type="checkbox" name="_$$options{name}_$$subvalue{id}" value="1" $subchecked onChange="is_dirty=true">&nbsp;$$subvalue{label} <br>};					
+				
+				}
+
+				my $display = $checked ? '' : 'style={display:none}';
+				
+				$subhtml = <<EOH;
+					<div id="$id" $display>
+						$subhtml
+					</div>
+EOH
+			
+				$subattr = qq{onClick="setVisible('$id', checked)"};
+			
+			}
+
+			$html .= qq {<input $subattr type="checkbox" name="_$$options{name}_$$value{id}" value="1" $checked onChange="is_dirty=true">&nbsp;$$value{label} <br> $subhtml};
+			
 		}		
 	
 	}
