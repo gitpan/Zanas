@@ -1891,10 +1891,19 @@ sub draw_centered_toolbar_button {
 		my $msg = js_escape ($options -> {confirm});
 		$options -> {href} = qq [javascript:if (confirm ($msg)) {window.open('$$options{href}', '$target')}];
 	} 	
+
+	my ($bra, $ket, $icon) = ();
+	if ($conf -> {core_show_icons} && $options -> {icon}) {	
+		$icon = qq|<td><a onclick="$$options{onclick}" href="$$options{href}" target="$$options{target}"><img hspace=3 src="/i/buttons/$$options{icon}.gif" border=0></a></td>|
+	}
+	else {
+		$bra = '<b>[';
+		$ket = ']</b>';
+	}
 	
 	return <<EOH
-		<!--<td><a onclick="$$options{onclick}" href="$$options{href}" target="$$options{target}"><img hspace=3 src="/i/buttons/$$options{icon}.gif" border=0></a></td>-->
-		<td nowrap>&nbsp;<a class=lnk0 onclick="$$options{onclick}" id="$$options{id}" href="$$options{href}" target="$$options{target}"><b>[$$options{label}]</b></a>&nbsp;</td>
+		$icon
+		<td nowrap>&nbsp;<a class=lnk0 onclick="$$options{onclick}" id="$$options{id}" href="$$options{href}" target="$$options{target}">${bra}$$options{label}${ket}</a>&nbsp;</td>
 		<td><img height=15 hspace=4 src="/i/toolbars/razd1.gif" width=2 border=0></td>
 EOH
 

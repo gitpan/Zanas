@@ -1,3 +1,7 @@
+0.9941:
+
+	- added icon option in draw_centered_toolbar_button sub;
+
 0.9940:
 
 	- startup logging beautyfied;
