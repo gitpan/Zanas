@@ -1,3 +1,7 @@
+0.9908: 
+
+	- check_title sub is added, draw_table_header, draw_row_button and draw_text_cell are fixed to use it;
+
 0.9907: 
 
 	- magic %_REQUEST params documented;

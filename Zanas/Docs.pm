@@ -439,6 +439,31 @@ EO
 		label_ru => 'Генерирует URL, наследующий значения всех параметров, кроме упомянутых в списке аргументов и тех, чьи имена начинаются с символа \'_\'. Неявно применяется ко всем значениям опции "href", которые заданы как ссылка на хэш',
 		see_also => [qw(check_href)],
 	},
+
+					#######################################
+
+	{
+		name     => 'check_title',
+#		options  => [qw()],
+		syn      => <<EO,	
+	check_title ({
+		...
+		label => 'project "Y"',
+		...
+	});
+
+	# --> {	
+	# ...
+	# label => 'project "Y"',
+	# title => 'title="project &amp;quot;Y&amp;quot;"'
+	# ...
+	# }	
+	
+EO
+		label_en => 'Adds a properly quoted TITLE tag to options hashref. Defaults to label option.',
+		label_ru => 'Добавляет в опции HTML-код для атрибута TITLE. Значение по умолчанию берётся из опции label.',
+		see_also => [qw(create_url)],
+	},
 				
 					#######################################
 

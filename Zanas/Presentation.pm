@@ -107,6 +107,18 @@ sub order {
 
 ################################################################################
 
+sub check_title {
+
+	my ($options) = @_;
+
+	$options -> {title} ||= $options -> {label};
+	$options -> {title} =~ s{\"}{\&quot\;}g;	
+	$options -> {title} = qq{title="$$options{title}"} if length $options -> {title};
+
+}
+
+################################################################################
+
 sub check_href {
 
 	my ($options) = @_;

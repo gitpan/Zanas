@@ -638,14 +638,15 @@ sub draw_text_cell {
 	$data -> {target} ||= $options -> {target};
 	if ($data -> {href} && !$_REQUEST {lpt}) {
 		check_href ($data);
-		$data -> {title} ||= $data -> {label};
 		my $target = $data -> {target} ? "target='$$data{target}'" : '';
 		$txt = qq { <a class=$$data{a_class} $target href="$$data{href}" onFocus="blur()">$txt</a> };
 	}
 	
 	my $attributes = dump_attributes ($data -> {attributes});
 	
-	return qq {<td title="$$data{title}" $attributes>$txt</td>};
+	check_title ($data);
+	
+	return qq {<td $$data{title} $attributes>$txt</td>};
 
 }
 
@@ -698,15 +699,15 @@ sub draw_table_header {
 	}
 	
 	return '' if $cell -> {off};
-	
-	$cell -> {title} ||= $cell -> {label};
-	
+		
 	$cell -> {label} = "<a class=lnk4 href=\"$$cell{href}\"><b>" . $cell -> {label} . "</b></a>" if $cell -> {href};
 	$cell -> {label} .= "\&nbsp;\&nbsp;<a class=lnk4 href=\"$$cell{href_asc}\"><b>\&uarr;</b></a>" if $cell -> {href_asc};
 	$cell -> {label} .= "\&nbsp;\&nbsp;<a class=lnk4 href=\"$$cell{href_desc}\"><b>\&darr;</b></a>" if $cell -> {href_desc};
 	$cell -> {colspan} ||= 1;
 	
-	return "<th class=bgr4 colspan=$$cell{colspan} title=\"$$cell{title}\">$$cell{label}\&nbsp;";
+	check_title ($cell);
+	
+	return "<th class=bgr4 colspan=$$cell{colspan} $cell{title}>$$cell{label}\&nbsp;";
 
 }
 
@@ -1061,20 +1062,14 @@ sub draw_row_button {
 
 	my ($options) = @_;	
 	
-	return '<td class=bgr0 valign=top nowrap width="1%">&nbsp;' if $options -> {off};
-	
-#	$options -> {href} = create_url (%{$options -> {href}}) if ref $options -> {href} eq HASH;
-	
-	check_href ($options);
+	return '<td class=bgr0 valign=top nowrap width="1%">&nbsp;' if $options -> {off};	
 	
 	if ($options -> {confirm}) {
 		my $salt = rand;
 		my $msg = js_escape ($options -> {confirm});
 		$options -> {href} = qq [javascript:if (confirm ($msg)) {window.open('$$options{href}', '_self')}];
 	} 
-	
-	my $title = $options -> {label};
-	
+		
 	if ($conf -> {core_show_icons}) {	
 		$options -> {label} = qq|<img src="/i/buttons/$$options{icon}.gif" alt="$$options{label}" border=0 hspace=0 vspace=0>|
 	}
@@ -1082,7 +1077,10 @@ sub draw_row_button {
 		$options -> {label} = "\&nbsp;[$$options{label}]\&nbsp;";
 	}
 
-	return qq {<td title="$title" class=bgr4 valign=top nowrap width="1%"><a class=lnk0 href="$$options{href}" onFocus="blur()" target="$$options{target}">$$options{label}</a>};
+	check_href  ($options);
+	check_title ($options);
+
+	return qq {<td $$options{title} class=bgr4 valign=top nowrap width="1%"><a class=lnk0 href="$$options{href}" onFocus="blur()" target="$$options{target}">$$options{label}</a>};
 
 }
 
