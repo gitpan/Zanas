@@ -53,7 +53,8 @@ sub wx_handler {
 	
 	if ($_REQUEST {type} eq 'menu') {
 		my $menu = call_for_role ('get_menu');
-		out_html ({}, Dumper ($menu));
+		$_USER -> {menu} = $menu;
+		out_html ({}, Dumper ($_USER));
 	} elsif ($_REQUEST {id}) {
 		my $content = call_for_role ("get_item_of_$_REQUEST{type}");
 		out_html ({}, Dumper ($content));
@@ -78,6 +79,8 @@ sub handler {
 	
 	our $r   = $use_cgi ? new Zanas::Request () : $_[0];
 	our $apr = $use_cgi ? $r : Apache::Request -> new ($r);
+
+	return wx_handler (@_) if $r -> header_in ('User-Agent') =~ /^Zanas/;
 		
 	my $parms = $apr -> parms;
 	our %_REQUEST = %{$parms};

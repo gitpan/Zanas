@@ -1,3 +1,9 @@
+0.9934: 
+
+	- draw_input_cell now returns empty <td> insteaf of '' when off => 1;
+	- added attributes option in draw_table_header;
+	- added picture option in draw_input_cell;
+
 0.9933: 
 
 	- charset in html documentation;

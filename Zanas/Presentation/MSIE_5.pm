@@ -553,21 +553,26 @@ sub draw_input_cell {
 
 	my ($data, $options) = @_;
 	
-	return '' if $data -> {off};
+	$data -> {attributes} ||= {};
+	$data -> {attributes} -> {class} ||= 'txt4';
+	my $attributes = dump_attributes ($data -> {attributes});
+
+	return "<td $attributes>" if $data -> {off};
 	
 	return draw_text_cell ($data, $options) if $_REQUEST {__read_only} || $data -> {read_only};
 	
 	$data -> {size} ||= 30;
-	
-	$data -> {attributes} ||= {};
-	$data -> {attributes} -> {class} ||= 'txt4';
-			
+				
 	$data -> {a_class} ||= 'lnk4';
 
 	my $txt = $data -> {label} || '';
-		
-	my $attributes = dump_attributes ($data -> {attributes});
 	
+	if ($data -> {picture}) {
+		$txt = $number_format -> format_picture ($txt, $data -> {picture});
+		$txt =~ s/^\s+//g; 
+	}
+	
+			
 	check_title ($data);
 		
 	return qq {<td $$data{title} $attributes><nobr><input onFocus="q_is_focused = true" onBlur="q_is_focused = false" type="text" name="$$data{name}" value="$txt" maxlength="$$data{max_len}" size="$$data{size}"></nobr></td>};
@@ -718,7 +723,12 @@ sub draw_table_header {
 	
 	check_title ($cell);
 	
-	return "<th class=bgr4 colspan=$$cell{colspan} $cell{title}>$$cell{label}\&nbsp;";
+	$cell -> {attributes} ||= {};
+	$cell -> {attributes} -> {class} ||= 'bgr4';
+	
+	my $attributes = dump_attributes ($cell -> {attributes});
+	
+	return "<th $attributes colspan=$$cell{colspan} $cell{title}>$$cell{label}\&nbsp;";
 
 }
 
