@@ -198,6 +198,10 @@ EOH
 			
 			my $error_code = call_for_role ($sub_name);
 			
+			if ($_USER -> {demo_level} > 0) {
+				($action eq 'execute' and $$page{type} eq 'logon') or $error_code ||= '»звините, вы работаете в демонстрационном режиме';
+			}
+			
 			if ($error_code) {		
 				my $error_message_template = $error_messages -> {"${action}_$$page{type}_${error_code}"} || $error_code;
 				$_REQUEST {error} = interpolate ($error_message_template);

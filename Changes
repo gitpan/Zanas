@@ -1,3 +1,7 @@
+0.9946:
+
+	- $_USER -> {demo_level} introduced;
+
 0.9945:
 
 	- alpha support for height option in draw_table;

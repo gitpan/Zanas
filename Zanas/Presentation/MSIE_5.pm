@@ -588,6 +588,22 @@ EOH
 
 ################################################################################
 
+sub format_picture {
+
+	my ($txt, $picture) = @_;
+	
+	my $result = $number_format -> format_picture ($txt, $picture);
+	
+	if ($_USER -> {demo_level} > 1) {
+		$result =~ s{\d}{\*}g;
+	}
+	
+	return $result;
+
+}
+
+################################################################################
+
 sub draw_input_cell {
 
 	my ($data, $options) = @_;
@@ -607,7 +623,7 @@ sub draw_input_cell {
 	my $txt = $data -> {label} || '';
 	
 	if ($data -> {picture}) {
-		$txt = $number_format -> format_picture ($txt, $data -> {picture});
+		$txt = format_picture ($txt, $data -> {picture});
 		$txt =~ s/^\s+//g; 
 	}
 	
@@ -674,7 +690,7 @@ sub draw_text_cell {
 	my $txt;
 	
 	if ($data -> {picture}) {	
-		$txt = $number_format -> format_picture ($data -> {label}, $data -> {picture});
+		$txt = format_picture ($data -> {label}, $data -> {picture});
 		$data -> {attributes} -> {align} ||= 'right';
 	}
 	else {
@@ -1403,7 +1419,7 @@ sub draw_form_field_string {
 	my $s = $options -> {value};
 	$s ||= $$data{$$options{name}};
 	if ($options -> {picture}) {
-		$s = $number_format -> format_picture ($s , $options -> {picture});
+		$s = format_picture ($s , $options -> {picture});
 		$s =~ s/^\s+//g; 
 	}
 	
@@ -1597,7 +1613,7 @@ sub draw_form_field_static {
 				
 		
 		
-	$static_value = $number_format -> format_picture ($static_value, $options -> {picture}) if $options -> {picture};	
+	$static_value = format_picture ($static_value, $options -> {picture}) if $options -> {picture};	
 		
 	if ($options -> {href}) {
 	
