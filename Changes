@@ -1,8 +1,13 @@
+0.9943:
+
+	- create_url fixed for compatibility with $conf -> {core_auto_esc};
+	
 0.9942:
 	
 	- added order option in sql_select_vocabulary sub;
 	- documentation fixes;
 	- get_user fixed (multirole specific bug was introduced in 0.9937 with Oracle support);
+	- conf option core_auto_esc added;
 
 0.9941:
 

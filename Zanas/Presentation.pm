@@ -35,7 +35,7 @@ sub create_url {
 		$param {$key} = $value;
 	}
 	
-	return $_REQUEST {__uri} . '?' . join ('&', map {($_ !~ /^_/ || $_ eq '__no_navigation') && $param {$_} ? ($_ . '=' . uri_escape ($param {$_})) : ()} keys %param);
+	return $_REQUEST {__uri} . '?' . join ('&', map {($_ !~ /^_/ || $_ eq '__no_navigation' || $_ eq '__last_query_string') && $param {$_} ? ($_ . '=' . uri_escape ($param {$_})) : ()} keys %param);
 	
 }
 
