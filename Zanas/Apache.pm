@@ -37,11 +37,24 @@ sub get_request {
 		our $apr = $r;
 		return;
 	}
+	else {
+	
+		our $use_cgi = $ENV {SCRIPT_NAME} =~ m{index\.pl} || $ENV {GATEWAY_INTERFACE} =~ m{^CGI/} || $conf -> {use_cgi} || $preconf -> {use_cgi} || !$INC{'Apache/Request.pm'};
 
-	our $use_cgi = $ENV {SCRIPT_NAME} =~ m{index\.pl} || $ENV {GATEWAY_INTERFACE} =~ m{^CGI/} || $conf -> {use_cgi} || $preconf -> {use_cgi} || !$INC{'Apache/Request.pm'};
+		our $r   = $use_cgi ? new Zanas::Request ($preconf, $conf) : $_[0];
+		our $apr = $use_cgi ? $r : Apache::Request -> new ($r);
+		
+	}
 
-	our $r   = $use_cgi ? new Zanas::Request ($preconf, $conf) : $_[0];
-	our $apr = $use_cgi ? $r : Apache::Request -> new ($r);
+	if (ref $apr eq 'Apache::Request') {
+		require Apache::Cookie;
+		our %_COOKIES = Apache::Cookie -> fetch;
+	}
+	else {
+		require CGI;
+		require CGI::Cookie;
+		our %_COOKIES = CGI::Cookie -> fetch;
+	}
 
 }
 
@@ -63,6 +76,11 @@ sub handler {
 	$_REQUEST {__uri} =~ s{\/\w+\.\w+$}{};
 	$_REQUEST {__uri} =~ s{\?.*}{};
 	$_REQUEST {__uri} =~ s{^/+}{/};
+	
+	if ($preconf -> {core_auth_cookie}) {
+		my $c = $_COOKIES {sid};
+		$_REQUEST {sid} ||= $c -> value if $c;
+	}
 	
 	$number_format or our $number_format = Number::Format -> new (%{$conf -> {number_format}});
 	
@@ -374,14 +392,6 @@ sub pub_handler {
 	
 	get_request (@_);
 	
-	if (ref $apr eq 'Apache::Request') {
-		require Apache::Cookie;
-	}
-	else {
-		require CGI;
-		require CGI::Cookie;
-	}
-
 	my $parms = $apr -> parms;
 	our %_REQUEST = %{$parms};		
 	$_REQUEST {__uri} = $r -> uri;
@@ -392,7 +402,6 @@ sub pub_handler {
 	$_REQUEST {__uri_chomped} = $_REQUEST {__uri};
 	$_REQUEST {__uri_chomped} =~ s{/+$}{};
 	
-	our %_COOKIES = ref $apr eq 'Apache::Request' ? Apache::Cookie -> fetch : CGI::Cookie -> fetch;
 	my $c = $_COOKIES {psid};
 	$_REQUEST {sid} = $c -> value if $c;
 	

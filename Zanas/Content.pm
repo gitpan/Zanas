@@ -136,11 +136,7 @@ sub call_for_role {
 sub get_user {
 
 	return if $_REQUEST {type} eq '_static_files';
-	
-	if ($preconf -> {core_auth_cookie} && $ENV{HTTP_COOKIE} =~ /[^p]sid=(\d+)/ && !defined $_REQUEST {sid}) {
-		$_REQUEST {sid} ||= $1;
-	}
-	
+		
 	sql_do_refresh_sessions ();
 
 #	sql_do ("DELETE FROM sessions WHERE ts < now() - INTERVAL ? MINUTE", $conf -> {session_timeout});

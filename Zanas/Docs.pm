@@ -509,6 +509,38 @@ our $charset = {
 @subs = (
 
 
+					#######################################
+
+	{
+		name     => 'get_request',
+		label_en => 'Set up $r and $apr. Internal use only.',
+		label_ru => 'Устанавливает значения глобальных переменных $r и $apr в процедурах типа handler. Только для внутреннего использования.',
+	},
+
+					#######################################
+
+	{
+		name     => 'get_version_name',
+		label_en => 'Returns the same as $Zanas::VERSION_NAME.',
+		label_ru => 'Вычисляет (и кэширует) значение $Zanas::VERSION_NAME.',
+	},
+
+					#######################################
+
+	{
+		name     => 'sql_assert_core_tables',
+		label_en => 'Guarantees the existence of core tables in the DB. Internal use only.',
+		label_ru => 'Гарантирует наличие в БД таблиц, необходимых для функционирования Zanas. Только для внутреннего использования.',
+	},
+
+					#######################################
+
+	{
+		name     => 'format_picture',
+		label_en => 'Wrap around Number::Format -> format_picture hiding the number when $_USER -> {demo_level} > 1.',
+		label_ru => 'Функция-обёртка над Number::Format -> format_picture, скрывающая число при $_USER -> {demo_level} > 1.',
+	},
+
 
 					#######################################
 
@@ -2548,6 +2580,13 @@ our @conf = (
 		label_en => 'Default date format for calendar input field',
 		label_ru => 'Формат даты по умолчанию для поля ввода типа "календарь"',
 		default => '%d.%m.%Y',
+		see_also => [qw(format_dt)],
+	},
+
+	{
+		name => 'number_format',
+		label_en => 'Number::Format options',
+		label_ru => 'Опции для объекта Number::Format. Желательно устнавливать -thousands_sep и -decimal_point.',
 		see_also => [qw(format_dt)],
 	},
 

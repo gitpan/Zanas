@@ -1,7 +1,11 @@
+0.9959:
+
+	- fixed (?) cookie auth in pub_handler;
+	- $preconf -> {core_auth_cookie} now overrides $conf -> {session_timeout};
+
 0.9958:
 
 	- improved version naming :-);
-	- 
 
 0.9957:
 

@@ -49,8 +49,17 @@ sub sql_prepare {
 
 sub sql_do_refresh_sessions {
 
+	my $timeout = $conf -> {session_timeout};
+	if ($preconf -> {core_auth_cookie} =~ /^\+(\d+)([mhd])/) {
+		$timeout = $1;
+		$timeout *= 
+			$2 eq 'h' ? 60 :
+			$2 eq 'd' ? 1440 :
+			1;
+	}
+
 	$db -> {AutoCommit} = 0;
-	sql_do ("DELETE FROM sessions WHERE ts < sysdate - ? / 1440", $conf -> {session_timeout});
+	sql_do ("DELETE FROM sessions WHERE ts < sysdate - ? / 1440", $timeout);
 	sql_do ("UPDATE sessions SET ts = sysdate WHERE id = ?", $_REQUEST {sid});
 	$db -> commit;
 	$db -> {AutoCommit} = 1;

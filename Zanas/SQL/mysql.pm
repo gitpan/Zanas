@@ -18,7 +18,17 @@ sub sql_version {
 ################################################################################
 
 sub sql_do_refresh_sessions {
-	sql_do ("DELETE FROM sessions WHERE ts < now() - INTERVAL ? MINUTE", $conf -> {session_timeout});
+
+	my $timeout = $conf -> {session_timeout};
+	if ($preconf -> {core_auth_cookie} =~ /^\+(\d+)([mhd])/) {
+		$timeout = $1;
+		$timeout *= 
+			$2 eq 'h' ? 60 :
+			$2 eq 'd' ? 1440 :
+			1;
+	}
+
+	sql_do ("DELETE FROM sessions WHERE ts < now() - INTERVAL ? MINUTE", $timeout);
 	sql_do ("UPDATE sessions SET ts = NULL WHERE id = ? ", $_REQUEST {sid});
 }
 
