@@ -114,9 +114,6 @@ sub handler {
 		Select                   => 'Sélection',
    	});
 
-#print STDERR Dumper (\%ENV);
-#	$_REQUEST {type} = '_static_files' if $r -> filename =~ /\w\.\w/;
-#	$_REQUEST {type} = '_static_files' if ($ENV{PATH_INFO} =~ /\w\.\w/ || $r -> filename =~ /\w\.\w/);
 	$_REQUEST {type} = '_static_files' if (($ENV{PATH_INFO} =~ /\w\.\w/ && $ENV{PATH_INFO} ne '/index.html') || $r -> filename =~ /\w\.\w/);
 
 	$conf -> {include_js}  ||= ['js'];
@@ -134,7 +131,7 @@ sub handler {
 		$r -> send_http_header;
 		print <<EOH;
 			<html><head>
-				<META HTTP-EQUIV=Refresh CONTENT="$timeout; URL=$_REQUEST {__uri}?keepalive=$_REQUEST{keepalive}">
+				<META HTTP-EQUIV=Refresh CONTENT="$timeout; URL=$_REQUEST{__uri}?keepalive=$_REQUEST{keepalive}">
 			</head></html>			
 EOH
 		return;

@@ -230,17 +230,14 @@ EOH
 	
 	my $auth_toolbar = draw_auth_toolbar ({lpt => $lpt});
 
-	my $keepalive = $_REQUEST{sid} ? <<EOH : '';
-		<iframe name=keepalive src="$_REQUEST{__uri}?keepalive=$_REQUEST{sid}&virgin=1" width=0 height=0>
-		</iframe>
-EOH
-
 #	my $root = $^O eq 'MSWin32' ? '/i/' : $_REQUEST{__uri};
 	my $root = $_REQUEST{__uri};
 	
 	my $request_package = ref $apr;
 	my $mod_perl = $ENV {MOD_PERL};
 	$mod_perl ||= 'NO mod_perl AT ALL';
+	
+	my $timeout = 1000 * (60 * $conf -> {session_timeout} - 1);
 				
 	return <<EOH;
 		<html>		
@@ -293,6 +290,10 @@ EOCSS
 			<body bgcolor=white leftMargin=0 topMargin=0 marginwidth="0" marginheight="0" name="body" id="body">
 
 				<script for="body" event="onload">
+				
+					@{[ $_REQUEST{sid} ? <<EOK : '' ]}
+						keepaliveID = setTimeout ("open('$_REQUEST{__uri}?keepalive=$_REQUEST{sid}', 'invisible'); clearTimeout (keepaliveID)", $timeout);
+EOK
 
 					@{[ $_REQUEST {__pack} ? <<EOF : '']}
 						var newWidth  = document.all ['bodyArea'].offsetWidth + 10;
@@ -401,9 +402,8 @@ EOHELP
 					$menu
 					$body
 				</div>
-				<iframe name=invisible src="${root}0.html" width=0 height=0>
+				<iframe name=invisible _src="${root}0.html" width=0 height=0>
 				</iframe>
-				$keepalive
 			</body>
 		</html>
 EOH
@@ -1814,9 +1814,11 @@ sub draw_form_field_select {
 	}
 	
 	my $multiple = $options -> {rows} > 1 ? "multiple size=$$options{rows}" : '';
+	
+	$tabindex ++;
 		
 	return <<EOH;
-		<select name="_$$options{name}" onChange="is_dirty=true; $$options{onChange}" onkeypress="typeAhead()" $multiple>
+		<select name="_$$options{name}" onChange="is_dirty=true; $$options{onChange}" onkeypress="typeAhead()" $multiple  tabindex='$tabindex'>
 			$html
 		</select>
 EOH

@@ -1,12 +1,18 @@
+0.9949:
+
+	- DHTML fix: tabindex is now set for <select>s;
+	- speed optimization: get_user's SQL is no more executed when $_REQUEST {type} eq '_static_files';
+	- speed optimization: keepalive requests are now delayed;
+
 0.9948:
 
 	- use Carp;
-	- MSIE5 fix (path to 0.html for Win32);
 	- *::Cookie loading fix;
 	- set_cookie API function added;
 	- js fix: escaping '\' in draw_form_field_htmleditor sub;
 	- handler fixed for Windows&CGI case: copying 0.gif e.t.c. to /i is no longer needed; (Zanas::Request bug ?)
 	- removed dependency of Apache::Request in Makefile.PL;
+	- force_label option in draw_row_button sub;
 
 0.9947:
 

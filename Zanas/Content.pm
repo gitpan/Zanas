@@ -59,6 +59,8 @@ sub call_for_role {
 
 sub get_user {
 
+	return if $_REQUEST {type} eq '_static_files';
+
 	if ($ENV{HTTP_COOKIE} =~ /sid=(\d+)/ && !defined $_REQUEST {sid}) {
 #		$_REQUEST {sid} ||= $1;
 	}
