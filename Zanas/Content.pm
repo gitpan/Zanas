@@ -65,6 +65,10 @@ sub call_for_role {
 
 sub get_user {
 
+	if ($ENV{HTTP_COOKIE} =~ /sid=(\d+)/ && !defined $_REQUEST {sid}) {
+#		$_REQUEST {sid} ||= $1;
+	}
+
 	sql_do ("DELETE FROM sessions WHERE ts < now() - INTERVAL ? MINUTE", $conf -> {session_timeout});
 	sql_do ("UPDATE sessions SET ts = NULL WHERE id = ? ", $_REQUEST {sid});
 

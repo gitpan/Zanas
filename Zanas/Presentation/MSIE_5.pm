@@ -155,10 +155,19 @@ EOH
 	
 		$body =~ s{^.*?\<table[^\>]*lpt\=\"?1\"?[^\>]*\>}{<table border cellspacing=0 cellpadding=5>}sm; #"
 	
+		$_REQUEST{_xml}	= "<xml>$_REQUEST{_xml}</xml>" if $_REQUEST{_xml};
+
 		return <<EOH;
-			<html>
+			<html xmlns:x="urn:schemas-microsoft-com:office/excel" xmlns:o="urn:schemas-microsoft-com:office:office">
 				<head>
 					<title>мот</title>
+					<style>
+						.x {
+							mso-number-format:General; 
+							mso-protection:locked visible; 
+						} 
+					</style>
+					$_REQUEST{_xml}
 				</head>
 				<body bgcolor=white leftMargin=0 topMargin=0 marginwidth="0" marginheight="0">
 					$body
@@ -189,8 +198,10 @@ EOH
 	my $mod_perl = $ENV {MOD_PERL};
 	$mod_perl ||= 'NO mod_perl AT ALL';
 		
+	$_REQUEST{_xml}	= "<xml>$_REQUEST{_xml}</xml>" if $_REQUEST{_xml};
+		
 	return <<EOH;
-		<html>
+		<html>		
 			<head>
 				<title>$$conf{page_title}</title>
 				<meta name="Generator" content="Zanas.pm ver.$Zanas::VERSION; parameters are fetched with $request_package; gateway_interface is $ENV{GATEWAY_INTERFACE}; $mod_perl is in use">
@@ -207,6 +218,9 @@ EOJS
 					<script type="text/javascript" src="/i/${_}.js">
 					</script>
 EOCSS
+
+				$_REQUEST{_xml}
+			
 				<script>
 					var scrollable_table = null;
 					var scrollable_table_row = 0;
@@ -547,7 +561,8 @@ sub draw_text_cell {
 	$data -> {attributes} -> {class} ||= $options -> {is_total} ? 'header5' : 'txt4';
 	$data -> {attributes} -> {align} ||= 'right' if $options -> {is_total};
 			
-	$data -> {a_class} ||= 'lnk4';
+	$options -> {a_class} ||= 'lnk4';
+	$data -> {a_class} ||= $options -> {a_class};
 	
 	my $txt;
 	
@@ -571,12 +586,12 @@ sub draw_text_cell {
 		check_href ($data);
 		$data -> {title} ||= $data -> {label};
 		my $target = $data -> {target} ? "target='$$data{target}'" : '';
-		$txt = qq { <a title="$$data{title}" class=$$data{a_class} $target href="$$data{href}" onFocus="blur()">$txt</a> };
+		$txt = qq { <a class=$$data{a_class} $target href="$$data{href}" onFocus="blur()">$txt</a> };
 	}
 	
 	my $attributes = dump_attributes ($data -> {attributes});
 	
-	return qq {<td $attributes>$txt</td>};
+	return qq {<td title="$$data{title}" $attributes>$txt</td>};
 
 }
 
@@ -630,12 +645,14 @@ sub draw_table_header {
 	
 	return '' if $cell -> {off};
 	
+	$cell -> {title} ||= $cell -> {label};
+	
 	$cell -> {label} = "<a class=lnk4 href=\"$$cell{href}\"><b>" . $cell -> {label} . "</b></a>" if $cell -> {href};
 	$cell -> {label} .= "\&nbsp;\&nbsp;<a class=lnk4 href=\"$$cell{href_asc}\"><b>\&uarr;</b></a>" if $cell -> {href_asc};
 	$cell -> {label} .= "\&nbsp;\&nbsp;<a class=lnk4 href=\"$$cell{href_desc}\"><b>\&darr;</b></a>" if $cell -> {href_desc};
 	$cell -> {colspan} ||= 1;
 	
-	return "<th class=bgr4 colspan=$$cell{colspan}>$$cell{label}\&nbsp;";
+	return "<th class=bgr4 colspan=$$cell{colspan} title=\"$$cell{title}\">$$cell{label}\&nbsp;";
 
 }
 
@@ -657,7 +674,7 @@ sub draw_table {
 	
 	my $trs = '';
 
-	if ($options -> {'..'}) {
+	if ($options -> {'..'} && !$_REQUEST{lpt}) {
 	
 		my $url = $_REQUEST {__path} -> [-2];
 	
@@ -687,6 +704,7 @@ EOH
 		$i -> {__n} = $n++;
 		$trs .= '<thead>' if $n == @$list && !$i -> {id};
 		foreach my $callback (@tr_callbacks) {
+#			$trs .= '<tr style="position:relative;left:0px;top:0px;z-index:1;">';
 			$trs .= '<tr>';
 			$trs .= &$callback ();
 			$trs .= '</tr>';
@@ -717,12 +735,11 @@ EOH
 				<input type=hidden name=action value=$$options{action}> 
 				<input type=hidden name=sid value=$_REQUEST{sid}>
 				$hiddens
-		
-				<table cellspacing=1 cellpadding=5 width="100%" id="scrollable_table">
-					$ths
-					<tbody>
-						$trs
-					</tbody>
+				<table cellspacing=1 cellpadding=5 width="100%" id="scrollable_table" lpt=$$options{lpt}>
+					$ths					
+						<tbody>
+							$trs
+						</tbody>
 				</table>
 				$$options{toolbar}
 			
@@ -1006,7 +1023,7 @@ sub draw_row_button {
 		$options -> {label} = "\&nbsp;[$$options{label}]\&nbsp;";
 	}
 
-	return qq {<td class=bgr4 valign=top nowrap width="1%"><a class=lnk0 title="$title" href="$$options{href}" onFocus="blur()" target="$$options{target}">$$options{label}</a>};
+	return qq {<td title="$title" class=bgr4 valign=top nowrap width="1%"><a class=lnk0 href="$$options{href}" onFocus="blur()" target="$$options{target}">$$options{label}</a>};
 
 }
 
@@ -1614,7 +1631,7 @@ EOH
 
 	$top_banner = interpolate ($conf -> {top_banner});
 	
-	$conf -> {exit_url} ||= '/';
+	$conf -> {exit_url} ||= '/?sid=0';
 	
 	return <<EOH;
 
@@ -1647,7 +1664,7 @@ EOH
 <!--				
 				<td class=bgr1><img src="/i/top_tb_icons/stat.gif" border=0 hspace=3 align=absmiddle></td>
 -->				
-				<td class=bgr1><nobr><A class=lnk2 href="@{[ create_url (xls => 1) ]}" target="_blank">[MS Excel]</a>&nbsp;&nbsp;</nobr></td>
+				<td class=bgr1><nobr><A class=lnk2 href="@{[ create_url (xls => 1, salt => rand) ]}" target="_blank">[MS Excel]</a>&nbsp;&nbsp;</nobr></td>
 EOLPT
 
 				@{[ $_USER ? <<EOEXIT : '' ]}

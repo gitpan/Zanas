@@ -1,3 +1,11 @@
+0.9901: 
+	
+	- added magic parameter _xml (included in <head>);
+	- added namespace for excel;
+	- added title attribute for table headers an cells;
+	- added 'a_class' option to draw_text_cells sub;
+#	- storing sid in session-only cookie;
+
 0.99: 15.03.2004 10:30
 
 	- pulldown menu rendering fixed (no glitches now);

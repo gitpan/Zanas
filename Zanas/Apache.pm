@@ -200,6 +200,7 @@ sub out_html {
 		}		
 
 		$r -> header_out ('Content-Length' => length $html);
+		$r -> header_out ('Set-Cookie' => "sid=$_REQUEST{sid};path=/;") if $_REQUEST{sid};
 		
 		$r -> send_http_header;
 		print $html;
