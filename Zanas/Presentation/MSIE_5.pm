@@ -236,6 +236,7 @@ EOH
 
 						if (
 							(window.event.keyCode >= 65 && window.event.keyCode <= 90)
+							|| (window.event.keyCode >= 48 && window.event.keyCode <= 57)
 							|| (window.event.keyCode >= 96 && window.event.keyCode <= 105)
 							|| window.event.keyCode == 107 || window.event.keyCode == 109
 							|| window.event.keyCode == 219 || window.event.keyCode == 221
@@ -941,7 +942,7 @@ sub MSIE_5_draw_form_field_hidden {
 
 sub MSIE_5_draw_form_field_hgroup {
 	my ($options, $data) = @_;
-	return join '&nbsp;&nbsp;', map {$_ -> {label} . ': ' . &{'draw_form_field_' . ($_ -> {type} ? $_ -> {type} : 'string')}($_, $data)} @{$options -> {items}};
+	return join '&nbsp;&nbsp;', map {$_ -> {label} . ($_->{label} ? ': ' : '') . &{'draw_form_field_' . ($_ -> {type} ? $_ -> {type} : 'string')}($_, $data)} @{$options -> {items}};
 }
 
 ################################################################################
@@ -974,7 +975,7 @@ sub MSIE_5_draw_form_field_password {
 
 sub MSIE_5_draw_form_field_static {
 	my ($options, $data) = @_;
-	return $$data{$$options{name}};
+	return $$options{value} || $$data{$$options{name}};
 }
 
 ################################################################################

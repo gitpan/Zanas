@@ -1,3 +1,8 @@
+0.63: 14.11.03 12:35
+	- added value option in draw_form_field_static sub (by hekima)
+	- don't show ':' after empty labels in draw_form_field_hgroup (by hekima)
+	- js fix: added support for scancodes 48..57
+
 0.62: 13.11.03 09:40
 	- added href attribute for table headers in draw_table sub (by hekima)
 	- added value option in draw_form_field_text sub (by hekima)
