@@ -155,6 +155,29 @@ sub headers {
 
 ################################################################################
 
+sub order {
+
+	my $default = shift;
+	my $result;
+	
+	while (@_) {
+		my $name  = shift;
+		my $sql   = shift;
+		$name eq $_REQUEST {order} or next;
+		$result   = $sql;
+		last;
+	}
+	
+	$result ||= $default;
+	
+	$result .= ' DESC' if $_REQUEST {desc};
+	
+	return $result;
+
+}
+
+################################################################################
+
 =head1 check_href
 
 Процедура коррекции компонента C<href> заданного хэша, переданного по ссылке, на предмет расстановки параметров C<sid> и C<_salt>. Для C<javascript>-ссылок оставляет аргумент без изменения.
@@ -177,7 +200,11 @@ sub check_href {
 
 	my ($options) = @_;
 	
-	if ($options -> {href} !~ /^(\#|java|\/i\/)/ and $options -> {href} !~ /\&sid=/) {	
+	if (ref $options -> {href} eq HASH) {
+		$options -> {href} = create_url (%{$options -> {href}});
+	}
+	
+	if ($options -> {href} !~ /^(\#|java|\/i\/)/ and $options -> {href} !~ /[\&\?]sid=/) {
 		$options -> {href} .= "\&sid=$_REQUEST{sid}";
 		$options -> {href} .= '&_salt=' . rand;
 	}	

@@ -1,3 +1,23 @@
+0.89:
+	- fixed a bug in draw_toolbar_input_text (useless sid hidden input);
+	- fixed a bug in check_href (useless sid appending);
+	- href option in check_href sub ( => almost *EVRYWHERE*) can now be a HASHref (fed to create_url);
+	- added 'additional_buttons' option in draw_form.
+	- added 'status_switch'	utility function. Synopsis (in YOUR_APP/Config.pm):
+	
+our ($SQL_STATUS, $status) = status_switch (<<EOS);
+	CASE
+		WHEN now() > my_table.expire_dt THEN 2 # Expired
+		WHEN my_table.is_ok             THEN 1 # OK
+		ELSE                                 0 # New
+	END
+EOS
+	To use it, add 'use Zanas::Util;' BEFORE 'use YOUR_APP::Config;'.
+	
+	- added 'read_only' option for all form inputs;
+	- now working unless Apache::Request is installed: in this case, params are fetched with CGI.pm;
+	- 'values' option in draw_form_field_static sub can be a hashref;
+
 0.88:
 	added 'headers' sub:
 	

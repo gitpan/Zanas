@@ -110,6 +110,13 @@ sub require_fresh_internal {
 ################################################################################
 
 BEGIN {
+
+   #use Apache::Request;
+
+	eval 'require Apache::Request';
+	if ($@) {
+		eval 'require CGI';
+	};	
 	
 	our $STATIC_ROOT = __FILE__;
 	$STATIC_ROOT =~ s{\.pm}{/static/};
@@ -246,7 +253,7 @@ BEGIN {
 
 package Zanas;
 
-$VERSION = '0.88';
+$VERSION = '0.89';
 
 =head1 NAME
 

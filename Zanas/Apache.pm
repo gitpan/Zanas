@@ -6,8 +6,16 @@ sub handler {
 
 	our $_PACKAGE = __PACKAGE__ . '::';
 	our $r = shift;
-	our $apr = Apache::Request -> new ($r);
-	my $parms = $apr -> parms;
+	
+	if ($INC{'Apache/Request.pm'}) {
+		our $apr = Apache::Request -> new ($r);
+		my $parms = $apr -> parms;
+		our %_REQUEST = %{$parms};
+	}
+	else {
+		our $q = new CGI;
+		our %_REQUEST = $q -> Vars ();
+	}	
 	
 	$number_format or our $number_format = Number::Format -> new (%{$conf -> {number_format}});
 	
@@ -17,7 +25,6 @@ sub handler {
 
    	$conf -> {dbf_dsn} and our $dbf = DBI -> connect ($conf -> {dbf_dsn}, {RaiseError => 1});
 
-	our %_REQUEST = %{$parms};
 	
 	$_REQUEST {type} = '_static_files' if $r -> filename =~ /\w\.\w/;
 	

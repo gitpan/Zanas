@@ -82,13 +82,7 @@ sub MSIE_5_draw_page {
 	my ($page) = @_;
 	
 	$_REQUEST {lpt} ||= $_REQUEST {xls};
-	
-	if ($_REQUEST {__popup}) {
-		$_REQUEST {__read_only} = 1;
-		$_REQUEST {__pack} = 1;
-		$_REQUEST {__no_navigation} = 1;
-	}
-	
+		
 	delete $_REQUEST {__response_sent};
 	
 	my $body = '';
@@ -121,6 +115,12 @@ sub MSIE_5_draw_page {
 		print STDERR $@ if $@;
 				
 		return '' if $_REQUEST {__response_sent};
+
+		if ($_REQUEST {__popup}) {
+			$_REQUEST {__read_only} = 1;
+			$_REQUEST {__pack} = 1;
+			$_REQUEST {__no_navigation} = 1;
+		}
 
 		eval {
 			$body = call_for_role ($renderrer, $content);
@@ -811,7 +811,7 @@ sub MSIE_5_draw_toolbar_input_text {
 	my $hiddens = '';
 	
 	foreach my $key (keys %_REQUEST) {
-		next if $key eq $options -> {name} or $key =~ /^_/ or $key eq 'start';
+		next if $key eq $options -> {name} or $key =~ /^_/ or $key eq 'start' or $key eq 'sid';
 		$hiddens .= qq {<input type=hidden name=$key value="$_REQUEST{$key}">};
 	}
 		
@@ -867,9 +867,11 @@ EOH
 
 sub MSIE_5_draw_row_button {
 
-	my ($options) = @_;
+	my ($options) = @_;	
 	
 	return '<td class=bgr0 valign=top nowrap width="1%">&nbsp;' if $options -> {off};
+	
+#	$options -> {href} = create_url (%{$options -> {href}}) if ref $options -> {href} eq HASH;
 	
 	check_href ($options);
 	
@@ -928,7 +930,7 @@ sub MSIE_5_draw_form_field {
 	return '' if $field -> {off};
 	
 	my $type = $field -> {type};
-	$type = 'static' if $_REQUEST {__read_only} and $type ne 'hgroup';	
+	$type = 'static' if ($_REQUEST {__read_only} or $field -> {read_only}) and $type ne 'hgroup';	
 	$type ||= 'string';
 	
 	my $html = &{"draw_form_field_$type"} ($field, $data);
@@ -1161,13 +1163,9 @@ sub MSIE_5_draw_form_field_hidden {
 ################################################################################
 
 sub MSIE_5_draw_form_field_hgroup {
-
 	my ($options, $data) = @_;
-	
 	map {$_ -> {label} .= '&nbsp;*' if $_ -> {mandatory}} @{$options -> {items}};
-	
-	return join '&nbsp;&nbsp;', map {$_ -> {label} . ($_->{label} ? ': ' : '') . ($_ -> {off} ? '' : &{'draw_form_field_' . ($_REQUEST {__read_only} ? 'static' : $_ -> {type} ? $_ -> {type} : 'string')}($_, $data))} @{$options -> {items}};
-	
+	return join '&nbsp;&nbsp;', map {$_ -> {label} . ($_ -> {label} ? ': ' : '') . ($_ -> {off} ? '' : &{'draw_form_field_' . (($_REQUEST {__read_only} || $options -> {read_only} || $_ -> {read_only}) ? 'static' : $_ -> {type} ? $_ -> {type} : 'string')}($_, $data))} @{$options -> {items}};
 }
 
 ################################################################################
@@ -1208,10 +1206,11 @@ sub MSIE_5_draw_form_field_static {
 	my $hidden_value = $$options{hidden_value};
 	$hidden_value ||= $$data{$$options{name}};
 	$hidden_value ||= $$options{value};
-	$hidden_value =~ s/\"/\&quot\;/gsm;
+	$hidden_value =~ s/\"/\&quot\;/gsm; #"
 	
-	my $static_value = $options -> {values} ? 
-		(map {$_ -> {label}} grep {$_ -> {id} == $data -> {$options -> {name}}} @{$options -> {values}})[0] : 
+	my $static_value = 
+		ref $options -> {values} eq ARRAY ? (map {$_ -> {label}} grep {$_ -> {id} == $data -> {$options -> {name}}} @{$options -> {values}})[0] : 
+		ref $options -> {values} eq HASH ?  $options -> {values} -> {$data -> {$options -> {name}}} : 
 		($options -> {value} || $data -> {$options -> {name}});
 		
 	$static_value = $number_format -> format_picture ($static_value, $options -> {picture}) if $options -> {picture};	
@@ -1316,6 +1315,7 @@ sub MSIE_5_draw_esc_toolbar {
 	check_href ($options);
 
 	draw_centered_toolbar ($options, [
+		@{$options -> {additional_buttons}},
 		{icon => 'cancel', label => 'вернуться', href => "$options->{href}", id => 'esc'},
 	])
 	
@@ -1344,6 +1344,7 @@ sub MSIE_5_draw_ok_esc_toolbar {
 			href => '#', 
 			onclick => "document.$name.submit()"
 		},
+		@{$options -> {additional_buttons}},
 		{
 			icon => 'cancel', 
 			label => $options -> {label_cancel}, 
@@ -1358,7 +1359,10 @@ sub MSIE_5_draw_ok_esc_toolbar {
 
 sub MSIE_5_draw_close_toolbar {
 	
+	my ($options) = @_;		
+
 	draw_centered_toolbar ({}, [
+		@{$options -> {additional_buttons}},
 		{
 			icon => 'ok',     
 			label => 'закрыть', 
@@ -1383,6 +1387,7 @@ sub MSIE_5_draw_back_next_toolbar {
 	
 	draw_centered_toolbar ($options, [
 		{icon => 'back', label => '&lt;&lt; назад', href => $back, id => 'esc'},
+		@{$options -> {additional_buttons}},
 		{icon => 'next', label => 'продолжить &gt;&gt;', href => '#', onclick => 'document.form.submit()'},
 	])
 	
@@ -1397,11 +1402,14 @@ sub MSIE_5_draw_centered_toolbar_button {
 	return '' if $options -> {off};
 	
 	check_href ($options);
+	
+	my $target = $options -> {target};
+	$target ||= '_self';
 
 	if ($options -> {confirm}) {
 		my $salt = rand;
 		my $msg = js_escape ($options -> {confirm});
-		$options -> {href} = qq [javascript:if (confirm ($msg)) {window.open('$$options{href}', '$$options{target}')}];
+		$options -> {href} = qq [javascript:if (confirm ($msg)) {window.open('$$options{href}', '$target')}];
 	} 	
 	
 	return <<EOH
