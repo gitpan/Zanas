@@ -266,15 +266,15 @@ BEGIN {
 
 package Zanas;
 
-$VERSION = '0.9903';
+$VERSION = '0.9905';
 
 =head1 NAME
 
-Zanas - Web application construction set.
+Zanas.pm - a RAD platform for WEB GUIs with rich DHTML widget set.
 
 =head1 DESCRIPTION
 
-Zanas is a set of naming conventions, utility functions, and a basic Apache request handler that help to quickly build robust, efficient and good-looking Web interfaces with standard design. The last doesn't mean that you can't alter hardcoded HTML fragments at all. But building public Web sites with original graphics and layout is not the primary goal of Zanas development. Zanas is good (I hope) for developing client database editing GUIs ('thin clients') and is conditionnally comparable to Windows API and java Swing.
+Zanas.pm is a set of naming conventions, utility functions, and a basic Apache request handler that help to quickly build robust, efficient and good-looking Web interfaces with standard design. The last doesn't mean that you can't alter hardcoded HTML fragments at all. But building public Web sites with original graphics and layout is not the primary goal of Zanas development. Zanas is good for developing client database editing GUIs ('thin clients') and is conditionnally comparable to Windows API and java Swing.
 
 Zanas' basic features are:
 
@@ -282,7 +282,15 @@ Zanas' basic features are:
 
 =item GUI base
 
-usable set of HTML widgets (forms, toolbars, etc);
+usable set of DHTML widgets (forms, toolbars, etc);
+
+=item transparent DB scheme maintenace
+
+when some table or field lacks, the application creates it silently;
+
+=item ALC support
+
+standard routines to backup, mirror and synchronize multiple installations of the same application (Zanas::Install);
 
 =item sessions
 
@@ -296,7 +304,7 @@ server side error handling and data validation with client javaScript notificati
 
 action logging is a part of core process, additionl API calls aren't needed;
 
-=item fake records
+=item fake records/garbage collection
 
 handling of temporary records that are only visible on creation forms and wizards;
 
@@ -324,21 +332,17 @@ Request handler reduce the top function f (x) to a superposition of a content an
 
 Content and presentation functions can be reduced to swithes between some elementary callback functions, where the switch is directly governed by known CGI parameters. Say, for C<url='/?type=users'> C<c == select_users> and C<p == draw_users>.
 
-=item no ASP
+=item no ASP or like
 
 Perl is ideal for implementing templating languages. That's why people love to implement new templating languages in Perl. But most of them ignore the fact that Perl I<is already> a templating language. Heredoc syntax is much more usable than any ASP-like. And it doesn't require any additional processing: everything is done by the Perl interpreter.
 
 =item no XML
 
-Nested Perl datastructures like list-of-hashes and more complex offer the same functionnality as the  XML DOM model. And it doesn't require any external libraries: everything is done by the Perl interpreter.
+Nested Perl datastructures like list-of-hashes and more complex offer the same functionnality as the XML DOM model. And it doesn't require any external libraries: everything is done by the Perl interpreter.
 
 =item no XSLT
 
 It would be very strange to use XSLT without XML, but we must underline here that there was one more reason to not use XSLT. Its syntax is even much crappier and less flexible than ASP-like.
-
-=item no cacheing
-
-We claim ourself unable to develop a universal and effective transparent cacheing system with authomatic dependencies tracking. (Can anybody do it?) And we don't need a memory hog with multiple obsolete copies of DB content accessible with some sophisticated API.
 
 =back
 
@@ -490,10 +494,15 @@ Now, all content callbacks (C<validate_{$action}_${type}_for_${role}>, C<do_{$ac
 			roles.pm
 			users.pm
 			
+=head1 MORE API DOCS
+
+Generate it:
+
+	perl -MZanas::Docs -e generate
 
 =head1 SEE ALSO
 
-Zanas::Presentation
+DBIx::ModelUpdate Zanas::Install
 
 =head1 AUTHORS
 

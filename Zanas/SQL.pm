@@ -5,24 +5,6 @@ use DBI;
 use Data::Dumper;
 use DBIx::ModelUpdate;
 
-=head1 NAME
-
-SQL.pm - essential DBI wrapper for Zanas. All subs use a unique global database connection.
-
-=cut
-
-################################################################################
-
-=head1 sql_do
-
-Executes a given SQL (DML) statement with supplied parameters. Returns nothing.
-
-=head2 Synopsis
-
-	sql_do ('INSERT INTO my_table (id, name) VALUES (?, ?)', $id, $name);
-
-=cut
-
 ################################################################################
 
 sub sql_do {
@@ -31,30 +13,6 @@ sub sql_do {
 	$st -> execute (@params);
 	$st -> finish;	
 }
-
-
-################################################################################
-
-=head1 sql_select_all_cnt
-
-Executes a given SQL (SELECT) statement with supplied parameters and returns the resultset (listref of hashrefs) and the number of rows in the corresponding selection without the C<LIMIT> clause.
-
-=head2 Synopsis
-
-	my ($rows, $cnt)= sql_select_all_cnt (<<EOS, ...);
-		SELECT 
-			...
-		FROM 
-			...
-		WHERE 
-			...
-		ORDER BY 
-			...
-		LIMIT
-			$start, 15
-EOS
-
-=cut
 
 ################################################################################
 
@@ -94,18 +52,6 @@ sub sql_select_all_cnt {
 
 ################################################################################
 
-=head1 sql_select_all
-
-Executes a given SQL (SELECT) statement with supplied parameters and returns the resultset (listref of hashrefs).
-
-=head2 Synopsis
-
-	my $rows = sql_select_all_cnt ('SELECT id, name FROM my_table WHERE name LIKE ?', '%');
-
-=cut
-
-################################################################################
-
 sub sql_select_all {
 
 	my ($sql, @params) = @_;
@@ -117,18 +63,6 @@ sub sql_select_all {
 	return $result;
 
 }
-
-################################################################################
-
-=head1 sql_select_col
-
-Executes a given SQL (one column SELECT) statement with supplied parameters and returns the resultset (listref of hashrefs).
-
-=head2 Synopsis
-
-	my $rows = sql_select_col ('SELECT name FROM my_table WHERE name LIKE ?', '%');
-
-=cut
 
 ################################################################################
 
@@ -295,8 +229,6 @@ sub sql_do_insert {
 	my $args   = '';
 	my @params = ();
 
-#	$pairs -> {fake} ||= $_REQUEST {sid};
-	
 	$pairs -> {fake} = $_REQUEST {sid} unless exists $pairs -> {fake};
 
 	while (my ($field, $value) = each %$pairs) {	
@@ -346,36 +278,6 @@ sub sql_delete_file {
 
 ################################################################################
 
-=head1 sql_download_file
-
-Fetches file info from a given table for the current id and sends file downloading response to the client
-
-=head2 options
-
-=over
-
-=item table
-
-SQL table name
-
-=item path_column
-
-name of the column containing the full path to the file
-
-=item file_name_column
-
-name of the column containing the [original, truncated] file name
-
-=item type_column
-
-name of the column containing the file MIME type
-
-=back
-
-=cut
-
-################################################################################
-
 sub sql_download_file {
 
 	my ($options) = @_;
@@ -388,44 +290,6 @@ sub sql_download_file {
 	download_file ($options);
 	
 }
-
-################################################################################
-
-=head1 sql_upload_file
-
-Uploads the file with given CGI name in a given directory under DocumentRoot and stores the related info into the given table for the current id
-
-=head2 options
-
-=over
-
-=item table
-
-SQL table name
-
-=item dir
-
-directory name (relative to DocumentRoot, must be writeable by httpd, file will be named time.pid)
-
-=item path_column
-
-name of the column containing the full path to the file
-
-=item file_name_column
-
-name of the column containing the [original, truncated] file name
-
-=item type_column
-
-name of the column containing the file MIME type
-
-=item size_column
-
-name of the column containing the file size (in bytes)
-
-=back
-
-=cut
 
 ################################################################################
 
@@ -462,44 +326,6 @@ print STDERR "sql_upload_file: purge finished\n";
 	
 	return $uploaded;
 	
-}
-
-################################################################################
-
-sub sql_adjust_schema ($) {
-
-	my ($tables) = @_;
-	
-	ref $tables eq HASH and $tables = [$tables];
-	
-	foreach my $table (@$tables) {
-		      	
-		my @test = sql_select_col ("SHOW TABLES LIKE '$$table{name}'");
-		
-		@test or sql_do (<<EOH);
-			CREATE TABLE $$table{name} (
-				id int unsigned primary key
-				, fake bigint unsigned not null
-			)
-EOH
-		
-		my $existing_columns = {};
-		my $st = $db -> prepare ("SHOW COLUMNS FROM $$table{name}");
-		$st -> execute ();
-	
-		while (my $col = $st -> fetchrow_hashref) {
-			next if $col -> {Field} =~ /^id|fake$/;
-			$existing_columns -> {$col -> {Field}} = $col;
-		}
-		
-		foreach my $column (@{$table -> {columns}}) {		
-			next if $column -> {name} =~ /^id|fake$/;
-			next if exists $existing_columns -> {$column -> {name}};
-			sql_do ("ALTER TABLE $$table{name} ADD $$column{name} $$column{type}");
-		}
-	
-	}	
-
 }
 
 ################################################################################
