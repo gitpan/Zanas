@@ -1,3 +1,7 @@
+0.9969:
+
+	- SQL/mysql.pm: sql_do fixed for temporality (UPDATE watching);
+
 0.9968:
 
 	- _static_files recognition fixed (by pashka);

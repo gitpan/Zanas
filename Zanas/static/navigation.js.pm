@@ -59,13 +59,23 @@ function activate_link (href, target) {
 }
 
 function open_popup_menu (type) {
+
 	var oPopup = window.createPopup ();
 	var div = document.getElementById ('vert_menu_' + type);
 	var table = document.getElementById ('vert_menu_table_' + type);
 	var w = table.offsetWidth;
 	var h = table.offsetHeight;
 	oPopup.document.body.innerHTML = div.innerHTML;
-	oPopup.show (-9, 17, w, h, document.getElementById ('main_menu_' + type));
+	
+	var mainMenuCell = document.getElementById ('main_menu_' + type);
+	
+	if (mainMenuCell) {
+		oPopup.show (-9, 17, w, h, mainMenuCell);
+	}
+	else {
+		oPopup.show (event.screenX, event.screenY, w, h);
+	}	
+	
 }
 
 function setVisible (id, isVisible) { 

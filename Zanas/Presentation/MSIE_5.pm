@@ -327,6 +327,7 @@ EOF
 							td2sr [scrollable_cell.uniqueID] = i;
 							td2sc [scrollable_cell.uniqueID] = j;
 							scrollable_cell.onclick = td_on_click;
+							scrollable_cell.oncontextmenu = td_on_click;
 						}
 					}
 									
@@ -538,8 +539,13 @@ EOH
 		
 			$type -> {href} ||= "/?type=$$type{name}";
 			$type -> {href} .= "&role=$$type{role}" if $type -> {role};
-			check_href ($type);		
-		
+			check_href ($type);	
+			
+			my $onclick = $type -> {href} =~ /^javascript\:/ ? $' : "parent.location.href='$$type{href}'";
+#			my $onclick = $type -> {href} =~ /^javascript\:/ ? $' : "open('$$type{href}', '_top')";
+			$onclick =~ s{[\n\r]}{}gsm;
+			$onclick =~ s{window\.open\('(.*?)'\, '_self'\)}{parent.location.href='$1'};
+					
 			$tr2 .= <<EOH;
 				<tr height=1>
 					<td bgcolor=#485F70 colspan=3><img height=1 src=$_REQUEST{__uri}0.gif width=1 border=0></td>
@@ -549,7 +555,7 @@ EOH
 						nowrap 
 						onmouseover="this.style.background='#efefef'" 
 						onmouseout="this.style.background='#d5d5d5'"
-						onclick="parent.location.href='$$type{href}'"
+						onclick="$onclick"
 						style="font-weight: normal; font-size: 11px; color: #000000; font-family: verdana; text-decoration: none"
 					>
 						&nbsp;&nbsp;$$type{label}&nbsp;&nbsp;
@@ -669,6 +675,28 @@ sub draw_text_cells {
 	
 }
 
+################################################################################
+
+sub draw_cells {
+
+	my $options = (ref $_[0] eq HASH) ? shift () : {};
+	
+	my $result = '';
+	
+	foreach my $cell (@{$_[0]}) {
+	
+		$result .= 
+			!ref ($cell)                  ? draw_text_cell ($cell, $options) :
+			($cell -> {type} eq 'checkbox' || exists $cell -> {checked}) ? draw_checkbox_cell ($cell, $options) :
+			$cell  -> {type} eq 'input'   ? draw_input_cell ($cell, $options) :
+			($cell -> {type} eq 'button'   || $cell -> {icon}) ? draw_row_button ($cell, $options) :		
+			draw_text_cell ($cell, $options);
+	
+	}
+	
+	return $result;
+	
+}
 
 ################################################################################
 
@@ -759,6 +787,8 @@ sub draw_table_header {
 
 	my ($cell) = @_;
 	
+	my $no_empty_cells = $conf -> {core_hide_row_buttons} == 2 || $preconf -> {core_hide_row_buttons} == 2;
+	
 	if (ref $cell eq ARRAY) {
 	
 		my $line = join '', (map {draw_table_header ($_)} @$cell);
@@ -766,13 +796,13 @@ sub draw_table_header {
 		return (ref $cell -> [0] eq ARRAY ? '' : '<tr>') . $line;
 							
 	}
-	elsif (!ref $cell) {
+	elsif (!ref $cell && ($cell || !$no_empty_cells)) {
 	
 		return "<th class=bgr4>$cell\&nbsp;";
 		
 	}
 	
-	return '' if $cell -> {off};
+	return '' if $cell -> {off} or (!$cell -> {label} && $no_empty_cells);
 		
 	$cell -> {label} = "<a class=lnk4 href=\"$$cell{href}\"><b>" . $cell -> {label} . "</b></a>" if $cell -> {href};
 	$cell -> {label} .= "\&nbsp;\&nbsp;<a class=lnk4 href=\"$$cell{href_asc}\"><b>\&uarr;</b></a>" if $cell -> {href_asc};
@@ -807,6 +837,7 @@ sub draw_table {
 	my $ths = @$headers ? '<thead>' . draw_table_header ($headers) . '</thead>' : '';
 	
 	my $trs = '';
+	my $menus = '';
 
 	if (ref $options -> {title} eq HASH) {
 		my $title = '';
@@ -859,12 +890,25 @@ EOH
 		$trs .= '<thead>' if $n == @$list && !$i -> {id};
 		foreach my $callback (@tr_callbacks) {
 #			$trs .= '<tr style="position:relative;left:0px;top:0px;z-index:1;">';
-			$trs .= '<tr>';
 			our $_FLAG_ADD_LAST_QUERY_STRING = 1;
-			$trs .= &$callback ();
+			our @__types = ();
+			my $tr = &$callback ();
 			undef $_FLAG_ADD_LAST_QUERY_STRING;
+			
+			my $oncontextmenu = '';
+			if (@__types) {
+				$menus .= draw_vert_menu ($i, \@__types);
+				$oncontextmenu  = qq{ oncontextmenu="open_popup_menu('$i'); window.event.keyCode = 0; window.event.cancelBubble = true; window.event.returnValue = false;"};
+			}
+
+			$trs .= '<tr';
+			$trs .= $oncontextmenu;
+			$trs .= '>';
+			$trs .= $tr;
 			$trs .= '</tr>';
+
 			$scrollable_row_id ++;
+			
 		}
 		$trs .= '</thead>' if $n == @$list && !$i -> {id};
 	}
@@ -915,6 +959,9 @@ EOH
 			</form>
 			
 		</table>
+		
+		$menus		
+		
 EOH
 
 }
@@ -1229,8 +1276,20 @@ sub draw_row_button {
 	}
 
 	check_title ($options);
-
-	return qq {<td $$options{title} class=bgr4 valign=top nowrap width="1%"><a class=lnk0 href="$$options{href}" onFocus="blur()" target="$$options{target}">$$options{label}</a>};
+	
+	my $vert_line = {label => $options -> {label}, href => $options -> {href}};
+	$vert_line -> {label} =~ s{[\[\]]}{}g;
+	push @__types, $vert_line;
+	
+	if ($conf -> {core_hide_row_buttons} == 1 || $preconf -> {core_hide_row_buttons} == 1) {
+		return '<td class=bgr0 valign=top nowrap width="1%">&nbsp;';
+	}
+	elsif ($conf -> {core_hide_row_buttons} == 2 || $preconf -> {core_hide_row_buttons} == 2) {
+		return '';
+	}
+	else {
+		return qq {<td $$options{title} class=bgr4 valign=top nowrap width="1%"><a class=lnk0 href="$$options{href}" onFocus="blur()" target="$$options{target}">$$options{label}</a>};
+	}
 
 }
 

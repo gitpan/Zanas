@@ -48,7 +48,7 @@ sub sql_do {
 	my ($sql, @params) = @_;
 	
 	undef $__last_insert_id if $sql =~ /INSERT/i;
-
+	my $ids = '-1';
 
 	if ($conf -> {'db_temporality'} && $_REQUEST {_id_log}) {
 			
@@ -66,14 +66,22 @@ sub sql_do {
 			$insert_sql = "INSERT INTO __log_$1 ($cols, __dt, __op, __id_log) SELECT $cols, NOW() AS __dt, 3 AS __op, $_REQUEST{_id_log} AS __id_log FROM $1 WHERE $1.id IN ($ids)";
 			
 		}
+		elsif ($sql =~ /\s*UPDATE\s*(\w+).*?(WHERE.*)/i && $1 ne 'log') {
+		
+			my $cols = join ', ', keys %{$model_update -> get_columns ($1)};
+
+			my $select_sql = "SELECT id FROM $1 $2";
+			my $param_number = $select_sql =~ y/?/?/;
+			splice (@params, 0, @params - $param_number);
+			$ids = sql_select_ids ($select_sql, @params);
+
+		}
 		
 #print STDERR "sql_do: \$insert_sql = $insert_sql\n";
 
 		$db -> do ($insert_sql) if $insert_sql;
 
 	}	
-
-
 	
 	my $st = $db -> prepare ($sql);
 	$st -> execute (@params);
@@ -82,28 +90,18 @@ sub sql_do {
 	if ($conf -> {'db_temporality'} && $_REQUEST {_id_log}) {
 			
 		my $insert_sql = '';
-
-		if ($sql =~ /\s*UPDATE\s*(\w+).*?(WHERE.*)/i && $1 ne 'log') {
 		
-			my $cols = join ', ', keys %{$model_update -> get_columns ($1)};
-
-			my $select_sql = "SELECT id FROM $1 $2";
-			my $param_number = $select_sql =~ y/?/?/;
-			splice (@params, 0, @params - $param_number);
-			my $ids = sql_select_ids ($select_sql, @params);
+		if ($sql =~ /\s*UPDATE\s*(\w+).*?(WHERE.*)/i && $1 ne 'log') {
 
 			$insert_sql = "INSERT INTO __log_$1 ($cols, __dt, __op, __id_log) SELECT $cols, NOW() AS __dt, 1 AS __op, $_REQUEST{_id_log} AS __id_log FROM $1 WHERE $1.id IN ($ids)";
-			
-		}
-		
-		elsif ($sql =~ /\s*INSERT\s+INTO\s*(\w+)/i && $1 ne 'log') {
-		
-			my $cols = join ', ', keys %{$model_update -> get_columns ($1)};
 
+		}
+		elsif ($sql =~ /\s*INSERT\s+INTO\s*(\w+)/i && $1 ne 'log') {
+
+			my $cols = join ', ', keys %{$model_update -> get_columns ($1)};
 			our $__last_insert_id = sql_last_insert_id ();
-			
 			$insert_sql = "INSERT INTO __log_$1 ($cols, __dt, __op, __id_log) SELECT $cols, NOW() AS __dt, 0 AS __op, $_REQUEST{_id_log} AS __id_log FROM $1 WHERE $1.id = $__last_insert_id";
-			
+
 		}
 
 #print STDERR "sql_do: \$insert_sql = $insert_sql\n";

@@ -190,7 +190,14 @@ sub get_user {
 #			sessions.id = ?
 #EOS
 
-	my $user = sql_select_hash (<<EOS, $_REQUEST {sid});
+	my $user = undef;
+	
+	if ($_REQUEST {_login}) {
+		$user = sql_select_hash ('SELECT * FROM users WHERE login = ? AND password = PASSWORD(?)', $_REQUEST {_login}, $_REQUEST {_password});
+		$user -> {id} or undef $user;
+	}
+
+	$user ||= sql_select_hash (<<EOS, $_REQUEST {sid});
 		SELECT
 			users.*
 			, roles.name AS role
