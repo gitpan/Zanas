@@ -3,6 +3,20 @@ no warnings;
 
 ################################################################################
 
+sub sql_version {
+
+	my $version = {	string => 'MySQL ' . sql_select_scalar ('SELECT VERSION()') };
+	
+	($version -> {number}) = $version -> {string} =~ /([\d\.]+)/;
+	
+	$version -> {number_tokens} = [split /\./, $version -> {number}];
+	
+	return $version;
+	
+}
+
+################################################################################
+
 sub sql_do_refresh_sessions {
 	sql_do ("DELETE FROM sessions WHERE ts < now() - INTERVAL ? MINUTE", $conf -> {session_timeout});
 	sql_do ("UPDATE sessions SET ts = NULL WHERE id = ? ", $_REQUEST {sid});
@@ -23,30 +37,38 @@ sub sql_select_all_cnt {
 
 	my ($sql, @params) = @_;
 	
-#	$sql =~ s{SELECT}{SELECT SQL_CALC_FOUND_ROWS}i;
-	
-#print STDERR $sql;
+	if ($SQL_VERSION -> {number_tokens} -> [0] > 3) {	
+		$sql =~ s{SELECT}{SELECT SQL_CALC_FOUND_ROWS}i;
+	}
 	
 	my $st = $db -> prepare ($sql);
 	$st -> execute (@params);
 	my $result = $st -> fetchall_arrayref ({});	
 	$st -> finish;
-	
-#	my $cnt = $db -> selectrow_array ("select found_rows()");
 
-	$sql =~ s{SELECT.*?FROM}{SELECT COUNT(*) FROM}ism;
-	if ($sql =~ s{LIMIT.*}{}ism) {
-#		pop @params;
-	}
-	$st = $db -> prepare ($sql);
-	$st -> execute (@params);
-	
 	my $cnt = 0;	
-	if ($sql =~ /GROUP\s+BY/i) {
-		$cnt++ while $st -> fetch ();
+
+	if ($SQL_VERSION -> {number_tokens} -> [0] > 3) {
+	
+		$cnt = $db -> selectrow_array ("select found_rows()");
+		
 	}
 	else {
-		$cnt = $st -> fetchrow_array ();
+	
+		$sql =~ s{SELECT.*?FROM}{SELECT COUNT(*) FROM}ism;
+		if ($sql =~ s{LIMIT.*}{}ism) {
+#			pop @params;
+		}
+		$st = $db -> prepare ($sql);
+		$st -> execute (@params);
+
+		if ($sql =~ /GROUP\s+BY/i) {
+			$cnt++ while $st -> fetch ();
+		}
+		else {
+			$cnt = $st -> fetchrow_array ();
+		}
+		
 	}
 	
 	return ($result, $cnt);

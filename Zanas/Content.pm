@@ -63,10 +63,15 @@ sub call_for_role {
 sub get_user {
 
 	return if $_REQUEST {type} eq '_static_files';
+	
+print STDERR "get_user: \$_REQUEST {sid}   = $_REQUEST{sid}\n";
+print STDERR "get_user: \$ENV{HTTP_COOKIE} = $ENV{HTTP_COOKIE}\n";
 
-	if ($ENV{HTTP_COOKIE} =~ /sid=(\d+)/ && !defined $_REQUEST {sid}) {
-#		$_REQUEST {sid} ||= $1;
+	if ($preconf -> {core_auth_cookie} && $ENV{HTTP_COOKIE} =~ /[^p]sid=(\d+)/ && !defined $_REQUEST {sid}) {
+		$_REQUEST {sid} ||= $1;
 	}
+
+print STDERR "get_user: \$_REQUEST {sid}   = $_REQUEST{sid}\n";
 	
 	sql_do_refresh_sessions ();
 

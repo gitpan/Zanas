@@ -5,6 +5,22 @@ use DBD::Oracle qw(:ora_types);
 
 ################################################################################
 
+sub sql_version {
+
+	my $version = {	strings => [ sql_select_col ('SELECT * FROM V$VERSION') ] };
+	
+	$version -> {string} = $version -> {strings} -> [0];
+	
+	($version -> {number}) = $version -> {string} =~ /([\d\.]+)/;
+	
+	$version -> {number_tokens} = [split /\./, $version -> {number}];
+	
+	return $version;
+	
+}
+
+################################################################################
+
 sub sql_prepare {
 
 	my ($sql) = @_;

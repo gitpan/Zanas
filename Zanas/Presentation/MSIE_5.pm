@@ -244,7 +244,7 @@ EOH
 		<html>		
 			<head>
 				<title>$$i18n{_page_title}</title>
-				<meta name="Generator" content="Zanas.pm ver.$Zanas::VERSION; parameters are fetched with $request_package; gateway_interface is $ENV{GATEWAY_INTERFACE}; $mod_perl is in use">
+				<meta name="Generator" content="Zanas ${Zanas::VERSION} / $$SQL_VERSION{string}; parameters are fetched with $request_package; gateway_interface is $ENV{GATEWAY_INTERFACE}; $mod_perl is in use">
 				$meta_refresh
 				
 				<LINK href="${root}zanas.css" type=text/css rel=STYLESHEET>

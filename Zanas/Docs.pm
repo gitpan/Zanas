@@ -1643,7 +1643,7 @@ EO
 				-path    =>  '/',
 			);      
 EO
-		see_also => [qw(draw_centered_toolbar)]
+#		see_also => [qw()]
 	},
 			
 					#######################################
@@ -2659,6 +2659,18 @@ our @preconf = (
 	},
 
 	{
+		name => 'core_auth_cookie',
+		label_en => 'If set, then cookie authorization mode is on. The value is used as -expires parameter',
+		label_ru => 'Если непусто, то включён режим cookie-авторизации. Значение параметра используется в качестве -expires.',
+	},
+
+	{
+		name => 'core_debug_profiling',
+		label_en => 'If true, all callback subs are profiled',
+		label_ru => 'Если истина, то включён режим профилирования. В STDERR пишется время исполнения каждой callback-поцедуры',
+	},
+
+	{
 		name => 'core_gzip',
 		label_en => 'If true, use gzip transfer encoding when possible',
 		label_ru => 'Если истина, по возможности использовать кодировку gzip.',
@@ -3164,7 +3176,7 @@ EOF
 	close (F);
 	
 	my @subs_in_zanas = subs_in 'Zanas';
-	my %imported_subs = map {$_ => 1} ('OK', map {subs_in $_} qw(Data::Dumper URI::Escape HTTP::Date MIME::Base64));
+	my %imported_subs = map {$_ => 1} ('OK', map {subs_in $_} qw(Data::Dumper URI::Escape HTTP::Date MIME::Base64 Time::HiRes));
 	my %documented_subs = map {$_ -> {name} => 1} @subs;
 	my @undocumented_subs = grep {!exists $imported_subs {$_} && !exists $documented_subs {$_}} @subs_in_zanas;
 

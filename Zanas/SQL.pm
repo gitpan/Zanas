@@ -23,6 +23,11 @@ sub sql_reconnect {
 	my $driver_name = $db -> {Driver} -> {Name};
 
 	eval "require Zanas::SQL::$driver_name";
+	
+	print STDERR $@ if $@;
+	
+	our $SQL_VERSION = sql_version ();
+	$SQL_VERSION -> {driver} = $driver_name;
 
 	delete $INC {"Zanas/SQL/${driver_name}.pm"};
 

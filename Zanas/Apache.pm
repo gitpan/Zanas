@@ -188,7 +188,8 @@ EOH
 		
 		if ($action) {
 		
-			$db -> {AutoCommit} = 0;
+			
+			eval { $db -> {AutoCommit} = 0; };
 	
 			our %_OLD_REQUEST = %_REQUEST;
 		
@@ -244,8 +245,10 @@ EOH
 				
 			}
 			
-			$db -> commit unless $_REQUEST {error};
-			$db -> {AutoCommit} = 1;
+			eval {
+				$db -> commit unless $_REQUEST {error};
+				$db -> {AutoCommit} = 1;
+			};
 
 			log_action ();
 			
@@ -317,6 +320,17 @@ sub out_html {
 
 		$r -> header_out ('Content-Length' => length $html);
 #		$r -> header_out ('Set-Cookie' => "sid=$_REQUEST{sid};path=/;") if $_REQUEST{sid};
+
+		if ($preconf -> {core_auth_cookie}) {
+		
+			set_cookie (
+				-name    =>  'sid',
+				-value   =>  $_REQUEST {sid} || 0,
+				-expires =>  $preconf -> {core_auth_cookie},
+				-path    =>  '/',
+			)      
+			
+		}
 		
 		$r -> send_http_header;		
 		$r -> header_only or print $html;
@@ -458,10 +472,12 @@ sub pub_handler {
 		}
 		else {
 
-			$db -> {AutoCommit} = 0;
+			eval { $db -> {AutoCommit} = 0; };
 			call_for_role ("do_${action}_${type}");
-			$db -> commit unless $_REQUEST {error};
-			$db -> {AutoCommit} = 1;
+			eval { 
+				$db -> commit unless $_REQUEST {error};
+				$db -> {AutoCommit} = 1;
+			};
 
 			$_REQUEST {__response_sent} or redirect ({action => ''}, {kind => 'http'});
 			

@@ -1,7 +1,13 @@
+0.9951:
+
+	- transaction related operations are enclosed in eval blocks;
+	- $SQL_VERSION introduced;
+
 0.9950:
 
 	- no more error messages for 'validate_... not found';
-
+	- profiling added;
+	- fixed charset for XLS files;
 
 0.9949:
 
