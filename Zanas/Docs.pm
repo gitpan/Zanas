@@ -16,6 +16,12 @@ our $deparse = B::Deparse -> new ();
 @options = (
 
 	{
+		name     => 'is_total',
+		label_en => "If true, the table row is displayed as a totals line, not ordinary row.",
+		label_ru => "Если истина, то строка таблицы подцвечивается как строка с суммой.",
+	},
+
+	{
 		name     => 'code',
 		label_en => "Keyboard scan code. Can be set as /F(\d+)/ for function keys.",
 		label_ru => "Клавиатурный scan code. Для функциональных клавиш может быть задан как /F(\d+)/.",
@@ -435,17 +441,627 @@ our $deparse = B::Deparse -> new ();
 		label_ru => "Дополнительная запись path, предшествующая всем осальным.",
 	},
 
+	{
+		name     => 'position',
+		label_en => "Position of the totals line in the recordset.",
+		label_ru => "Номер строки итогов в выборке.",
+	},
+
+	{
+		name     => 'lpt',
+		label_en => "If true, 'MS Excel' and 'Print' buttons are shown",
+		label_ru => "Если истина, то показываются кнопки 'MS Excel' и 'Печать'",
+	},
+
+	{
+		name     => 'kind',
+		label_en => "Redirection kind:<ul> <li>'internal' (apache only); <li>'http' (response code 302) or <li>'js' (with onLoad handler)",
+		label_ru => "Тип перенаправления:<ul> <li>'internal' (только apache, URL на клиенте не меняется); <li>'http' (ответ с кодом 302) or <li>'js' (через обработчик onLoad)",
+	},
+
+	{
+		name     => 'before',
+		label_en => "When kind is 'js', this option is the JS code executed before the redirection",
+		label_ru => "При перенаравлении типа 'js' эта опция исполняется как JavaScript на клиенте до перенаправления",
+	},
+
 );
 
 ################################################################################
 
 @subs = (
 
+
+
+					#######################################
+
+	{
+		name     => 'redirect',
+		syn      => <<EO,
+	redirect ({type => 'logon', sid => ''}, {kind => 'http'});
+EO
+		label_en => 'Redirects the client to the given URL.',
+		label_ru => 'Перенаправление клиента на заданный адрес.',
+#		see_also => [qw(draw_form draw_table)],
+		options  => [qw(kind/internal before)],
+	},
+
+
+					#######################################
+
+	{
+		name     => 'out_html',
+		syn      => <<EO,
+	out_html ({}, '<html></html>');
+EO
+		label_en => 'Internal sub outting the given HTML code',
+		label_ru => 'Внутренняя процедура, подающая заданный HTML на выход',
+#		see_also => [qw(draw_form draw_table)],
+	},
+
+
+					#######################################
+					
+	{
+		name     => 'log_action',
+		syn      => <<EO,		
+	log_action (
+		1,		#id_user
+		'logon'		#type
+		'execute'	#action
+		'bad_password'	#error
+		0		#id
+	)
+EO
+		label_en => 'Internal sub logging the curren action',
+		label_ru => 'Внутренняя процедура, протоколирующая текщее действие',
+#		see_also => [qw(draw_form draw_table)],
+	},
+
+					#######################################
+
+	{
+		name     => 'trunc_string',
+		syn      => <<EO,		
+	trunc_string ('A long string', 6) # -> 'A long...';
+EO
+		label_en => 'Internal sub for truncating too long label strings',
+		label_ru => 'Внутренняя процедура, укорачивающая слишком длинные строки (выходящие за границы ячеек таблиц и т. п.)',
+	},
+
+					#######################################
+
+	{
+		name     => 'keep_alive',
+		syn      => <<EO,		
+	keep_alive (73548324387324);
+EO
+		label_en => 'Internal sub keeping the given session alive',
+		label_ru => 'Внутренняя процедура, поддерживающая заданную сессию актуальной',
+#		see_also => [qw(draw_form draw_table)],
+	},
+
+
+					#######################################
+
+	{
+		name     => 'js_ok_escape',
+		syn      => <<EO,		
+		
+	js_ok_escape ({
+		name        => 'form1',
+		confirm_ok  => 'Apply changes?',
+		confirm_esc => 'Quit without saving changes?',
+	});
+		
+EO
+		label_en => 'JavaScript handler for Enter and Esc keys. Normally invoked by draw_form. May be needed to invoke manually for bottom toolbars after draw_table.',
+		label_ru => 'JavaScript-обработчик для клавиш Enter и Esc. Обычно вызывается автоматически из-под draw_form. Может вывзываться вручную при отрисовке нижней кнопочной панели при draw_table.',
+		see_also => [qw(draw_form draw_table)],
+	},
+
+					#######################################
+
+	{
+		name     => 'js_escape',
+		syn      => <<EO,		
+		
+	js_escape ('So called "foo"'); # --> So called \'foo\'
+		
+EO
+		label_en => 'Generate a valid JavaScript string literal for agiven scalar',
+		label_ru => 'Генерирует корректный литерал строки JavaScript для заданного скаляра',
+#		see_also => [qw(headers draw_table draw_table_header order)],
+	},
+
+
+					#######################################
+
+	{
+		name     => 'interpolate',
+		syn      => <<EO,		
+		
+	interpolate ('2 * 2'); # == 4
+		
+EO
+		label_en => 'Internal sub evaluting the given Perl expression with given source',
+		label_ru => 'Внутренняя подпрограмма для вычисления выражения по заданному исходному тексту',
+#		see_also => [qw(headers draw_table draw_table_header order)],
+	},
+
+
+					#######################################
+
+	{
+		name     => 'hrefs',
+		syn      => <<EO,		
+		
+	[
+		label => 'Title',
+		hrefs ('title'),
+	]
+		
+# is the same as 	
+		
+	[
+		{
+			label => 'Title',
+			href  => {order => 'title'},
+			href_asc => {order => 'title'},
+			href_desc => {order => 'title', desc => 1},
+		}
+	]
+EO
+		label_en => 'Shortcut for quick table headers definition (DEPRECATED)',
+		label_ru => 'Компактное описание табличного заголовка (УСТАРЕЛО)',
+		see_also => [qw(headers draw_table draw_table_header order)],
+	},
+	
+
+					#######################################
+
+	{
+		name     => 'sql_delete_file',
+		syn      => <<EO,		
+	sql_delete_file ({
+		table => 'images',
+		file_path_columns => ['path_big', 'path_small'],
+	});
+EO
+		label_en => 'Delete files corresponding to the record in the specified table.',
+		label_ru => 'Удаление с диска файлов, соответствующих записи заданной таблицы.',
+		see_also => [qw(delete_file)],
+	},
+
+					#######################################
+
+	{
+		name     => 'sql_select_loop',
+		syn      => <<EO,		
+	
+	my \$sum = 0;
+	sql_select_loop (
+		'SELECT * FROM my_data WHERE year = ?', 
+		sub { \$sum += non_linear_function (\$i -> {field}); },
+		2000
+	);
+EO
+		label_en => 'Iterates over a given recordset with a given callback. Good for huge selections.',
+		label_ru => 'Последовательный вызов заданной подпрограммы для каждой записи в заданной выборке.',
+		see_also => [qw(sql_select_all)],
+	},
+
+
+
+
+					#######################################
+
+	{
+		name     => 'sql_reconnect',
+		syn      => <<EO,		
+			sql_reconnect ();
+EO
+		label_en => 'Internal sub maintainning the [my]sql server connection.',
+		label_ru => 'Внутренняя процедура поддержки связи с [my]sql-сервером.',
+#		see_also => [qw(hotkey)],
+	},
+
+					#######################################
+
+	{
+		name     => 'require_fresh',
+		syn      => <<EO,		
+			require_fresh ("\${_PACKAGE}Content::\$\$page{type}");
+EO
+		label_en => 'Internal sub loading the last version of the given module.',
+		label_ru => 'Внутренняя процедура загрузки последней версии требуемого модуля.',
+#		see_also => [qw(hotkey)],
+	},
+
+					#######################################
+
+	{
+		name     => 'select__static_files',
+		syn      => <<EO,		
+EO
+		label_en => 'Internal sub sending static files included is Zanas.pm engine back to the client.',
+		label_ru => 'Внутренняя процедура выдачи на клиент внутренних статических файлов, содержащихся в дистрибутиве Zanas.pm.',
+#		see_also => [qw(hotkey)],
+	},
+
+					#######################################
+
+	{
+		name     => 'register_hotkey',
+		syn      => <<EO,		
+EO
+		label_en => 'Internal sub for defining a hotkey for the current page. Use "hotkey" instead.',
+		label_ru => 'Внутреннее определение горячей клавиши. В прикладных программах следует использовать "hotkey"',
+		see_also => [qw(hotkey)],
+	},
+
+
+					#######################################
+
+	{
+		name     => 'hotkey',
+		syn      => <<EO,		
+		
+	hotkey ({
+		code => F11,
+		type => 'href',
+		data => 'http://www.megapr0n.edu/',
+		ctrl => 1,
+		alt  => 0,
+	});
+	
+EO
+		label_en => 'Define a hotkey for the current page',
+		label_ru => 'Определение горячей клавиши (F1-F12 или скан-код)',
+#		see_also => [qw(draw_table draw_table_header headers)],
+	},
+
+					#######################################
+
+	{
+		name     => 'order',
+		syn      => <<EO,		
+		
+	my $order = order ('my_table.title', # default
+		number => 'alien_table.n',
+	))			
+	
+EO
+		label_en => 'Shortcut for quick ORDER BY content generation',
+		label_ru => 'Генерация выражения ORDER BY на основании параметров order и desc',
+		see_also => [qw(draw_table draw_table_header headers)],
+	},
+
+					#######################################
+
+	{
+		name     => 'headers',
+		syn      => <<EO,		
+		
+	headers (qw(
+		Title			title
+		Number_of_pages		number
+	))			
+		
+# is the same as 	
+		
+	[
+		{
+			label => 'Title',
+			href  => {order => 'title'},
+			href_asc => {order => 'title'},
+			href_desc => {order => 'title', desc => 1},
+		}
+		{
+			label => 'Number of pages',
+			href  => {order => 'number'},
+			href_asc => {order => 'number'},
+			href_desc => {order => 'number', desc => 1},
+		}
+	]
+EO
+		label_en => 'Shortcut for quick table headers definition',
+		label_ru => 'Компактное описание табличного заголовка',
+		see_also => [qw(draw_table draw_table_header order)],
+	},
+
+					#######################################
+					
+	{
+		name     => 'handler',
+		syn      => <<EO,		
+		
+# In httpd.conf
+
+	SetHandler  perl-script
+	PerlModule  MYAPP
+	PerlHandler MYAPP::handler # or just MYAPP
+EO
+		label_en => 'Apache request handler for intranet applications',
+		label_ru => 'Обработчик запросов Apache для intranet-приложений',
+		see_also => [qw(pub_handler)],
+	},
+
+					#######################################
+					
+	{
+		name     => 'pub_handler',
+		syn      => <<EO,		
+		
+# In httpd.conf
+
+	SetHandler  perl-script
+	PerlModule  MYAPP
+	PerlHandler MYAPP::pub_handler
+EO
+		label_en => 'Apache request handler for public sites',
+		label_ru => 'Обработчик запросов Apache для публичных сайтов',
+		see_also => [qw(handler)],
+	},
+
+					#######################################
+					
+	{
+		name     => 'handle_hotkey_focus',
+#		options  => [qw(js_ok_escape)],
+#		syn      => <<EO,		
+#EO
+		label_en => 'Internal sub generating JavaScript code for keyboard handling for setting focus.',
+		label_ru => 'Внутренняя подпрограмма, генерирующая JavaScript-код обработки нажатия на клавишу для перемещения фокуса ввода.',
+#		see_also => [qw(upload_file sql_upload_file)],
+	},
+			
+					#######################################
+	{
+		name     => 'handle_hotkey_href',
+#		options  => [qw(js_ok_escape)],
+#		syn      => <<EO,		
+#EO
+		label_en => 'Internal sub generating JavaScript code for keyboard handling for following the given href.',
+		label_ru => 'Внутренняя подпрограмма, генерирующая JavaScript-код обработки нажатия на клавишу для открытия заданного URL.',
+#		see_also => [qw(upload_file sql_upload_file)],
+	},
+
+			
+					#######################################
+	{
+		name     => 'get_user',
+#		options  => [qw(js_ok_escape)],
+		syn      => <<EO,
+   	our $_USER = get_user ();
+EO
+		label_en => 'Internal sub fetching the current user info.',
+		label_ru => 'Внутренняя подпрограмма, считывающая из БД информацию о текущем пользователе системы',
+#		see_also => [qw(upload_file sql_upload_file)],
+	},
+
+					#######################################
+	{
+		name     => 'get_filehandle',
+#		options  => [qw(js_ok_escape)],
+		syn      => <<EO,
+   	get_filehandle ('file');
+EO
+		label_en => 'Returns the file handle for the file upload field with given name. Not to be used directlty',
+		label_ru => 'Возвращает дескриптор загружаемого файла, HTML-поле для которого имело заданное имя. Данную подропграмму не следует вызывать непосредственно.',
+		see_also => [qw(upload_file sql_upload_file)],
+	},
+
+					#######################################
+	{
+		name     => 'fill_in_i18n',
+#		options  => [qw(js_ok_escape)],
+		syn      => <<EO,
+   	fill_in_i18n ('ENG', {
+   		_charset                 => 'windows-1252',
+		Exit                     => 'Exit',
+   	});
+EO
+		label_en => 'I18n vocabulary initialization',
+		label_ru => 'Инициализация словая i18n',
+#		see_also => [qw(draw_table)],
+	},
+
+					#######################################
+	{
+		name     => 'dump_attributes',
+#		options  => [qw(js_ok_escape)],
+		syn      => <<EO,
+	dump_attributes ({width => 1, height => 10});
+EO
+		label_en => 'Internal sub dumping the given hashref as HTML attributes',
+		label_ru => 'Внутренняя подпрограмма распечатки заданного хэша как HTML-атрибутов',
+#		see_also => [qw(draw_table)],
+	},
+
+					#######################################
+	{
+		name     => 'draw_tr',
+#		options  => [qw(js_ok_escape)],
+		syn      => <<EO,
+	draw_tr  ({}, '<td>One</td>', '<td>Two</td>');
+EO
+		label_en => 'Internal sub rendering the table row',
+		label_ru => 'Внутренняя подпрограмма отрисовки строки таблицы',
+		see_also => [qw(draw_table)],
+	},
+
+					#######################################
+	{
+		name     => 'draw_table_header',
+#		options  => [qw(js_ok_escape)],
+		syn      => <<EO,
+	draw_table_header  ([
+		'No',
+		{
+			label => 'Title',
+			href  => {order => 'title'},
+			href_asc => {order => 'title'},
+			href_desc => {order => 'title', desc => 1},
+		}
+	]);
+EO
+		label_en => 'Internal sub rendering the table header',
+		label_ru => 'Внутренняя подпрограмма отрисовки заголовка таблицы',
+		see_also => [qw(draw_table)],
+	},
+
+					#######################################
+	{
+		name     => 'draw_page',
+#		options  => [qw(js_ok_escape)],
+		syn      => <<EO,
+	draw_page  ($page);
+EO
+		label_en => 'Internal sub rendering the whole page',
+		label_ru => 'Внутренняя подпрограмма отрисовки страницы в целом',
+#		see_also => [qw(draw_table)],
+	},
+
+					#######################################
+	{
+		name     => 'draw_one_cell_table',
+		options  => [qw(js_ok_escape)],
+		syn      => <<EO,
+	draw_one_cell_table ({js_ok_escape => 1}, '<pre> ERROR! (just kidding) </pre>');
+EO
+		label_en => 'Draws the 100% width table width default style in the main area. Good for custom HTML hacking',
+		label_ru => 'Отрисовка таблицы 100%-ной ширины c заданным HTML-наполнением.',
+		see_also => [qw(draw_table)],
+	},
+
+
+					#######################################
+	{
+		name     => 'draw_form_field_iframe',
+		options  => [qw(name href width height)],
+		syn      => <<EO,
+	draw_form_field_iframe ({
+		name   => 'my_iframe', 
+		href   => 'http://pr0n.site.org',
+		width  => 10,
+		height => 5,
+	});
+EO
+		label_en => 'Renders an IFRAME form field. Called internally by draw_form',
+		label_ru => 'Отрисовка IFRAME как поля формы. Вызывается автоматически из draw_form.',
+		see_also => [qw(draw_form)],
+	},
+
+					#######################################
+	{
+		name     => 'draw_form_field',
+#		options  => [qw(lpt)],
+		syn      => <<EO,
+	draw_form_field ($field, $data);
+EO
+		label_en => 'Internal sub rendering a form field by given definition for the given data.',
+		label_ru => 'Отрисовка поля формы по заданному описанию для заданной записи БД. Вызывается автоматически из draw_form.',
+		see_also => [qw(draw_form)],
+	},
+
+
+					#######################################
+	{
+		name     => 'draw_menu',
+#		options  => [qw(lpt)],
+		syn      => <<EO,
+	draw_menu (get_menu_for_admin ());
+EO
+		label_en => 'Draws the top menu of the page. Invoked automatically.',
+		label_ru => 'Отрисовка главного меню страницы. Вызывается автоматически.',
+		see_also => [qw(draw_vert_menu)],
+	},
+
+					#######################################
+	{
+		name     => 'draw_vert_menu',
+#		options  => [qw(lpt)],
+		syn      => <<EO,
+	draw_vert_menu ([
+	
+		{
+			name  => 'who',
+			label => 'Who?',
+		},
+		
+		BREAK,
+
+		{	
+			name => 'env',
+			label => '%ENV'
+		},
+	]);
+EO
+		label_en => 'Draws the pulldown menu. Invoked automatically.',
+		label_ru => 'Отрисовка выпадающего меню. Вызывается автоматически.',
+		see_also => [qw(draw_menu)],
+	},
+
+
+					#######################################
+	{
+		name     => 'draw_auth_toolbar',
+		options  => [qw(lpt)],
+		syn      => <<EO,
+	draw_auth_toolbar ({lpt => 1});
+EO
+		label_en => 'Draws the navigation toolbar on top of the page. Invoked automatically.',
+		label_ru => 'Отрисовка верхней навигационной панели страницы. Вызывается автоматически.',
+#		see_also => [qw(draw_text_cell draw_text_cells)],
+	},
+
+					#######################################
+
+	{
+		name     => 'delete_file',
+#		options  => [qw(position)],
+		syn      => <<EO,
+	delete_file ('i/upload/foo.doc');
+EO
+		label_en => 'Deletes the given file by its relative path in the current document root.',
+		label_ru => "Удаление заданного файла по пути, заданному относительно DocumentRoot'а",
+#		see_also => [qw(draw_text_cell draw_text_cells)],
+	},
+
+
+					#######################################
+
+	{
+		name     => 'call_for_role',
+#		options  => [qw(position)],
+		syn      => <<EO,
+	my \$some_concent = call_for_role ('get_some_concent', \@args);
+EO
+		label_en => 'Internal sub calling the given callback according the role of current user.',
+		label_ru => 'Внутрення подпрограмма, вызывающая заданную callback-процедуру в соответствии с ролью текущего пользователя',
+#		see_also => [qw(draw_text_cell draw_text_cells)],
+	},
+
+
+
+					#######################################
+
+	{
+		name     => 'add_totals',
+		options  => [qw(position)],
+		syn      => <<EO,
+	add_totals ($statistics_data, {position => 0});
+EO
+		label_en => 'Adds a totals line (sums only) in the given recordeset (arrayref of hashrefs)',
+		label_ru => 'Добавляет строку итогов (суммы всех полей) в заданную выборку (список ссылок на хэши)',
+		see_also => [qw(draw_text_cell draw_text_cells)],
+	},
+
 					#######################################
 
 	{
 		name     => 'create_url',
-#		options  => [qw()],
 		syn      => <<EO,	
 	create_url (
 		type => 'some_other_type',
@@ -745,7 +1361,7 @@ EOS
 EOP
 		label_en => 'Executes a given SQL (SELECT) statement with supplied parameters and returns the resultset (listref of hashrefs).',
 		label_ru => 'Исполняет оператор SQL с заданными аргументами и возвращает выборку (список хэшей).',
-#		see_also => [qw()]
+		see_also => [qw(sql_select_loop)]
 	},
 
 					#######################################
@@ -924,7 +1540,7 @@ EO
 
 	{
 		name     => 'draw_back_next_toolbar',
-		options  => [qw(additional_buttons back)],
+		options  => [qw(additional_buttons back type)],
 		label_en => 'Draws toolbar with Back and Next buttons. Used in wizards',
 		label_ru => 'Отрисовывает панель с кнопками "назад" и "далее". Применяется для пошаговых "мастеров".',
 		see_also => [qw(draw_centered_toolbar)]
@@ -944,7 +1560,7 @@ EO
 
 	{
 		name     => 'draw_esc_toolbar',
-		options  => [qw(esc additional_buttons)],
+		options  => [qw(esc/?type=$_REQUEST{type} additional_buttons href/esc(?type=$_REQUEST{type}))],
 		label_en => 'Draws toolbar with an escape button.',
 		label_ru => 'Отрисовывает панель с кнопкой "выход"',
 		see_also => [qw(draw_centered_toolbar)]
@@ -954,7 +1570,7 @@ EO
 
 	{
 		name     => 'draw_ok_esc_toolbar',
-		options  => [qw(name esc/?type=$_REQUEST{type} additional_buttons label_ok/применить label_cancel/вернуться)],
+		options  => [qw(name esc/?type=$_REQUEST{type} additional_buttons label_ok/применить label_cancel/вернуться href/esc(?type=$_REQUEST{type}))],
 		label_en => 'Draws toolbar with an escape button.',
 		label_ru => 'Отрисовывает панель с кнопкой "выход"',
 		see_also => [qw(draw_centered_toolbar)]
@@ -1254,7 +1870,7 @@ EO
 
 	{
 		name     => 'draw_toolbar_input_submit',
-		options  => [qw(name label)],
+		options  => [qw(name label off)],
 		syn      => <<EO,	
 	draw_toolbar_input_submit ({
 		label  => 'Refresh',
@@ -1431,7 +2047,7 @@ EO
 
 	{
 		name     => 'draw_text_cell',
-		options  => [qw(label max_len/$$conf{max_len} picture attributes off href target/invisible a_class/lnk4)],
+		options  => [qw(label max_len/$$conf{max_len} picture attributes off href target/invisible a_class/lnk4 is_total)],
 		syn      => <<EO,	
 	draw_text_cell ('foo')
 
@@ -1528,7 +2144,7 @@ EO
 EO
 		label_en => 'Draws the data table with the given headers, callback sub and data array. Data are passed to the callback sub through the global variable $i.',
 		label_ru => 'Отрисовывает таблицу данных с заданными заголовками, callback-процедурой и массивом данных. Данные передаются в callback-процедуру через глобальную переменную $i.',
-		see_also => [qw(draw_text_cells draw_text_cell draw_input_cell draw_checkbox_cell draw_row_button draw_row_buttons)]
+		see_also => [qw(draw_text_cells draw_text_cell draw_input_cell draw_checkbox_cell draw_row_button draw_row_buttons draw_table_header)]
 	},
 
 					#######################################
@@ -1744,6 +2360,190 @@ EO
 
 );
 
+our @conf = (
+
+	{
+		name => 'page_title',
+		label_en => 'HTML page title',
+		label_ru => 'Содержимое тега TITLE результирующей HTML-страницы',
+	},
+
+	{
+		name => 'top_banner',
+		label_en => 'Verbatim HTML area between top navigation toolbar and the main area.',
+		label_ru => 'Фрагмент HTML, вставляемый между верхней навигационной панелью и основной частью страницы.',
+	},
+	
+	{
+		name => 'kb_options_focus',
+		label_en => 'Ctrl & Alt options for focus shortcuts',
+		label_ru => 'Опции ctrl и alt для клавиатурных ускорителей, перемещающих фокус ввода.',
+		default => '$conf -> {kb_options_buttons}',
+		see_also => [qw(kb_options_buttons)],
+	},
+	
+	{
+		name => 'kb_options_buttons',
+		label_en => 'Ctrl & Alt options for buttons shortcuts',
+		label_ru => 'Опции ctrl и alt для клавиатурных ускорителей кнопок.',
+		default => '{ctrl => 1, alt => 1}',
+		see_also => [qw(kb_options_focus kb_options_menu)],
+	},
+	
+	{
+		name => 'kb_options_menu',
+		label_en => 'Ctrl & Alt options for main menu shortcuts',
+		label_ru => 'Опции ctrl и alt для клавиатурных ускорителей главного меню.',
+		default => '{ctrl => 1, alt => 1}',
+		see_also => [qw(kb_options_focus kb_options_buttons)],
+	},
+
+	{
+		name => 'max_len',
+		label_en => 'Default length limit for dispayed strings',
+		label_ru => 'Ограниение по умолчанию для отображаемых строк.',
+		default => '30',
+#		see_also => [qw(kb_options_focus kb_options_buttons)],
+	},
+
+	{
+		name => 'format_d',
+		label_en => 'Default date format for calendar input field',
+		label_ru => 'Формат даты по умолчанию для поля ввода типа "календарь"',
+		default => '%d.%m.%Y',
+		see_also => [qw(format_dt)],
+	},
+
+	{
+		name => 'format_dt',
+		label_en => 'Default date format for calendar input field',
+		label_ru => 'Формат даты/времени по умолчанию для поля ввода типа "календарь"',
+		default => '%d.%m.%Y %k:%M',
+		see_also => [qw(format_d)],
+	},
+
+	{
+		name => 'portion',
+		label_en => 'Default page size for long lists',
+		label_ru => 'Умолчательое количество строк выборки на странице',
+		default => '15',
+	},
+
+	{
+		name => 'session_timeout',
+		label_en => 'User session timeout, in minutes',
+		label_ru => 'Время жизни сессии, мин.',
+	},
+
+	{
+		name => 'i18n',
+		label_en => 'i18n dictionary',
+		label_ru => 'Словарь для многоязычного интерфейса',
+	},
+
+	{
+		name => 'use_cgi',
+		label_en => 'If true, then CGI.pm is used instead of mod_perl interface',
+		label_ru => 'Если истина, то вместо родного интерфейса mod_perl используется CGI.pm.',
+	},
+
+	{
+		name => 'core_sweep_spaces',
+		label_en => 'If true, then unnecessary spaces are sweeped off the resulting HTML.',
+		label_ru => 'Если истина, то из HTML страниц удаляются незначащие пробельные символы.',
+	},
+
+	{
+		name => 'core_cache_html',
+		label_en => 'If true, then resulting HTML is cached for public sites.',
+		label_ru => 'Если истина, HTML страниц для публичных сайтов кэшируется.',
+	},
+
+	{
+		name => 'core_spy_modules',
+		label_en => 'If true then application *.pm modules are checked for freshness for each request and is reloaded as needed.',
+		label_ru => 'Если истина, то для *.pm-модулей отслеживается дата изменения и при необходимости производится подгрузка свежих версий.',
+	},
+
+	{
+		name => 'core_show_icons',
+		label_en => 'Reserved :-(',
+		label_ru => 'Зарезервировано :-(',
+	},
+
+	{
+		name => 'db_dsn',
+		label_en => 'DBI DSN. Better set it in $preconf!',
+		label_ru => 'Строка соединения БД. Желательно задавать не в $conf, а в $preconf',
+		see_also => [qw(db_user db_password)],
+	},
+
+	{
+		name => 'db_user',
+		label_en => 'DBI user. Better set it in $preconf!',
+		label_ru => 'Имя пользователя БД. Желательно задавать не в $conf, а в $preconf',
+		see_also => [qw(db_dsn db_password)],
+	},
+
+	{
+		name => 'db_password',
+		label_en => 'DBI password. Better set it in $preconf!',
+		label_ru => 'Пароль пользователя БД. Желательно задавать не в $conf, а в $preconf',
+		see_also => [qw(db_dsn db_user)],
+	},
+
+
+);
+
+our @preconf = (
+
+	{
+		name => 'use_cgi',
+		label_en => 'If true, then CGI.pm is used instead of mod_perl interface',
+		label_ru => 'Если истина, то вместо родного интерфейса mod_perl используется CGI.pm.',
+	},
+
+	{
+		name => 'core_gzip',
+		label_en => 'If true, use gzip transfer encoding when possible',
+		label_ru => 'Если истина, по возможности использовать кодировку gzip.',
+	},
+
+	{
+		name => 'core_spy_modules',
+		label_en => 'If true then application *.pm modules are checked for freshness for each request and is reloaded as needed.',
+		label_ru => 'Если истина, то для *.pm-модулей отслеживается дата изменения и при необходимости производится подгрузка свежих версий.',
+	},
+
+	{
+		name => 'core_multiple_roles',
+		label_en => 'If true then multiple simultaneous sessions with different roles per one user are allowed.',
+		label_ru => 'Если истина, то один пользователь может одновременно поддерживать несколько сессий с разными ролями.',
+	},
+
+	{
+		name => 'db_dsn',
+		label_en => 'DBI DSN',
+		label_ru => 'Строка соединения БД',
+		see_also => [qw(db_user db_password)],
+	},
+
+	{
+		name => 'db_user',
+		label_en => 'DBI user',
+		label_ru => 'Имя пользователя БД',
+		see_also => [qw(db_dsn db_password)],
+	},
+
+	{
+		name => 'db_password',
+		label_en => 'DBI password',
+		label_ru => 'Пароль пользователя БД',
+		see_also => [qw(db_dsn db_user)],
+	},
+
+);
+
 ################################################################################
 
 %i18n = (
@@ -1830,16 +2630,125 @@ EOF
 
 ################################################################################
 
+sub generate_conf {
+
+	my ($lang, $s) = @_;		
+	
+	my $see_also = '';
+	foreach my $sa (sort @{$s -> {see_also}}) {
+		$see_also .= qq{<li><a href="$sa.html">$sa</a>};
+	}
+	
+	$see_also and $see_also = <<EOF;
+					<dt>${$i18n{SEE_ALSO}}{$lang}
+					<dd><ul>$see_also</ul>
+EOF
+		
+	open (F, ">$lang/conf/$$s{name}.html");
+	print F <<EOF;
+		<HTML>
+			<HEAD>
+				<TITLE>Zanas.pm documentation: \$conf option $$s{name}</TITLE>
+				<link rel="STYLESHEET" href="../../css/z.css" type="text/css">
+			</HEAD>
+			<BODY>
+				<dl>
+					<dt>${$i18n{NAME}}{$lang}
+					<dd>\$conf -> {$$s{name}}
+					
+					@{[ $$s{default} ? <<EOD : '' ]}
+						<dt>${$i18n{DEFAULT}}{$lang}
+						<pre>$$s{default}</pre>
+EOD
+
+					<dt>${$i18n{DESCRIPTION}}{$lang}
+					<dd>$$s{"label_$lang"}
+					
+					$see_also
+
+				</dl>
+			</BODY>
+		</HTML>
+EOF
+
+	close (F);
+
+}
+
+################################################################################
+
+sub generate_preconf {
+
+	my ($lang, $s) = @_;		
+	
+	my $see_also = '';
+	foreach my $sa (sort @{$s -> {see_also}}) {
+		$see_also .= qq{<li><a href="$sa.html">$sa</a>};
+	}
+	
+	$see_also and $see_also = <<EOF;
+					<dt>${$i18n{SEE_ALSO}}{$lang}
+					<dd><ul>$see_also</ul>
+EOF
+		
+	open (F, ">$lang/preconf/$$s{name}.html");
+	print F <<EOF;
+		<HTML>
+			<HEAD>
+				<TITLE>Zanas.pm documentation: \$conf option $$s{name}</TITLE>
+				<link rel="STYLESHEET" href="../../css/z.css" type="text/css">
+			</HEAD>
+			<BODY>
+				<dl>
+					<dt>${$i18n{NAME}}{$lang}
+					<dd>\$preconf -> {$$s{name}}
+					
+					@{[ $$s{default} ? <<EOD : '' ]}
+						<dt>${$i18n{DEFAULT}}{$lang}
+						<pre>$$s{default}</pre>
+EOD
+
+					<dt>${$i18n{DESCRIPTION}}{$lang}
+					<dd>$$s{"label_$lang"}
+					
+					$see_also
+
+				</dl>
+			</BODY>
+		</HTML>
+EOF
+
+	close (F);
+
+}
+
+################################################################################
+
 sub generate_sub {
 
 	my ($lang, $s) = @_;
 	
-#	if ($lang eq 'en') {
+	my %soptions = ();
+	my %coptions = ();
+	my %poptions = ();
+	
+	if ($lang eq 'en') {	
+		
 		my $body = '';
 		eval '$body = $deparse -> coderef2text(\&Zanas::' . $s -> {name} . ')';	
+
 		my @soptions = ($body =~ m{\$\$options\{\'(\w+)\'\}});
-		my %soptions = map {$_ => 1} @soptions;
-#	}
+		%soptions = map {$_ => 1} @soptions;
+		
+		my @coptions = ($body =~ m{\$\$conf\{\'(\w+)\'\}});
+		%coptions = map {$_ => 1} @coptions;
+		map {delete $coptions {$_ -> {name}}} @conf;
+		
+		my @poptions = ($body =~ m{\$\$preconf\{\'(\w+)\'\}});
+		%poptions = map {$_ => 1} @poptions;
+		map {delete $poptions {$_ -> {name}}} @preconf;
+
+	}
 
 	my $options = '';
 	foreach my $o (@{$s -> {options}}) {
@@ -1852,7 +2761,11 @@ sub generate_sub {
 		delete $soptions {$name};
 	}
 	
-	print STDERR join '', map {"Warning! undocumented option '$_' in sub '$$s{name}': \n"} sort keys %soptions if ($lang eq 'en');
+	if ($lang eq 'en') {	
+		print STDERR join '', map {"Warning! undocumented option '$_' in sub '$$s{name}': \n"} sort keys %soptions;
+		print STDERR join '', map {"Warning! undocumented \$conf option '$_' in sub '$$s{name}': \n"} sort keys %coptions;
+		print STDERR join '', map {"Warning! undocumented \$preconf option '$_' in sub '$$s{name}': \n"} sort keys %poptions;
+	}
 	
 	$options and $options = <<EOF;
 					<dt>${$i18n{OPTIONS}}{$lang}
@@ -1915,7 +2828,8 @@ sub generate_left {
 	
 	my $subs = '';
 	foreach my $s (sort {$a -> {name} cmp $b -> {name}} @subs) {
-		$subs .= qq{<a href="$$s{name}.html" target="main">$$s{name}</a><br>};
+		my $class = $s -> {label_en} =~ /internal/i ? 'class=internal' : '';
+		$subs .= qq{<a $class href="$$s{name}.html" target="main">$$s{name}</a><br>};
 		generate_sub ($lang, $s);
 	}
 		
@@ -1924,7 +2838,19 @@ sub generate_left {
 		$params .= qq{<a href="params/$$s{name}.html" target="main">$$s{name}</a><br>};
 		generate_param ($lang, $s);
 	}
+
+	my $coptions = '';
+	foreach my $s (sort {$a -> {name} cmp $b -> {name}} @conf) {
+		$coptions .= qq{<a $class href="conf/$$s{name}.html" target="main">$$s{name}</a><br>};
+		generate_conf ($lang, $s);
+	}
 		
+	my $poptions = '';
+	foreach my $s (sort {$a -> {name} cmp $b -> {name}} @preconf) {
+		$poptions .= qq{<a $class href="preconf/$$s{name}.html" target="main">$$s{name}</a><br>};
+		generate_preconf ($lang, $s);
+	}
+
 	open (F, ">$lang/left.html");
 	print F <<EOF;
 		<HTML>
@@ -1952,6 +2878,16 @@ sub generate_left {
 					    text-decoration: underline;
 					    color: #005050;
     					};
+					a.internal:link, a.internal:visited, a.internal:active {
+					    font-family: Verdana, Arial, Helvetica, sans-serif;
+					    text-decoration: none;
+					    color: #009090;
+    					};
+					a.internal:hover {
+					    font-family: Verdana, Arial, Helvetica, sans-serif;
+					    text-decoration: underline;
+					    color: #009090;
+    					};
 				</STYLE>
 			</HEAD>			
 			<BODY>
@@ -1962,7 +2898,13 @@ EO
 				$subs
 
 				<h1>%_REQUEST</h1>
-				$params
+				$params				
+				
+				<h1>\$conf</h1>
+				$coptions
+
+				<h1>\$preconf</h1>
+				$poptions
 			</BODY>
 		</HTML>
 EOF
@@ -1994,6 +2936,8 @@ sub generate_for_lang {
 	my ($lang) = @_;
 	mkdir $lang;
 	mkdir "$lang/params";
+	mkdir "$lang/conf";
+	mkdir "$lang/preconf";
 	generate_index ($lang);
 	generate_left  ($lang);
 }

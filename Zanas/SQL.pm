@@ -271,15 +271,8 @@ sub sql_delete_file {
 	}
 	
 	foreach my $column (@{$options -> {file_path_columns}}) {
-
 		my $path = sql_select_array ("SELECT $$options{path_column} FROM $$options{table} WHERE id = ?", $_REQUEST {id});
-
-#print STDERR "sql_delete_file: unlinking '$path'\n";
-
 		delete_file ($path);
-
-#print STDERR "sql_delete_file: '$path' unlinked\n";
-
 	}
 	
 

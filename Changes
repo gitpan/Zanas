@@ -1,6 +1,15 @@
+0.9922: 
+
+	- cache_html column types are changed to longtext;
+	- added support for client side caching (proper If-Modified-Since handling);
+	- get rid of Mozilla/Unsupported;
+	- doc fixes;
+	- [X] button for datetime control (by pashka);
+	- fixed a bug with CGI interface inroduced in 0.9918 (by pashka);
+
 0.9921: 
 
-	new $conf option: core_cache_html. HTML cacheing in pub_handler introduced;
+	- new $conf option: core_cache_html. HTML cacheing in pub_handler introduced;	
 
 0.9920: 
 

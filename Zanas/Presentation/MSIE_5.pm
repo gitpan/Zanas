@@ -1366,6 +1366,8 @@ sub draw_form_field_datetime {
 	return <<EOH
 		<input $attributes onFocus="scrollable_table_is_blocked = true; q_is_focused = true" onBlur="scrollable_table_is_blocked = false; q_is_focused = false" autocomplete="off" type="text" name="_$$options{name}" value="$s" $size onKeyPress="if (window.event.keyCode != 27) is_dirty=true">
 		<button id="calendar_trigger_$$options{name}" class="txt7">...</button>
+		&nbsp;
+		<button class="txt7" onClick="document.all._$$options{name}.value=''">X</button>
 		
 		<script type="text/javascript">
 			Calendar.setup(

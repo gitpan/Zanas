@@ -1,6 +1,7 @@
 no warnings;
 
 use Number::Format;
+use HTTP::Date;
 
 ################################################################################
 
@@ -38,6 +39,7 @@ sub handler {
 	
 	$_REQUEST {type} =~ s/_for_.*//;
 	$_REQUEST {__uri} = $r -> uri;
+	$_REQUEST {__uri} =~ s{/cgi-bin/.*}{/};
 	$_REQUEST {__uri} =~ s{\/\w+\.\w+$}{};
 	
 	$number_format or our $number_format = Number::Format -> new (%{$conf -> {number_format}});
@@ -109,11 +111,10 @@ sub handler {
 		Select                   => 'Sélection',
    	});
 
-#	$_REQUEST {type} = '_static_files' if $r -> filename =~ /\w\.\w/;
-
 #print STDERR Dumper (\%ENV);
-	
-	$_REQUEST {type} = '_static_files' if ($ENV{PATH_INFO} =~ /\w\.\w/ || $r -> filename =~ /\w\.\w/);
+#	$_REQUEST {type} = '_static_files' if $r -> filename =~ /\w\.\w/;
+#	$_REQUEST {type} = '_static_files' if ($ENV{PATH_INFO} =~ /\w\.\w/ || $r -> filename =~ /\w\.\w/);
+	$_REQUEST {type} = '_static_files' if (($ENV{PATH_INFO} =~ /\w\.\w/ && $ENV{PATH_INFO} ne '/index.html') || $r -> filename =~ /\w\.\w/);
 
 	$conf -> {include_js}  ||= ['js'];
    	
@@ -174,15 +175,7 @@ EOH
 		
 	}
 	else {
-	
-		my $user_agent = $r->header_in ('User-Agent');
-
-		$_USER -> {drawer_name} = 
-			$user_agent =~ /MSIE [56]/  ? 'MSIE_5':
-			$user_agent =~ /Mozilla\/3/ ? 'Mozilla_3':
-			$user_agent =~ /Mozilla\/5/ ? 'MSIE_5':
-			'Unsupported';
-		
+			
 		require_fresh ("${_PACKAGE}Content::menu");
 		require_fresh ("${_PACKAGE}Content::page");
 
@@ -307,7 +300,7 @@ sub out_html {
 		$_REQUEST {__content_type} ||= 'text/html; charset=' . $i18n -> {_charset};
 		$r -> content_type ($_REQUEST {__content_type});
 		
-		if (($conf -> {core_gzip} or $preconf -> {core_gzip}) and $r -> header_in ('Accept-Encoding') =~ /gzip/) {
+		if (($conf -> {core_gzip} or $preconf -> {core_gzip}) && ($r -> header_in ('Accept-Encoding') =~ /gzip/)) {
 			$r -> header_out ('Content-Encoding' => 'gzip');
 			unless ($_REQUEST {__is_gzipped}) {
 				$html = Compress::Zlib::memGzip ($html);
@@ -317,8 +310,9 @@ sub out_html {
 		$r -> header_out ('Content-Length' => length $html);
 #		$r -> header_out ('Set-Cookie' => "sid=$_REQUEST{sid};path=/;") if $_REQUEST{sid};
 		
-		$r -> send_http_header;
-		print $html;
+		$r -> send_http_header;		
+		$r -> header_only or print $html;
+		
 	}	
 
 }
@@ -344,25 +338,38 @@ sub pub_handler {
 	my $c = $_COOKIES {psid};
 	$_REQUEST {sid} = $c -> value if $c;
 	
+	sql_reconnect ();
+
 	eval {
 		require_fresh ("${_PACKAGE}Content::pub_users");
 		our $_USER = get_public_user ();
 	};
 	
-	sql_reconnect ();
-
 	if ($conf -> {core_cache_html} && !$_USER -> {id}) {
-	
-		my $use_gzip = ($conf -> {core_gzip} or $preconf -> {core_gzip}) and $r -> header_in ('Accept-Encoding') =~ /gzip/;
 		
-		my $field = $use_gzip ? 'gzipped' : 'html';
+		my $time = sql_select_scalar ("SELECT UNIX_TIMESTAMP(ts) FROM cache_html WHERE uri = ?", $_REQUEST {__uri_chomped} . '/' . $r -> args);
+		my $ims = $r -> header_in ("If-Modified-Since");
+		if ($ims && str2time ($ims) >= $time) {
+			$r -> status (304);
+			$r -> send_http_header;
+			$_REQUEST {__response_sent} = 1;
+			return OK;
+		}		
 		
+		$r -> header_out ('Last-Modified' => time2str ($time));
+		$r -> header_out ('Cache-Control' => 'max-age=0');
+
+		if ($r -> header_only && $time) {
+			return OK;
+		}
+
+		my $use_gzip = ($conf -> {core_gzip} or $preconf -> {core_gzip}) && ($r -> header_in ('Accept-Encoding') =~ /gzip/);
+		my $field = $use_gzip ? 'gzipped' : 'html';		
 		my $html = sql_select_scalar ("SELECT $field FROM cache_html WHERE uri = ?", $_REQUEST {__uri_chomped} . '/' . $r -> args);
 		
 		if ($html) {
 			$_REQUEST {__is_gzipped} = $use_gzip;
 			out_html ({}, $html);
-		   	$db -> disconnect;
 			return OK;
 		}
 	
@@ -418,6 +425,9 @@ sub pub_handler {
 			sql_do ('REPLACE INTO cache_html (uri, html, gzipped) VALUES (?, ?, ?)', $_REQUEST {__uri_chomped} . '/' . $r -> args, $html, $gzipped);
 		}
 		
+		$r -> header_out ('Last-Modified' => time2str (time));
+		$r -> header_out ('Cache-Control' => 'max-age=0');
+
 		out_html ({}, $html);
 		
 	}

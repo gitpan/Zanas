@@ -7,58 +7,58 @@ use Zanas::SQL;
 use Zanas::Request;
 
 ################################################################################
+#
+#sub require_fresh {
+
+#	my ($module_name) = @_;	
+		
+#	if ($_USER and $$_USER{role} and $module_name =~ /Content|Presentation/) {
+	
+#		my $specific_module_name = $module_name;
+#		
+#		$specific_module_name =~ s/(Content|Presentation)/$$_USER{role}::$1/;
+		
+#		my $error;
+		
+#		eval {$error = require_fresh_internal ($specific_module_name)};
+		
+#		return unless $error;
+		
+#	}
+	
+#	require_fresh_internal ($module_name, 1);
+
+#}
+
+################################################################################
+
+#sub fix_module_for_role {
+
+#	my ($file_name) = @_;
+	
+#	my $tmp_file_name = $file_name . '~';
+	
+#	open (IN, $file_name) or die "Cannot open $file_name: $!\n";
+#	open (OUT, ">$tmp_file_name") or die "Cannot write to $tmp_file_name: $!\n";
+	
+#	my $suffix = ($_USER and $$_USER{role}) ? '_for_' . $_USER -> {role} : '';
+	
+#	while (my $s = <IN>) {
+	
+#		$s =~ s/sub\s+get_menu\w*/sub get_menu$suffix/;
+		
+#		print OUT $s;
+		
+#	}
+	
+#	close (OUT);
+#	close (IN);		
+
+#}
+
+################################################################################
 
 sub require_fresh {
-
-	my ($module_name) = @_;	
-		
-	if ($_USER and $$_USER{role} and $module_name =~ /Content|Presentation/) {
-	
-		my $specific_module_name = $module_name;
-		
-		$specific_module_name =~ s/(Content|Presentation)/$$_USER{role}::$1/;
-		
-		my $error;
-		
-		eval {$error = require_fresh_internal ($specific_module_name)};
-		
-		return unless $error;
-		
-	}
-	
-	require_fresh_internal ($module_name, 1);
-
-}
-
-################################################################################
-
-sub fix_module_for_role {
-
-	my ($file_name) = @_;
-	
-	my $tmp_file_name = $file_name . '~';
-	
-	open (IN, $file_name) or die "Cannot open $file_name: $!\n";
-	open (OUT, ">$tmp_file_name") or die "Cannot write to $tmp_file_name: $!\n";
-	
-	my $suffix = ($_USER and $$_USER{role}) ? '_for_' . $_USER -> {role} : '';
-	
-	while (my $s = <IN>) {
-	
-		$s =~ s/sub\s+get_menu\w*/sub get_menu$suffix/;
-		
-		print OUT $s;
-		
-	}
-	
-	close (OUT);
-	close (IN);		
-
-}
-
-################################################################################
-
-sub require_fresh_internal {
 
 	my ($module_name, $fatal) = @_;	
 
@@ -75,7 +75,7 @@ sub require_fresh_internal {
 
 		-f $file_name or return "File not found: $file_name\n";
 		
-		fix_module_for_role ($file_name) if $conf -> {core_fix_modules} and $module_name =~ /Content|Presentation/;
+#		fix_module_for_role ($file_name) if $conf -> {core_fix_modules} and $module_name =~ /Content|Presentation/;
 
 		my ($dev, $ino, $mode, $nlink, $uid, $gid, $rdev, $size, $atime, $last_modified, $ctime, $blksize, $blocks) = stat ($file_name);
 
@@ -203,8 +203,9 @@ BEGIN {
 				
 					columns => {
 						uri     => {TYPE_NAME  => 'varchar', COLUMN_SIZE  => 255, _PK    => 1},
-						html    => {TYPE_NAME  => 'text'},
-						gzipped => {TYPE_NAME  => 'text'},
+						html    => {TYPE_NAME  => 'longtext'},
+						gzipped => {TYPE_NAME  => 'longtext'},
+						ts      => {TYPE_NAME  => 'timestamp'},
 					}
 
 				},
@@ -271,7 +272,7 @@ BEGIN {
 
 package Zanas;
 
-$VERSION = '0.9921';
+$VERSION = '0.9922';
 
 =head1 NAME
 
