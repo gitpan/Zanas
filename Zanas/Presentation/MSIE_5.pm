@@ -557,9 +557,6 @@ sub draw_input_cell {
 	
 	return draw_text_cell ($data, $options) if $_REQUEST {__read_only} || $data -> {read_only};
 	
-	$data -> {max_len} ||= $conf -> {max_len};
-	$data -> {max_len} ||= 30;
-
 	$data -> {size} ||= 30;
 	
 	$data -> {attributes} ||= {};
@@ -567,10 +564,8 @@ sub draw_input_cell {
 			
 	$data -> {a_class} ||= 'lnk4';
 
-	my $txt = trunc_string ($data -> {label}, $data -> {max_len});
-	
-	$txt ||= '';
-	
+	my $txt = $data -> {label} || '';
+		
 	my $attributes = dump_attributes ($data -> {attributes});
 	
 	check_title ($data);
@@ -622,8 +617,7 @@ sub draw_text_cell {
 		
 #	return '' if $data -> {off};
 	
-	$data -> {max_len} ||= $conf -> {max_len};
-	$data -> {max_len} ||= 30;
+	$data -> {max_len} ||= $data -> {size} || $conf -> {max_len} || 30;
 	
 	$data -> {attributes} ||= {};
 	$data -> {attributes} -> {class} ||= $options -> {is_total} ? 'header5' : 'txt4';
@@ -1089,11 +1083,14 @@ sub draw_toolbar_pager {
 
 	if ($start > 0) {
 		register_hotkey ({label => '&<'}, 'href', '_pager_prev', $conf -> {kb_options_pager});
-		$url = create_url (start => $start - $options -> {portion});
+		$url = create_url (start => ($start - $options -> {portion} < 0 ? 0 : $start - $options -> {portion}));
 		$label .= qq {&nbsp;<a href="$url" class=lnk0 id="_pager_prev" onFocus="blur()"><b><u>&lt;</u></b></a>&nbsp;};
 	}
 	
 	$options -> {total} or return qq {<td nowrap>$$i18n{toolbar_pager_empty_list}<td><img height=15  hspace=4 src="/i/toolbars/razd1.gif" width=2 border=0></td>};
+	
+#	$label .= qq {<input type=text size=4 name=start value=@{[$start+1]} onFocus="scrollable_table_is_blocked = true; q_is_focused = true" onBlur="scrollable_table_is_blocked = false; q_is_focused = false" onchange="s=document.toolbar_form.start.value; s=(isNaN(s) ? 1 : s); s=(s < 1 ? 1 : s); lp=$$options{total}; s=(s > lp ? lp : s); document.toolbar_form.start.value=s-1; toolbar_form.submit()">};
+#	$label .= ' - ' . ($start + $$options{cnt}) . $$i18n{toolbar_pager_of} . $$options{total};
 	
 	$label .= ($start + 1) . ' - ' . ($start + $$options{cnt}) . $$i18n{toolbar_pager_of} . $$options{total};
 	

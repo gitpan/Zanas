@@ -1,3 +1,9 @@
+0.9930: 
+
+	- small fix in draw_toolbar_pages: nevative paga numbers (thanks RomALo);
+	- $data -> {max_len} defaults to $data -> {size} in draw_text_cell (thanks pashka);
+	- no more trunc_string in draw_input_cell (thanks pashka);
+
 0.9929: 
 
 	- trunc_string now does nothing when xls=1;
