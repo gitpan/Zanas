@@ -178,11 +178,20 @@ sub out_html {
 	}
 	
 	if ($_REQUEST {xls}) {
-		my $fn = 'i/xls/' . time . '.xls';
+	
+		my $fn_local = '/i/xls/' . time . '.xls';
+		my $fn = $r -> document_root . $fn_local;
 		open (O, ">$$conf{site_root}/$fn") or die "Can't write to $$conf{site_root}/$fn: $!";
 		print O $html;
 		close (O);
-		redirect ("/$fn");
+		
+		download_file ({
+			path => $fn_local,
+			file_name => "file.xls",
+		});
+		
+		unlink $fn;
+		
 	}	
 	else {
 	

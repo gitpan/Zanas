@@ -154,19 +154,15 @@ EOH
 	elsif ($_REQUEST{lpt}) {
 	
 		$body =~ s{^.*?\<table[^\>]*lpt\=\"?1\"?[^\>]*\>}{<table border cellspacing=0 cellpadding=5>}sm; #"
+		
+		$_REQUEST{_xls_checksum} and $body =~ s{</table>}{<tr style="display:none"><td>$_REQUEST{_xls_checksum}</table>};
 	
 		$_REQUEST{_xml}	= "<xml>$_REQUEST{_xml}</xml>" if $_REQUEST{_xml};
 
 		return <<EOH;
 			<html xmlns:x="urn:schemas-microsoft-com:office/excel" xmlns:o="urn:schemas-microsoft-com:office:office">
 				<head>
-					<title>мот</title>
-					<style>
-						.x {
-							mso-number-format:General; 
-							mso-protection:locked visible; 
-						} 
-					</style>
+					<title>$$conf{page_title}</title>
 					$_REQUEST{_xml}
 				</head>
 				<body bgcolor=white leftMargin=0 topMargin=0 marginwidth="0" marginheight="0">
@@ -197,9 +193,7 @@ EOH
 	my $request_package = ref $apr;
 	my $mod_perl = $ENV {MOD_PERL};
 	$mod_perl ||= 'NO mod_perl AT ALL';
-		
-	$_REQUEST{_xml}	= "<xml>$_REQUEST{_xml}</xml>" if $_REQUEST{_xml};
-		
+				
 	return <<EOH;
 		<html>		
 			<head>
@@ -218,8 +212,6 @@ EOJS
 					<script type="text/javascript" src="/i/${_}.js">
 					</script>
 EOCSS
-
-				$_REQUEST{_xml}
 			
 				<script>
 					var scrollable_table = null;
@@ -230,7 +222,6 @@ EOCSS
 					var scrollable_table_is_blocked = false;
 					var q_is_focused = false;					
 					var scrollable_rows = new Array();		
-										
 				</script>
 				
 			</head>

@@ -1,3 +1,9 @@
+0.9902: 
+
+	- serving XLS responses refactored: $conf -> {site_root} is obsoleted & no more filesystem garbage;
+	- <title> fixed to $$conf{page_title} in lpt mode;	
+	- new magic parameter: $_REQUEST{_xls_checksum}. Added in the 1st <td> in an invisible extra row of the main table (LPT mode only);
+
 0.9901: 
 	
 	- added magic parameter _xml (included in <head>);
