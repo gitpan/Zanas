@@ -5,25 +5,30 @@ no warnings;
 sub async ($@) {
 
 	my ($sub, @args) = @_;
-	
-	sql_disconnect ();
 
-	defined (my $child_pid = fork) or die "Cannot fork: $!\n";
-	
-	sql_reconnect ();
-
-	return $child_pid if $child_pid;
-	
-	chdir '/' or die "Can't chdir to /: $!";
-	close STDIN;
-	close STDOUT;
-	close STDERR;	
-	
 	eval { &$sub (@args); };
 	
-	sql_disconnect ();
+	print STDERR $@ if $@;
+	
+	
+#	sql_disconnect ();
 
-	CORE::exit ();
+#	defined (my $child_pid = fork) or die "Cannot fork: $!\n";
+	
+#	sql_reconnect ();
+
+#	return $child_pid if $child_pid;
+	
+#	chdir '/' or die "Can't chdir to /: $!";
+#	close STDIN;
+#	close STDOUT;
+#	close STDERR;	
+	
+#	eval { &$sub (@args); };
+	
+#	sql_disconnect ();
+
+#	CORE::exit ();
 
 }
 
@@ -546,6 +551,8 @@ sub log_action_start {
 	our $__log_id = $_REQUEST {id};
 	our $__log_user = $_USER -> {id};
 	
+	$_REQUEST {error} = substr ($_REQUEST {error}, 0, 255);
+	
 	$_REQUEST {_id_log} = sql_do_insert ('log', {
 		id_user => $_USER -> {id}, 
 		type => $_REQUEST {type}, 
@@ -564,6 +571,7 @@ sub log_action_start {
 sub log_action_finish {
 	
 	$_REQUEST {_params} = $_REQUEST {params} = Data::Dumper -> Dump ([\%_OLD_REQUEST], ['_REQUEST']);	
+	$_REQUEST {error} = substr ($_REQUEST {error}, 0, 255);
 	$_REQUEST {_error}  = $_REQUEST {error};
 	$_REQUEST {_id_object} = $__log_id || $_REQUEST {id} || $_OLD_REQUEST {id};
 	$_REQUEST {_id_user} = $__log_user || $_USER -> {id};
@@ -589,9 +597,14 @@ sub select__static_files {
 	$ENV{PATH_INFO} =~ /\w+\.\w+/ or $r -> filename =~ /\w+\.\w+/ or $ENV {REQUEST_URI} =~ /\w+\.\w+/;
 	
 	my $filename = $&;
+
+#print STDERR "\$filename = '$filename' (1)\n";
 	
 	my $v = '_' . $Zanas::VERSION_NAME;	
-	$filename =~ s{$v}{};
+	$filename =~ s{$v}{}i;
+
+#print STDERR "\$v = '$v'\n";
+#print STDERR "\$filename = '$filename' (2)\n";
 	
 	my $content_type = 
 		$filename =~ /\.js/ ? 'application/x-javascript' :
@@ -755,37 +768,6 @@ sub select__logout {
 
 ################################################################################
 
-sub get_version_name {
-
-	unless ($Zanas::VERSION_NAME) {
-
-		my @z = grep {/\d/} split /(\d)/, $Zanas::VERSION;
-
-		my $word = '';
-		my @c = qw(b d f g k l m n p q r s t v x z);
-		my @v = qw(a e i o u);
-		my $n = $Zanas::VERSION * 10000;
-		$n = ($n * 1973 + 112) % 11111;
-		$word .= uc $c [$n % @c];
-		$n = ($n * 1973 + 112) % 11111;
-		$word .= $v [$n % @v];
-		$n = ($n * 1973 + 112) % 11111;
-		$word .= $c [$n % @c];
-		$n = ($n * 1973 + 112) % 11111;
-		$word .= $v [$n % @v];
-		$n = ($n * 1973 + 112) % 11111;
-		$word .= $c [$n % @c];
-		
-		$Zanas::VERSION_NAME = $word;
-
-	}
-		
-	return $Zanas::VERSION_NAME;
-
-}
-
-################################################################################
-
 sub select__info {
 	
 	my $os_name = $^O;
@@ -815,9 +797,7 @@ sub select__info {
 	}
 		
 	my @z = grep {/\d/} split /(\d)/, $Zanas::VERSION;
-	
-	my $word = get_version_name ();
-	
+		
 	require Config;
 
 	return [
@@ -863,7 +843,7 @@ sub select__info {
 		
 		{			
 			id    => 'Engine',
-			label => "Zanas $Zanas::VERSION ($word)",
+			label => "Zanas $Zanas_VERSION ($Zanas_VERSION_NAME)",
 			path  => $preconf -> {core_path},
 		},
 

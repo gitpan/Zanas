@@ -865,6 +865,33 @@ sub draw_checkbox_cell {
 
 ################################################################################
 
+sub draw_radio_cell {
+
+	my ($data) = @_;
+	my $value = $data -> {value} || 1;
+
+	if ($i -> {__n} == 0) {
+		my $__header = $__headers -> [$__last_header_id ++];
+		$prototype .= qq{\t\t\t<input type="radio" label="$__header" />\n};
+	}
+	
+	my $checked = $data -> {checked} ? 'checked' : '';
+
+	$data -> {attributes} ||= {};
+	$data -> {attributes} -> {class} ||= 'row-cell';
+
+	my $attributes = dump_attributes ($data -> {attributes});
+
+	return qq {<td $attributes>&nbsp;} if $data -> {off};	
+
+	check_title ($data);
+
+	return qq {<td $$data{title} $attributes><input type=checkbox class="row-cell" name=$$data{name} $checked value='$value'></td>};
+	
+}
+
+################################################################################
+
 sub draw_text_cells {
 
 	my $options = (ref $_[0] eq HASH) ? shift () : {};
@@ -885,6 +912,7 @@ sub draw_cells {
 	
 		$result .= 
 			!ref ($cell)                  ? draw_text_cell ($cell, $options) :
+			$cell -> {type}  eq 'radio'   ? draw_radio_cell ($cell, $options) :
 			($cell -> {type} eq 'checkbox' || exists $cell -> {checked}) ? draw_checkbox_cell ($cell, $options) :
 			$cell  -> {type} eq 'input'   ? draw_input_cell ($cell, $options) :
 			($cell -> {type} eq 'button'   || $cell -> {icon}) ? draw_row_button ($cell, $options) :		
@@ -1120,7 +1148,7 @@ EOH
 			our $_FLAG_ADD_LAST_QUERY_STRING = 1;
 			our @__types = (@__global_types);
 			push @__types, BREAK if @__types > 0;
-			my $tr = &$callback ();
+			my $tr = &$callback () or next;
 			undef $_FLAG_ADD_LAST_QUERY_STRING;
 			
 			my $oncontextmenu = '';
@@ -1726,8 +1754,19 @@ sub draw_form_field {
 	}
 
 	return '' if $field -> {off};
-	
+		
 	my $type = $field -> {type};	
+	
+	my $state = $_REQUEST {__read_only} ? 'passive' : 'active';
+
+	if ($type eq 'banner') {
+	
+		return <<EOH;
+			<td class='form-$state-label' colspan=$_REQUEST{__max_cols} nowrap align=center>$$field{label}</td>
+EOH
+	
+	}	
+	
 	if (($_REQUEST {__read_only} or $field -> {read_only}) and ($type ne 'hgroup' && $type ne 'iframe' && ($type ne 'text' || !$conf -> {core_keep_textarea}))) {
 		$field -> {value} = $data -> {$field -> {name}} ? $i18n -> {yes} : $i18n -> {no} if ($field -> {type} eq 'checkbox');
 		$type = 'static';
@@ -1750,9 +1789,7 @@ sub draw_form_field {
 	$field -> {label_width} = '20%' unless $field -> {is_slave};
 	my $label_width = $field -> {label_width} ? 'width=' . $field -> {label_width} : '';
 	my $cell_width  = $field -> {cell_width}  ? 'width=' . $field -> {cell_width}  : '';
-	
-	my $state = $_REQUEST {__read_only} ? 'passive' : 'active';
-		
+			
 	return $type eq 'hidden' ? $html : <<EOH;
 		<td class='form-$state-label' nowrap align=right $label_width>$$field{label}</td>
 		<td class='form-$state-inputs' colspan=$$field{colspan} $cell_width>$html</td>
@@ -2564,6 +2601,7 @@ sub draw_esc_toolbar {
 		{
 			preset => 'cancel',
 			href => $options -> {href}, 
+			off  => $options -> {no_esc}, 
 		},
 		@{$options -> {right_buttons}},
 	])

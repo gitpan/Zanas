@@ -15,8 +15,8 @@ use constant OK => 200;
 
 BEGIN {	
 
-	$Zanas::VERSION = '5.3.9';
-	$Zanas::VERSION_NAME = 'Asyn';
+	$Zanas_VERSION = $Zanas::VERSION = '5.3.25';
+	$Zanas_VERSION_NAME = $Zanas::VERSION_NAME = 'Thinning';
 	
 	eval {
 		require Storable;
@@ -45,9 +45,7 @@ BEGIN {
 	$| = 1;
 
 	$SIG {__DIE__} = \&Carp::confess;
-	$SIG {CHLD}    = 'IGNORE';
-	
-	get_version_name ();
+#	$SIG {CHLD}    = 'IGNORE';
 	
 	unless ($PACKAGE_ROOT) {
 		$PACKAGE_ROOT = $INC {__PACKAGE__ . '/Config.pm'} || '';
@@ -57,7 +55,7 @@ BEGIN {
 
 	my $pkg_banner = '[' . (join ',', @$PACKAGE_ROOT) . '] => ' . ($_NEW_PACKAGE ? $_NEW_PACKAGE : __PACKAGE__);
 
-	print STDERR "\nZanas $Zanas::VERSION [$Zanas::VERSION_NAME]: loading $pkg_banner...";
+	print STDERR "\nZanas $Zanas_VERSION [$Zanas_VERSION_NAME]: loading $pkg_banner...";
 	
 	unless ($preconf -> {no_model_update}) {
 		require DBIx::ModelUpdate;
@@ -123,7 +121,7 @@ BEGIN {
 
 	}
 
-	print STDERR "\rZanas $Zanas::VERSION [$Zanas::VERSION_NAME]: loading $pkg_banner ok.\n";
+	print STDERR "\rZanas $Zanas_VERSION [$Zanas_VERSION_NAME]: loading $pkg_banner ok.\n";
 
 }
 

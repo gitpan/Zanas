@@ -1,3 +1,20 @@
+5.3.25:
+
+	- no_esc introduced;
+	- draw_table callbacks can now return undef, no TRs genereted;    
+
+5.3.15:
+
+	- draw_radio_cell introduced;
+	- form field of type 'banner' introduced;
+	- SIG {CHLD} = 'IGNORE'; deleted;
+
+5.3.14:
+
+	- async blocked :-((
+	- select__static_files patched for case insensivity (win32 - related);
+	- log_action_start && log_action_finish patched for error message size (255);
+
 5.3.9:
 
 	- $conf -> {core_keep_textarea} introduced;
