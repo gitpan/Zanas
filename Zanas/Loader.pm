@@ -6,7 +6,9 @@ sub import {
 
 	my ($dummy, $root, $package, $preconf) = @_;
 	
-	$root =~ /[A-Z0-9_]+$/;
+	ref $root eq ARRAY or $root = [$root];	
+	
+	$root -> [0] =~ /[A-Z0-9_]+$/;
 	my $old_package = $&;
 	
 	if ($old_package ne $package) {
@@ -34,8 +36,8 @@ EOL
 
 	my $cmd = <<EOC;
 		package $package;
-		do "$root/Config.pm";
-		do "$root/Calendar.pm";
+		do "$$root[0]/Config.pm";
+		do "$$root[0]/Calendar.pm";
 		$dos
 EOC
 	

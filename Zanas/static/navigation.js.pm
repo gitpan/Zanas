@@ -70,7 +70,7 @@ function open_popup_menu (type) {
 	var mainMenuCell = document.getElementById ('main_menu_' + type);
 	
 	if (mainMenuCell) {
-		oPopup.show (-9, 17, w, h, mainMenuCell);
+		oPopup.show (-6, 16, w, h, mainMenuCell);
 	}
 	else {
 		oPopup.show (event.screenX, event.screenY, w, h);
@@ -82,15 +82,24 @@ function setVisible (id, isVisible) {
 	document.getElementById (id).style.display = isVisible ? 'block' : 'none'
 };
 
-function setSelectOption (name, id, label) { 
-	var selects = document.getElementsByName (name);
-	if (selects == null || selects.length == 0) {
-		return;
+function restoreSelectVisibility (name, rewind) {
+	setVisible (name + '_select', true);
+//	setVisible (name + '_iframe', false);
+	setVisible (name + '_div', false);
+	document.getElementById (name + '_iframe').src = '/0.html';
+	if (rewind) {
+		document.getElementById (name + '_select').selectedIndex = 0;
 	}
-	var select = selects [0];
+};
+
+function setSelectOption (name, id, label) { 
+
+	restoreSelectVisibility (name, false);
+	var select = document.getElementById (name + '_select');
 	
 	for (var i = 0; i < select.options.length; i++) {
 		if (select.options [i].value == id) {
+			select.options [i].innerText = label;
 			select.selectedIndex = i;
 			window.focus ();
 			select.focus ();

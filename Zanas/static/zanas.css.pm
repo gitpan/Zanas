@@ -1,47 +1,54 @@
 BODY {
-	FONT-SIZE: 11px; FONT-FAMILY: Verdana; BACKGROUND-COLOR: #d5d5d5
+	FONT-SIZE: 11px; FONT-FAMILY: Verdana; background-color: #D6D3CE
 }
 TD, TH {
 	FONT-SIZE: 11px; FONT-FAMILY: Verdana
 }
 .bgr0 {
-	FONT-SIZE: 11px; FONT-FAMILY: Verdana; BACKGROUND-COLOR: #ffffff
+	FONT-SIZE: 11px; FONT-FAMILY: Verdana; background-color: #ffffff
 }
 .bgr1 {
-	FONT-SIZE: 11px; FONT-FAMILY: Verdana; BACKGROUND-COLOR: #485F70 /*#596084*/ /*#5f7452*/
+	FONT-SIZE: 11px; FONT-FAMILY: Verdana; background-color: #485F70 /*#596084*/ /*#5f7452*/
 }
 .bgr2 {
-	FONT-SIZE: 11px; FONT-FAMILY: Verdana; BACKGROUND-COLOR: #293869
+	FONT-SIZE: 11px; FONT-FAMILY: Verdana; background-color: #293869
 }
 .bgr3 {
-	FONT-SIZE: 11px; FONT-FAMILY: Verdana; BACKGROUND-COLOR: #aab3d1
+	FONT-SIZE: 11px; FONT-FAMILY: Verdana; background-color: #aab3d1
 }
 .bgr4 {
-	FONT-SIZE: 11px; FONT-FAMILY: Verdana; BACKGROUND-COLOR: #efefef
+	FONT-SIZE: 11px; FONT-FAMILY: Verdana; background-color: #efefef
 }
 .bgr5 {
-	FONT-SIZE: 11px; FONT-FAMILY: Verdana; BACKGROUND-COLOR: #dededc
+	FONT-SIZE: 11px; FONT-FAMILY: Verdana; background-color: #dededc
 }
 .bgr6 {
-	FONT-SIZE: 11px; FONT-FAMILY: Verdana; BACKGROUND-COLOR: #888888
+	FONT-SIZE: 11px; FONT-FAMILY: Verdana; background-color: #888888
 }
 .bgr7 {
-	FONT-SIZE: 11px; FONT-FAMILY: Verdana; BACKGROUND-COLOR: #b0b0b0
+	FONT-SIZE: 11px; FONT-FAMILY: Verdana; background-color: #b0b0b0
 }
 .bgr8 {
-	FONT-SIZE: 11px; FONT-FAMILY: Verdana; BACKGROUND-COLOR: #d5d5d5
+	FONT-SIZE: 11px; FONT-FAMILY: Verdana; background-color: #D6D3CE
 }
 .bgr9 {
-	FONT-SIZE: 11px; FONT-FAMILY: Verdana; BACKGROUND-COLOR: #dde5ef
+	FONT-SIZE: 11px; FONT-FAMILY: Verdana; background-color: #dde5ef
 }
 .bgr13 {
-	FONT-SIZE: 11px; FONT-FAMILY: Verdana; BACKGROUND-COLOR: #ffe0e0
+	FONT-SIZE: 11px; FONT-FAMILY: Verdana; background-color: #ffe0e0
 }
+.bgr10 {
+	background-color: #424142
+}
+
+
+
+
 .outter {
 	BORDER-RIGHT: #ffffff 1px solid; BORDER-TOP: #2d2d2d 1px solid; BORDER-LEFT: #2d2d2d 1px solid; BORDER-BOTTOM: #ffffff 1px solid; HEIGHT: 100%
 }
 .serv {
-	BORDER-RIGHT: #2d2d2d 1px solid; BORDER-TOP: #ffffff 1px solid; BORDER-LEFT: #ffffff 1px solid; BORDER-BOTTOM: #2d2d2d 1px solid; BACKGROUND-COLOR: #d0cfcf
+	BORDER-RIGHT: #2d2d2d 1px solid; BORDER-TOP: #ffffff 1px solid; BORDER-LEFT: #ffffff 1px solid; BORDER-BOTTOM: #2d2d2d 1px solid; background-color: #d0cfcf
 }
 .inner {
 	BORDER-RIGHT: #ffffff 1px solid; BORDER-TOP: #2d2d2d 1px solid; BORDER-LEFT: #2d2d2d 1px solid; WIDTH: 100%; BORDER-BOTTOM: #ffffff 1px solid; HEIGHT: 100%
@@ -62,94 +69,94 @@ TD, TH {
 	FONT-SIZE: 11px; COLOR: #ab300f; FONT-FAMILY: Verdana
 }
 .header0 {
-	FONT-WEIGHT: bold; FONT-SIZE: 11px; COLOR: #ffffff; FONT-FAMILY: Verdana; BACKGROUND-COLOR: #5f7452
+	FONT-WEIGHT: bold; FONT-SIZE: 11px; COLOR: #ffffff; FONT-FAMILY: Verdana; background-color: #5f7452
 }
 .header1 {
-	FONT-WEIGHT: bold; FONT-SIZE: 11px; COLOR: #ffffff; FONT-FAMILY: Verdana; BACKGROUND-COLOR: #293869
+	FONT-WEIGHT: bold; FONT-SIZE: 11px; COLOR: #ffffff; FONT-FAMILY: Verdana; background-color: #293869
 }
 .header2 {
-	FONT-WEIGHT: bold; FONT-SIZE: 11px; COLOR: #ffffff; FONT-FAMILY: Verdana; BACKGROUND-COLOR: #888888
+	FONT-WEIGHT: bold; FONT-SIZE: 11px; COLOR: #ffffff; FONT-FAMILY: Verdana; background-color: #888888
 }
 .header3 {
-	FONT-WEIGHT: bold; FONT-SIZE: 11px; COLOR: #ffffff; FONT-FAMILY: Verdana; BACKGROUND-COLOR: #b0b0b0
+	FONT-WEIGHT: bold; FONT-SIZE: 11px; COLOR: #ffffff; FONT-FAMILY: Verdana; background-color: #b0b0b0
 }
 .header4 {
-	FONT-WEIGHT: bold; FONT-SIZE: 11px; COLOR: #000000; FONT-FAMILY: Verdana; BACKGROUND-COLOR: #ffffff
+	FONT-WEIGHT: bold; FONT-SIZE: 11px; COLOR: #000000; FONT-FAMILY: Verdana; background-color: #ffffff
 }
 .header5 {
-	FONT-WEIGHT: bold; FONT-SIZE: 11px; COLOR: #000000; FONT-FAMILY: Verdana; BACKGROUND-COLOR: #efefef
+	FONT-WEIGHT: bold; FONT-SIZE: 11px; COLOR: #000000; FONT-FAMILY: Verdana; background-color: #efefef
 }
 .header6 {
-	FONT-WEIGHT: bold; FONT-SIZE: 11px; COLOR: #000000; FONT-FAMILY: Verdana; BACKGROUND-COLOR: #dededc
+	FONT-WEIGHT: bold; FONT-SIZE: 11px; COLOR: #000000; FONT-FAMILY: Verdana; background-color: #dededc
 }
 .header7 {
-	FONT-WEIGHT: bold; FONT-SIZE: 11px; COLOR: #293869; FONT-FAMILY: Verdana; BACKGROUND-COLOR: #ffffff
+	FONT-WEIGHT: bold; FONT-SIZE: 11px; COLOR: #293869; FONT-FAMILY: Verdana; background-color: #ffffff
 }
 .header8 {
-	FONT-WEIGHT: bold; FONT-SIZE: 11px; COLOR: #293869; FONT-FAMILY: Verdana; BACKGROUND-COLOR: #efefef
+	FONT-WEIGHT: bold; FONT-SIZE: 11px; COLOR: #293869; FONT-FAMILY: Verdana; background-color: #efefef
 }
 .header9 {
-	FONT-WEIGHT: bold; FONT-SIZE: 11px; COLOR: #293869; FONT-FAMILY: Verdana; BACKGROUND-COLOR: #dededc
+	FONT-WEIGHT: bold; FONT-SIZE: 11px; COLOR: #293869; FONT-FAMILY: Verdana; background-color: #dededc
 }
 .header10 {
-	FONT-WEIGHT: bold; FONT-SIZE: 11px; COLOR: #ab300f; FONT-FAMILY: Verdana; BACKGROUND-COLOR: #ffffff
+	FONT-WEIGHT: bold; FONT-SIZE: 11px; COLOR: #ab300f; FONT-FAMILY: Verdana; background-color: #ffffff
 }
 .header11 {
-	FONT-WEIGHT: bold; FONT-SIZE: 11px; COLOR: #ab300f; FONT-FAMILY: Verdana; BACKGROUND-COLOR: #efefef
+	FONT-WEIGHT: bold; FONT-SIZE: 11px; COLOR: #ab300f; FONT-FAMILY: Verdana; background-color: #efefef
 }
 .header12 {
-	FONT-WEIGHT: bold; FONT-SIZE: 11px; COLOR: #ab300f; FONT-FAMILY: Verdana; BACKGROUND-COLOR: #dededc
+	FONT-WEIGHT: bold; FONT-SIZE: 11px; COLOR: #ab300f; FONT-FAMILY: Verdana; background-color: #dededc
 }
 .header13 {
-	FONT-WEIGHT: bold; FONT-SIZE: 11px; COLOR: #ab300f; FONT-FAMILY: Verdana; BACKGROUND-COLOR: #888888
+	FONT-WEIGHT: bold; FONT-SIZE: 11px; COLOR: #ab300f; FONT-FAMILY: Verdana; background-color: #888888
 }
 .header14 {
-	FONT-WEIGHT: bold; FONT-SIZE: 11px; COLOR: #ab300f; FONT-FAMILY: Verdana; BACKGROUND-COLOR: #b0b0b0
+	FONT-WEIGHT: bold; FONT-SIZE: 11px; COLOR: #ab300f; FONT-FAMILY: Verdana; background-color: #b0b0b0
 }
 .header15 {
-	FONT-WEIGHT: bold; FONT-SIZE: 9pt; COLOR: #ffffff; FONT-FAMILY: Verdana; BACKGROUND-COLOR: #8e8e8e
+	FONT-WEIGHT: bold; FONT-SIZE: 9pt; COLOR: #ffffff; FONT-FAMILY: Verdana; background-color: #8e8e8e
 }
 .txt0 {
-	FONT-WEIGHT: normal; FONT-SIZE: 11px; COLOR: #ffffff; FONT-FAMILY: Verdana; BACKGROUND-COLOR: #5f7452
+	FONT-WEIGHT: normal; FONT-SIZE: 11px; COLOR: #ffffff; FONT-FAMILY: Verdana; background-color: #5f7452
 }
 .txt1 {
-	FONT-WEIGHT: normal; FONT-SIZE: 11px; COLOR: #ffffff; FONT-FAMILY: Verdana; BACKGROUND-COLOR: #293869
+	FONT-WEIGHT: normal; FONT-SIZE: 11px; COLOR: #ffffff; FONT-FAMILY: Verdana; background-color: #293869
 }
 .txt2 {
-	FONT-WEIGHT: normal; FONT-SIZE: 11px; COLOR: #ffffff; FONT-FAMILY: Verdana; BACKGROUND-COLOR: #888888
+	FONT-WEIGHT: normal; FONT-SIZE: 11px; COLOR: #ffffff; FONT-FAMILY: Verdana; background-color: #888888
 }
 .txt3 {
-	FONT-WEIGHT: normal; FONT-SIZE: 11px; COLOR: #ffffff; FONT-FAMILY: Verdana; BACKGROUND-COLOR: #b0b0b0
+	FONT-WEIGHT: normal; FONT-SIZE: 11px; COLOR: #ffffff; FONT-FAMILY: Verdana; background-color: #b0b0b0
 }
 .txt4 {
-	FONT-WEIGHT: normal; FONT-SIZE: 11px; COLOR: #000000; FONT-FAMILY: Verdana; BACKGROUND-COLOR: #ffffff
+	FONT-WEIGHT: normal; FONT-SIZE: 11px; COLOR: #000000; FONT-FAMILY: Verdana; background-color: #ffffff
 }
 .txt5 {
-	FONT-WEIGHT: normal; FONT-SIZE: 11px; COLOR: #000000; FONT-FAMILY: Verdana; BACKGROUND-COLOR: #efefef
+	FONT-WEIGHT: normal; FONT-SIZE: 11px; COLOR: #000000; FONT-FAMILY: Verdana; background-color: #efefef
 }
 .txt6 {
-	FONT-WEIGHT: normal; FONT-SIZE: 11px; COLOR: #000000; FONT-FAMILY: Verdana; BACKGROUND-COLOR: #dededc
+	FONT-WEIGHT: normal; FONT-SIZE: 11px; COLOR: #000000; FONT-FAMILY: Verdana; background-color: #dededc
 }
 .txt7 {
-	FONT-WEIGHT: normal; FONT-SIZE: 11px; COLOR: #293869; FONT-FAMILY: Verdana; BACKGROUND-COLOR: #ffffff
+	FONT-WEIGHT: normal; FONT-SIZE: 11px; COLOR: #293869; FONT-FAMILY: Verdana; background-color: #ffffff
 }
 .txt8 {
-	FONT-WEIGHT: normal; FONT-SIZE: 11px; COLOR: #293869; FONT-FAMILY: Verdana; BACKGROUND-COLOR: #efefef
+	FONT-WEIGHT: normal; FONT-SIZE: 11px; COLOR: #293869; FONT-FAMILY: Verdana; background-color: #efefef
 }
 .txt9 {
-	FONT-WEIGHT: normal; FONT-SIZE: 11px; COLOR: #293869; FONT-FAMILY: Verdana; BACKGROUND-COLOR: #dededc
+	FONT-WEIGHT: normal; FONT-SIZE: 11px; COLOR: #293869; FONT-FAMILY: Verdana; background-color: #dededc
 }
 .txt10 {
-	FONT-WEIGHT: normal; FONT-SIZE: 11px; COLOR: #c8c8c8; FONT-FAMILY: Verdana; BACKGROUND-COLOR: #ffffff
+	FONT-WEIGHT: normal; FONT-SIZE: 11px; COLOR: #c8c8c8; FONT-FAMILY: Verdana; background-color: #ffffff
 }
 .txt11 {
-	FONT-WEIGHT: normal; FONT-SIZE: 9pt; COLOR: #000000; FONT-FAMILY: Verdana; BACKGROUND-COLOR: #ffffff
+	FONT-WEIGHT: normal; FONT-SIZE: 9pt; COLOR: #000000; FONT-FAMILY: Verdana; background-color: #ffffff
 }
 .txt12 {
-	FONT-WEIGHT: normal; FONT-SIZE: 11px; COLOR: #ab300f; FONT-FAMILY: Verdana; BACKGROUND-COLOR: #efefef
+	FONT-WEIGHT: normal; FONT-SIZE: 11px; COLOR: #ab300f; FONT-FAMILY: Verdana; background-color: #efefef
 }
 .txt13 {
-	FONT-WEIGHT: normal; FONT-SIZE: 11px; COLOR: #ab300f; FONT-FAMILY: Verdana; BACKGROUND-COLOR: #ffffff
+	FONT-WEIGHT: normal; FONT-SIZE: 11px; COLOR: #ab300f; FONT-FAMILY: Verdana; background-color: #ffffff
 }
 A {
 	FONT-WEIGHT: normal; FONT-SIZE: 11px; COLOR: #b0b0b0; FONT-FAMILY: Verdana; TEXT-DECORATION: none
@@ -487,7 +494,7 @@ TEXTAREA {
 	FONT-WEIGHT: normal; 
 	FONT-SIZE: 10pt; 
 	COLOR: #000000; 
-	BACKGROUND-COLOR: #ffffff;
+	background-color: #ffffff;
 	padding-top: 3px;
 	padding-bottom: 2px;
 }
@@ -496,7 +503,7 @@ TEXTAREA {
 	FONT-WEIGHT: normal; 
 	FONT-SIZE: 10pt; 
 	COLOR: #000000; 
-	BACKGROUND-COLOR: #efefef;
+	background-color: #efefef;
 	padding-top: 3px;
 	padding-bottom: 2px;
 }
@@ -505,15 +512,28 @@ TEXTAREA {
 	FONT-WEIGHT: bold;   
 	FONT-SIZE: 10pt; 
 	COLOR: #000000; 
-	BACKGROUND-COLOR: #efefef;
+	background-color: #efefef;
 	padding-top: 5px;
 	padding-bottom: 5px;
 }
+.row-cell-header {
+	FONT-FAMILY: Arial; 
+	FONT-WEIGHT: bold;   
+	FONT-SIZE: 10pt; 
+	COLOR: #000000; 
+	background-color: #efefef;
+	padding-top: 3px;
+	padding-bottom: 2px;
+	border-width:1px;
+	border-style:none;
+}
+
+
 .row-cell-hilite {
 	FONT-FAMILY: Arial; 
 	FONT-SIZE: 10pt; 
 	COLOR: #000000; 
-	BACKGROUND-COLOR: #dededc;
+	background-color: #dededc;
 	padding-top: 3px;
 	padding-bottom: 2px;
 }
@@ -523,17 +543,109 @@ A.row-cell, A.row-cell:link, A.row-cell:active, A.row-cell:hover, A.row-cell:vis
 	FONT-SIZE: 10pt; 
 	COLOR: #293869; 
 	TEXT-DECORATION: none;
-	BACKGROUND-COLOR: transparent;
+	background-color: transparent;
 }
 A.row-button, A.row-button:link, A.row-button:active, A.row-button:hover, A.row-button:visited {
 	FONT-FAMILY: Arial; 
 	FONT-SIZE: 10pt; 
 	COLOR: #000000; 
 	TEXT-DECORATION: none;
-	BACKGROUND-COLOR: transparent;
+	background-color: transparent;
 }
 checkbox.row-cell,
 	padding: 1px;
-	BACKGROUND-COLOR: transparent;
+	background-color: transparent;
 }
 
+
+
+td.main-menu {
+	background-color: #D6D3CE;
+	padding-top:1px;
+	padding-bottom:1px;
+	border-width:1px;
+	border-style:solid;
+	border-color:#D6D3CE;
+}
+a.main-menu, a.main-menu:link, a.main-menu:active, a.main-menu:visited, a.main-menu:hover {
+	font-family: MS Sans Serif; 
+	font-size: 8pt; 
+	color: #000000; 
+	text-decoration: none;
+}
+
+
+td.button {
+	background-color: #D6D3CE;
+	padding-top:0px;
+	padding-bottom:0px;
+	padding-left:3px;
+	padding-right:3px;
+	border-width:1px;
+	border-style:solid;
+	border-color:#D6D3CE;
+}
+A.button, A.button:link, A.button:active, A.button:hover, A.button:visited {
+	FONT-WEIGHT: normal; FONT-SIZE: 11px; COLOR: #000000; FONT-FAMILY: Verdana; TEXT-DECORATION: none
+}
+
+
+
+
+
+td.tabs-1 {
+	background-color: #D6D3CE;
+	padding-top:0px;
+	padding-bottom:0px;
+}
+td.tabs-0 {
+	background-color: #FFFFFF;
+	padding-top:0px;
+	padding-bottom:0px;
+}
+a.tabs, a.tabs:link, a.tabs:active, a.tabs:visited, a.tabs:hover {
+	font-family: MS Sans Serif; 
+	font-size: 8pt; 
+	color: #000000; 
+	text-decoration: none;
+}
+
+
+.form-passive-label {
+	FONT-WEIGHT: bold; 
+	FONT-SIZE: 11px; 
+	COLOR: #000000; 
+	FONT-FAMILY: Verdana; 
+	background-color: #efefff;
+}
+.form-passive-inputs {
+	FONT-SIZE: 11px; 
+	FONT-FAMILY: Verdana; 
+	background-color: #efefff;
+}
+
+.form-active-label {
+	FONT-WEIGHT: bold; 
+	FONT-SIZE: 11px; 
+	COLOR: #000000; 
+	FONT-FAMILY: Verdana; 
+	background-color: #EBFFFA;
+}
+.form-active-inputs {
+	FONT-SIZE: 11px; 
+	FONT-FAMILY: Verdana; 
+	background-color: #EBFFFA;
+}
+
+
+
+A.path, A.path:link, A.path:active, A.path:hover, A.path:visited {
+	FONT-WEIGHT: normal; 
+	FONT-SIZE: 8pt; 
+/*	
+	COLOR: #000000; 
+*/	
+	COLOR: #596084; 
+	FONT-FAMILY: MS Sans Serif; 
+	TEXT-DECORATION: none;
+}

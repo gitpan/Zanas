@@ -3,9 +3,11 @@ no warnings;
 ################################################################################
 
 sub js_set_select_option {
-	my ($name, $item) = @_;	
+	my ($name, $item, $fallback_href) = @_;	
+	return ($fallback_href || $i) unless $_REQUEST {select};
 	my $question = js_escape ($i18n -> {confirm_close_vocabulary} . ' ' . $item -> {label} . '?');
-	return 'javaScript:if (window.confirm(' . $question . ')) {window.opener.setSelectOption(' . js_escape ($name) . ', '	. $item -> {id} . ', ' . js_escape ($item -> {label}) . '); window.close();}';
+	$name ||= '_' . $_REQUEST {select};
+	return 'javaScript:if (window.confirm(' . $question . ')) {parent.setSelectOption(' . js_escape ($name) . ', '	. $item -> {id} . ', ' . js_escape ($item -> {label}) . ');}';
 }
 
 ################################################################################
@@ -64,8 +66,15 @@ sub hotkey {
 #	return if $def -> {off};
 	
 	$def -> {type} ||= 'href';
+
 	if ($def -> {code} =~ /^F(\d+)/) {
 		$def -> {code} = 111 + $1;
+	}
+	elsif ($def -> {code} =~ /^ESC$/i) {
+		$def -> {code} = 27;
+	}
+	elsif ($def -> {code} =~ /^ENTER$/i) {
+		$def -> {code} = 13;
 	}
 	
 	push @scan2names, $def;
@@ -97,19 +106,18 @@ sub handle_hotkey_href {
 	
 	my $ctrl = $r -> {ctrl} ? '' : '!';
 	my $alt  = $r -> {alt}  ? '' : '!';
+	
+	my $condition = 
+		$r -> {off}     ? '0' :
+		$r -> {confirm} ? 'window.confirm(' . js_escape ($r -> {confirm}) . ')' : 
+		'1';
 
-	$r -> {off} and return <<EOJS;
+	return <<EOJS
 		if (window.event.keyCode == $$r{code} && $alt window.event.altKey && $ctrl window.event.ctrlKey) {
-			event.keyCode      = 0;
-			event.returnValue  = false;
-			event.cancelBubble = true;
-		}
-EOJS
-
-	<<EOJS
-		if (window.event.keyCode == $$r{code} && $alt window.event.altKey && $ctrl window.event.ctrlKey) {
-			var a = document.getElementById ('$$r{data}');
-			activate_link (a.href, a.target);
+			if ($condition) {
+				var a = document.getElementById ('$$r{data}');
+				activate_link (a.href, a.target);
+			}
 			event.keyCode      = 0;
 			event.returnValue  = false;
 			event.cancelBubble = true;
@@ -244,13 +252,13 @@ EOH
 #	$_USER -> {role} eq 'admin' and $_REQUEST{id} or my $lpt = $body =~ s{<table[^\>]*lpt\=\"?1\"?[^\>]*\>}{\<table cellspacing\=1 cellpadding\=5 id='scrollable_table' width\=100\%\>}gsm; #"
 	my $lpt = $body =~ s{<table[^\>]*lpt\=\"?1\"?[^\>]*\>}{\<table cellspacing\=1 cellpadding\=2 id='scrollable_table' width\=100\%\> <!--**-->}gsm; #"
 	
-	my $menu = draw_menu ($page -> {menu}, $page -> {highlighted_type});
+	my $menu = $_REQUEST {__edit} ? '' : draw_menu ($page -> {menu}, $page -> {highlighted_type}, {lpt => $lpt});
 	
 	$_REQUEST {__scrollable_table_row} ||= 0;
 	
 	my $meta_refresh = $_REQUEST {__meta_refresh} ? qq{<META HTTP-EQUIV=Refresh CONTENT="$_REQUEST{__meta_refresh}; URL=@{[create_url()]}">} : '';	
 	
-	my $auth_toolbar = draw_auth_toolbar ({lpt => $lpt});
+	my $auth_toolbar = $conf -> {core_no_auth_toolbar} ? '' : draw_auth_toolbar ({lpt => $lpt});
 
 #	my $root = $^O eq 'MSWin32' ? '/i/' : $_REQUEST{__uri};
 	my $root = $_REQUEST{__uri};
@@ -267,6 +275,7 @@ EOH
 		<html>		
 			<head>
 				<title>$$i18n{_page_title}</title>
+								
 				<meta name="Generator" content="Zanas ${Zanas::VERSION} / $$SQL_VERSION{string}; parameters are fetched with $request_package; gateway_interface is $ENV{GATEWAY_INTERFACE}; $mod_perl is in use">
 				$meta_refresh
 				
@@ -385,7 +394,50 @@ EOF
 							focused_input.select ();
 						}
 					}
-					else {					
+					else {	
+					
+						var forms = document.forms;
+						if (forms != null) {
+						
+							var done = 0;
+						
+							for (var i = 0; i < forms.length; i++) {
+							
+								var elements = forms [i].elements;
+								
+								if (elements != null) {
+								
+									for (var j = 0; j < elements.length; j++) {
+										
+										var element = elements [j];
+										
+										if (element.tagName == 'INPUT' && element.name == 'q') {
+											break;
+										}
+
+										if (
+											(element.tagName == 'INPUT' && (element.type == 'text' || element.type == 'checkbox' || element.type == 'radio'))
+											|| element.tagName == 'SELECT' 
+											|| element.tagName == 'TEXTAREA') 
+										{
+											element.focus ();
+											done = 1;
+											break;
+										}										
+										
+									}									
+								
+								}
+								
+								if (done) {
+									break;
+								}
+							
+							}
+						
+						}
+					
+/*					
 						var inputs = document.body.getElementsByTagName ('input');
 						if (inputs != null) {
 							for (var i = 0; i < inputs.length; i++) {
@@ -395,6 +447,7 @@ EOF
 								break;
 							}
 						}
+*/						
 					}
 
 					@{[ $_REQUEST {__blur_all} ? <<EOF : '']}
@@ -428,7 +481,7 @@ EOHELP
 					$menu
 					$body
 				</div>
-				<iframe name=invisible src="${root}0.html" width=0 height=0>
+				<iframe name=invisible src="${root}0.html" width=0 height=0 application="yes">
 				</iframe>
 			</body>
 		</html>
@@ -452,13 +505,13 @@ sub draw_form_field_button {
 
 sub draw_menu {
 
-	my ($types, $cursor) = @_;	
+	my ($types, $cursor, $options) = @_;
 	
 	@$types or return '';
 	
 	$_REQUEST {__no_navigation} and return '';
 	
-	my ($tr1, $tr2, $tr3, $divs) = ('', '', '', '');
+	my ($tr1, $tr2, $tr3, $divs, $colspan) = ('', '', '', '', $options -> {lpt} ? 4 : 2);
 
 	foreach my $type (@$types)	{
 	
@@ -467,13 +520,7 @@ sub draw_menu {
 		$conf -> {kb_options_menu} ||= {ctrl => 1, alt => 1};
 	
 		register_hotkey ($type, 'href', 'main_menu_' . $type -> {name}, $conf -> {kb_options_menu});
-	
-		$tr1 .= <<EOH;
-			<td class=bgr8 rowspan=2><img src="/i/toolbars/n_left.gif" border=0></td>
-			<td bgcolor=#ffffff><img height=1 src="$_REQUEST{__uri}0.gif" width=1 border=0></td>				
-			<td class=bgr8 rowspan=2><img src="/i/toolbars/n_right.gif" border=0></td>
-EOH
-	
+		
 		my $is_active = $type -> {is_active};
 		if ($type -> {role}) {
 			$is_active ||= ($cursor && "$$type{name}_for_$$type{role}" eq $cursor);
@@ -481,17 +528,12 @@ EOH
 			$is_active ||= ($cursor && $$type{name} eq $cursor);
 		}
 
-		my $aclass = $is_active ? 'lnk1' : 'lnk0';
-		my $tclass = $is_active ? 'bgr4' : 'bgr8';
-
 		my $onhover = '';
 		if (ref $type -> {items} eq ARRAY) {
 			$divs .= draw_vert_menu ($type -> {name}, $type -> {items});
-			$onhover = qq {onmouseover="open_popup_menu ('$$type{name}')"} unless $type -> {no_page};
+			$onhover = qq {open_popup_menu ('$$type{name}')} unless $type -> {no_page};
 		}
 		
-#		my $href = $type -> {no_page} ? '#' : ("$_REQUEST{__uri}?type=$$type{name}&sid=$_REQUEST{sid}@{[$_REQUEST{period} ? '&period=' . $_REQUEST {period} : '']}@{[$type->{role} ? '&role=' . $type->{role} : '']}";
-
 		if ($type -> {no_page}) {
 			$type -> {href} = "javaScript:open_popup_menu('$$type{name}')";
 		} 
@@ -502,29 +544,33 @@ EOH
 		}
 		
 		$tr2 .= <<EOH;
-			<td class=bgr1><img height=20 src="$_REQUEST{__uri}0.gif" width=1 border=0></td>
-			<td $onhover class=$tclass nowrap>&nbsp;&nbsp;<a class=$aclass id="main_menu_$$type{name}" href="$$type{href}">$$type{label}</a>&nbsp;&nbsp;</td>
+			<td onmouseover="this.style.borderColor='#FFFFFF'; this.style.borderStyle='groove'; ;$onhover" onmouseout="this.style.borderColor='#D6D3CE'; this.style.borderStyle='solid';" class="main-menu" nowrap>&nbsp;<a class="main-menu" id="main_menu_$$type{name}" href="$$type{href}">&nbsp;$$type{label}&nbsp;</a>&nbsp;</td>
 EOH
 
-		$tr3 .= <<EOH;
-			<td class=bgr1><img height=1 src="$_REQUEST{__uri}0.gif" width=1 border=0></td>
-			<td class=bgr1 nowrap><img height=1 src="$_REQUEST{__uri}0.gif" width=1 border=0></td>
-EOH
-
+		$colspan++;
+	
 	}
+	
+	my $exit_url = $conf -> {exit_url} || "$_REQUEST{__uri}?type=_logout&sid=$_REQUEST{sid}";	
 
 	return <<EOH;
 		<table width="100%" class=bgr8 cellspacing=0 cellpadding=0 border=0>
 			<tr>
-				<td class=bgr8 width=7><img height=1 src="$_REQUEST{__uri}0.gif" width=7 border=0></td>
-				$tr2
-				<td class=bgr1><img height=20 src="$_REQUEST{__uri}0.gif" width=1 border=0></td>
-				<td class=bgr8 width=100%><img height=1 src="$_REQUEST{__uri}0.gif" width=1 border=0></td>
+				<td class=bgr8 colspan=$colspan width=100%><img height=2 src="$_REQUEST{__uri}0.gif" width=1 border=0></td>
 			<tr>
-				<td class=bgr8><img height=1 src="$_REQUEST{__uri}0.gif" width=1 border=0></td>
-				$tr3
-				<td class=bgr1><img height=1 src="$_REQUEST{__uri}0.gif" width=1 border=0></td>
+				$tr2
 				<td class=bgr8 width=100%><img height=1 src="$_REQUEST{__uri}0.gif" width=1 border=0></td>
+				@{[ $options -> {lpt} ? <<EOLPT : '']}
+				<td class="main-menu" nowrap>&nbsp;&nbsp;<a class="main-menu" id="main_menu__lpt" target="_blank" href="@{[ create_url (lpt => 1) ]}">$$i18n{Print}</a>&nbsp;&nbsp;</td>
+				<td class="main-menu" nowrap>&nbsp;&nbsp;<a class="main-menu" id="main_menu__xls" target="_blank" href="@{[ create_url (xls => 1, salt => rand * time) ]}">MS Excel</a>&nbsp;&nbsp;</td>
+EOLPT
+				<td class="main-menu" nowrap>&nbsp;&nbsp;<a class="main-menu" id="main_menu__logout" href="$exit_url">$$i18n{Exit}</a>&nbsp;&nbsp;</td>
+			<tr>
+				<td class=bgr8 colspan=$colspan width=100%><img height=2 src="$_REQUEST{__uri}0.gif" width=1 border=0></td>
+			<tr>
+				<td class=bgr6 colspan=$colspan width=100%><img height=1 src="$_REQUEST{__uri}0.gif" width=1 border=0></td>
+			<tr>
+				<td class=bgr0 colspan=$colspan width=100%><img height=1 src="$_REQUEST{__uri}0.gif" width=1 border=0></td>
 				
 		</table>	
 		$divs
@@ -542,15 +588,33 @@ sub draw_vert_menu {
 	foreach my $type (@$types) {
 	
 		if ($type eq BREAK) {
-		
+
 			$tr2 .= <<EOH;
-				<tr height=1>
-					<td bgcolor=#485F70 colspan=3><img height=1 src=$_REQUEST{__uri}0.gif width=1 border=0></td>
-				<tr>
-					<td bgcolor=#485F70><img height=1 src=$_REQUEST{__uri}0.gif width=1 border=0></td>
-					<td><img height=1 src=$_REQUEST{__uri}0.gif width=1 border=0></td>
-					<td bgcolor=#485F70><img height=1 src=$_REQUEST{__uri}0.gif width=1 border=0></td>
+				<tr height=2>
+
+					<td bgcolor=#D6D3CE><img height=2 src=$_REQUEST{__uri}0.gif width=1 border=0></td>
+					<td bgcolor=#ffffff><img height=2 src=$_REQUEST{__uri}0.gif width=1 border=0></td>
+
+					<td>
+					<table width=90% border=0 cellspacing=0 cellpadding=0 align=center minheight=2>
+						<tr height=1><td bgcolor="#888888"><img height=1 src=$_REQUEST{__uri}0.gif width=1 border=0></td></tr>
+						<tr height=1><td bgcolor="#ffffff"><img height=1 src=$_REQUEST{__uri}0.gif width=1 border=0></td></tr>
+					</table></td>
+					<td bgcolor=#888888><img height=2 src=$_REQUEST{__uri}0.gif width=1 border=0></td>
+					<td bgcolor=#424142><img height=2 src=$_REQUEST{__uri}0.gif width=1 border=0></td>
+					
+				</tr>
+				
 EOH
+
+		
+#			$tr2 .= <<EOH;
+#				<tr height=1>
+#					<td bgcolor=#485F70 colspan=3><img height=1 src=$_REQUEST{__uri}0.gif width=1 border=0></td>
+#				<tr>
+#					<td><img height=1 src=$_REQUEST{__uri}0.gif width=1 border=0></td>
+#					<td bgcolor=#485F70><img height=1 src=$_REQUEST{__uri}0.gif width=1 border=0></td>
+#EOH
 		
 		}
 		else {
@@ -564,20 +628,28 @@ EOH
 			$onclick =~ s{window\.open\('(.*?)'\, '_self'\)}{parent.location.href='$1'};
 					
 			$tr2 .= <<EOH;
-				<tr height=1>
-					<td bgcolor=#485F70 colspan=3><img height=1 src=$_REQUEST{__uri}0.gif width=1 border=0></td>
 				<tr>
-					<td bgcolor=#485F70><img height=20 src=$_REQUEST{__uri}0.gif width=1 border=0></td>
-					<td 
+					<td bgcolor=#D6D3CE><img height=1 src=$_REQUEST{__uri}0.gif width=1 border=0></td>
+					<td bgcolor=#ffffff><img height=1 src=$_REQUEST{__uri}0.gif width=1 border=0></td>
+					<td bgcolor=#D6D3CE
 						nowrap 
-						onmouseover="this.style.background='#efefef'" 
-						onmouseout="this.style.background='#d5d5d5'"
+						onmouseover="this.style.background='#08246b'; this.style.color='white'" 
+						onmouseout="this.style.background='#D6D3CE'; this.style.color='black'"
 						onclick="$onclick"
-						style="font-weight: normal; font-size: 11px; color: #000000; font-family: verdana; text-decoration: none"
+						style="
+							font-weight: normal; 
+							font-size: 8pt; 
+							color: black; 
+							font-family: MS Sans Serif; 
+							text-decoration: none;
+							padding-top:4px;
+							padding-bottom:4px;
+						"
 					>
 						&nbsp;&nbsp;$$type{label}&nbsp;&nbsp;
 					</td>
-					<td bgcolor=#485F70><img height=20 src=$_REQUEST{__uri}0.gif width=1 border=0></td>
+					<td bgcolor=#888888><img height=1 src=$_REQUEST{__uri}0.gif width=1 border=0></td>
+					<td bgcolor=#424142><img height=1 src=$_REQUEST{__uri}0.gif width=1 border=0></td>
 EOH
 		}
 	
@@ -585,10 +657,22 @@ EOH
 
 	return <<EOH;
 		<div id="vert_menu_$name" style="visibility:hidden; position:absolute; z-index:-100;">
-			<table id="vert_menu_table_$name" width=1% bgcolor=#d5d5d5 cellspacing=0 cellpadding=0 border=0>
+			<table id="vert_menu_table_$name" width=1% bgcolor=#d5d5d5 cellspacing=0 cellpadding=0 border=0  border=1>
+				<tr height=1>
+					<td bgcolor=#D6D3CE colspan=4><img height=1 src=$_REQUEST{__uri}0.gif width=1 border=0></td>
+					<td bgcolor=#424142 colspan=1><img height=1 src=$_REQUEST{__uri}0.gif width=1 border=0></td>
+				<tr height=1>
+					<td bgcolor=#D6D3CE><img height=1 src=$_REQUEST{__uri}0.gif width=1 border=0></td>
+					<td bgcolor=#ffffff colspan=2><img height=1 src=$_REQUEST{__uri}0.gif width=1 border=0></td>
+					<td bgcolor=#888888><img height=1 src=$_REQUEST{__uri}0.gif width=1 border=0></td>
+					<td bgcolor=#424142><img height=1 src=$_REQUEST{__uri}0.gif width=1 border=0></td>
 				$tr2
 				<tr height=1>
-					<td bgcolor=#485F70 colspan=3><img height=1 src=$_REQUEST{__uri}0.gif width=1 border=0></td>
+					<td bgcolor=#D6D3CE><img height=1 src=$_REQUEST{__uri}0.gif width=1 border=0></td>
+					<td bgcolor=#888888 colspan=3><img height=1 src=$_REQUEST{__uri}0.gif width=1 border=0></td>
+					<td bgcolor=#424142><img height=1 src=$_REQUEST{__uri}0.gif width=1 border=0></td>
+				<tr height=1>
+					<td bgcolor=#424142 colspan=5><img height=1 src=$_REQUEST{__uri}0.gif width=1 border=0></td>
 			</table>
 		</div>
 EOH
@@ -640,7 +724,7 @@ sub draw_input_cell {
 
 	return "<td $attributes>" if $data -> {off};
 	
-	return draw_text_cell ($data, $options) if $_REQUEST {__read_only} || $data -> {read_only};
+	return draw_text_cell ($data, $options) if ($_REQUEST {__read_only} && !$data -> {edit}) || $data -> {read_only};
 	
 	$data -> {size} ||= 30;
 				
@@ -753,8 +837,14 @@ sub draw_text_cell {
 		$txt = '<nobr>' . $txt . '</nobr>';
 	}
 	
-	$data -> {href}   ||= $options -> {href} unless $options -> {is_total};
-	$data -> {target} ||= $options -> {target};
+	if ($_REQUEST {select}) {
+		$data -> {href}   = js_set_select_option ('', {id => $i -> {id}, label => $data -> {label}});
+	}
+	else {
+		$data -> {href}   ||= $options -> {href} unless $options -> {is_total};
+		$data -> {target} ||= $options -> {target};
+	}
+
 	if ($data -> {href} && !$_REQUEST {lpt}) {
 		check_href ($data);
 		my $target = $data -> {target} ? "target='$$data{target}'" : '';
@@ -787,10 +877,7 @@ sub draw_one_cell_table {
 
 	my ($options, $body) = @_;
 	
-	return <<EOH
-	
-		@{[ $options -> {js_ok_escape} ? js_ok_escape () : '' ]}
-		
+	return <<EOH			
 		<table cellspacing=0 cellpadding=0 width="100%">
 				<form name=form action=$_REQUEST{__uri} method=post enctype=multipart/form-data target=invisible>
 					<tr><td class=bgr8>$body
@@ -817,7 +904,7 @@ sub draw_table_header {
 	}
 	elsif (!ref $cell && ($cell || !$no_empty_cells)) {
 	
-		return "<th class='row-cell-total'>\&nbsp;$cell\&nbsp;</th>";
+		return "<th class='row-cell-header'><!img align='absmiddle' hspace=0 vspace=0 border=0 width=1 height=20 src='$_REQUEST{__uri}w_20_1.gif' align=left>\&nbsp;$cell\&nbsp;</th>";
 		
 	}
 	
@@ -831,11 +918,11 @@ sub draw_table_header {
 	check_title ($cell);
 	
 	$cell -> {attributes} ||= {};
-	$cell -> {attributes} -> {class} ||= 'row-cell-total';
+	$cell -> {attributes} -> {class} ||= 'row-cell-header';
 	
 	my $attributes = dump_attributes ($cell -> {attributes});
 	
-	return "<th $attributes colspan=$$cell{colspan} $cell{title}>\&nbsp;$$cell{label}\&nbsp;</th>";
+	return "<th $attributes colspan=$$cell{colspan} $cell{title}><!img hspace=0 vspace=0 border=0 width=1 height=20 src='$_REQUEST{__uri}w_20_1.gif' align=left>\&nbsp;$$cell{label}\&nbsp;</th>";
 
 }
 
@@ -860,13 +947,15 @@ sub draw_table {
 
 	if (ref $options -> {title} eq HASH) {
 		my $title = '';
-		$options -> {title} -> {height} ||= 10;
-		$title .= draw_hr (%{$options -> {title}});
-		$title .= draw_window_title ($options -> {title}) if $options -> {title} -> {label};
+		unless ($_REQUEST {select}) {
+			$options -> {title} -> {height} ||= 10;
+			$title .= draw_hr (%{$options -> {title}});
+			$title .= draw_window_title ($options -> {title}) if $options -> {title} -> {label};
+		}
 		$options -> {title} = $title;
 	}
 
-	if (ref $options -> {top_toolbar} eq ARRAY) {
+	if (ref $options -> {top_toolbar} eq ARRAY) {			
 #		$_FLAG_ADD_LAST_QUERY_STRING = 1;
 		$options -> {top_toolbar} = draw_toolbar (@{ $options -> {top_toolbar} });
 #		$_FLAG_ADD_LAST_QUERY_STRING = 0;
@@ -957,9 +1046,7 @@ EOH
 		$$options{title}
 		$$options{path}
 		$$options{top_toolbar}
-		
-		@{[ $options -> {js_ok_escape} ? js_ok_escape ({name => $options -> {name}, no_ok => $options -> {no_ok}}) : '' ]}
-		
+				
 		<table cellspacing=0 cellpadding=0 width="100%"><tr><td class=bgr8>
 		
 			<form name=$$options{name} action=$_REQUEST{__uri} method=post enctype=multipart/form-data target=invisible>
@@ -967,9 +1054,10 @@ EOH
 				<input type=hidden name=type value=$$options{type}> 
 				<input type=hidden name=action value=$$options{action}> 
 				<input type=hidden name=sid value=$_REQUEST{sid}>
+				<input type=hidden name=__last_query_string value="$_REQUEST{__last_query_string}">
 				$hiddens
 		$div_bra
-				<table cellspacing=1 cellpadding=2 width="100%" id="scrollable_table" lpt=$$options{lpt}> <!----------->
+				<table cellspacing=1 cellpadding=0 width="100%" id="scrollable_table" lpt=$$options{lpt}>
 					$ths					
 						<tbody>
 							$trs
@@ -1003,7 +1091,7 @@ sub draw_path {
 	$options -> {max_len} ||= 30;
 	
 	$path = '';
-	
+		
 	my $nowrap = $options -> {multiline} ? '' : 'nowrap';
 	
 	my $n = 2;
@@ -1027,34 +1115,24 @@ sub draw_path {
 		
 		push @{$_REQUEST {__path}}, $url;
 
-		$path .= <<EOH;
-			<a class=lnk1 href="$url">$name</a>
-EOH
+		my $href = $_REQUEST {__read_only} ? '' : qq {href="$url"};
+
+		$path .= qq{<a class=path $href>$name</a>};
 	
 	}
 
-	return draw_hr (height => 10) . <<EOH
+	if ($conf -> {core_show_icons}) {
+		$path = qq{<img src="/folder.gif" border=0 hspace=3 vspace=1 align=absmiddle>&nbsp;} . $path;
+	}
+
+	return <<EOH
 		
 		<table cellspacing=0 cellpadding=0 width="100%" border=0>
 			<tr>
-				<td class=bgr5>
+				<td class=bgr8>
 					<table cellspacing=0 cellpadding=0 width="100%" border=0>
-						<tr>
-							<td class=bgr6 colspan=4><img height=1 src="$_REQUEST{__uri}0.gif" width=1 border=0></td>
-						</tr>
-						<tr>
-<!--						
-							<td><img height=14 hspace=4 src="/i/toolbars/4pt.gif" width=2 border=0></td>
--->							
-							<td class='header6' $nowrap>&nbsp;$path&nbsp;</td>
-							<td>
-								<table cellspacing=0 cellpadding=0 width="100%" border=0>
-									<tr>
-										<td _background="/i/toolbars/4pt.gif" height=15><img height=15  hspace=0 src="$_REQUEST{__uri}0.gif" width=1 border=0></td>
-									</tr>
-								</table>
-							</td>
-							<td align=right><img height=15  src="$_REQUEST{__uri}0.gif" width=4 border=0></td>
+						<tr height=18>
+							<td class=bgr0 $nowrap>&nbsp;$path&nbsp;</td>
 						</tr>
 						<tr>
 							<td class=bgr8 colspan=4><img height=1 src="$_REQUEST{__uri}0.gif" width=1 border=0></td>
@@ -1093,14 +1171,33 @@ sub draw_toolbar {
 	return '' if $options -> {off};	
 	
 	$_REQUEST {__toolbars_number} ||= 0;
-	
+		
 	my $form_name = $_REQUEST {__toolbars_number} ? 'toolbar_form_' . $_REQUEST {__toolbars_number} : 'toolbar_form';
 	$_REQUEST {__toolbars_number} ++;
+
+	if ($_REQUEST {select}) {
+
+		hotkeys (
+			{
+				code => 27,
+				data => 'cancel',
+			},
+		);
+
+		unshift @buttons, {
+			icon    => 'cancel',
+			id      => 'cancel',
+			label   => $i18n -> {close},
+#			href    => 'javaScript:window.opener.focus();window.close()',
+			href    => "javaScript:window.parent.restoreSelectVisibility('_$_REQUEST{select}', true);window.parent.focus();",
+		};
+		
+	}
 	
 	my $buttons = join '', map { ref $_ eq HASH ? ( &{'draw_toolbar_' . ($$_{type} || 'button')} ($_) ) : $_ } @buttons;
 	
 	return <<EOH
-		<table class=bgr5 cellspacing=0 cellpadding=0 width="100%" border=0>
+		<table class=bgr8 cellspacing=0 cellpadding=0 width="100%" border=0>
 			<form action=$_REQUEST{__uri} name=$form_name target="$$options{target}">
 			
 				@{[ map {<<EO} @{$options -> {keep_params}} ]}
@@ -1114,22 +1211,9 @@ EO
 					<td class=bgr6 colspan=15><img height=1 src="$_REQUEST{__uri}0.gif" width=1 border=0></td>
 				</tr>
 				<tr>
-					<td width=20>
-						<table cellspacing=0 cellpadding=0 width=20 border=0>
-							<tr>
-								<td _background="/i/toolbars/6ptbg.gif"><img height=17 hspace=0 src="$_REQUEST{__uri}0.gif" width=1 border=0></td>
-							</tr>
-						</table>
-					</td>
+					<td class=bgr8 width=30><img height=1 src="$_REQUEST{__uri}0.gif" width=20 border=0></td>
 					$buttons
-					<td width="100%">
-						<table cellspacing=0 cellpadding=0 width="100%" border=0>
-							<tr>
-								<td _background="/i/toolbars/6ptbg.gif"><img height=17 hspace=0 src="$_REQUEST{__uri}0.gif" width=1 border=0></td>
-							</tr>
-						</table>
-					</td>
-					<td align=right><img height=23 src="$_REQUEST{__uri}0.gif" width=4 border=0></td>
+					<td class=bgr8 width=100%><img height=1 src="$_REQUEST{__uri}0.gif" width=1 border=0></td>
 				</tr>
 				<tr>
 					<td class=bgr8 colspan=15><img height=1 src="$_REQUEST{__uri}0.gif" width=1 border=0></td>
@@ -1151,7 +1235,7 @@ sub draw_toolbar_button {
 	
 	return '' if $options -> {off};
 	
-	$options -> {target} ||= '_self';
+#	$options -> {target} ||= '_self';
 	
 	$conf -> {kb_options_buttons} ||= {ctrl => 1, alt => 1};	
 	
@@ -1160,6 +1244,7 @@ sub draw_toolbar_button {
 	check_href ($options);
 
 	if ($options -> {confirm}) {
+		$options -> {target} ||= '_self';
 		my $salt = rand;
 		my $msg = js_escape ($options -> {confirm});
 		$options -> {href} = qq [javascript:if (confirm ($msg)) {window.open('$$options{href}', '$$options{target}')}];
@@ -1172,8 +1257,8 @@ sub draw_toolbar_button {
 		$bra = qq|<img src="/i/buttons/$$options{icon}.gif" alt="$label" border=0 hspace=0 vspace=1 align=absmiddle>&nbsp;|
 	}
 	else {
-		$bra = '<b>[';
-		$ket = ']</b>';
+#		$bra = '<b>[';
+#		$ket = ']</b>';
 	}
 	
 	my $vert_line = {label => $options -> {label}, href => $options -> {href}};
@@ -1183,8 +1268,8 @@ sub draw_toolbar_button {
 	my $id = $options -> {id} || $options;
 	
 	return <<EOH
-		<td nowrap>&nbsp;<a class=lnk0 href="$$options{href}" id="$id" target="$$options{target}">${bra}$$options{label}${ket}</b></a></td>
-		<td><img height=15 hspace=4 src="/i/toolbars/razd1.gif" width=2 border=0></td>
+		<td class="button" onmouseover="style.borderStyle='groove';style.borderColor='#FFFFFF';" onmouseout="style.borderStyle='solid';style.borderColor='#D6D3CE';" nowrap>&nbsp;<a class=button href="$$options{href}" id="$id" target="$$options{target}">$bra $$options{label} $ket</a></td>
+		<td><img height=15 vspace=1 hspace=4 src="/i/toolbars/razd1.gif" width=2 border=0></td>
 EOH
 
 }
@@ -1213,7 +1298,7 @@ sub draw_toolbar_input_text {
 		
 	return <<EOH
 		<td nowrap>$$options{label}: <input type=text size=$$options{size} name=$$options{name} value="$value" onFocus="scrollable_table_is_blocked = true; q_is_focused = true" onBlur="scrollable_table_is_blocked = false; q_is_focused = false">$hiddens</td>
-		<td><img height=15  hspace=4 src="/i/toolbars/razd1.gif" width=2 border=0></td>
+		<td><img height=15 vspace=1 hspace=4 src="/i/toolbars/razd1.gif" width=2 border=0></td>
 EOH
 
 }
@@ -1226,7 +1311,7 @@ sub draw_toolbar_input_submit {
 	return '' if $options -> {off};
 	return <<EOH
 		<td nowrap><input type=submit name="$$options{name}" value="$$options{label}"></td>
-		<td><img height=15  hspace=4 src="/i/toolbars/razd1.gif" width=2 border=0></td>
+		<td><img height=15 vspace=1 hspace=4 src="/i/toolbars/razd1.gif" width=2 border=0></td>
 EOH
 
 }
@@ -1257,7 +1342,7 @@ sub draw_toolbar_pager {
 		$label .= qq {&nbsp;<a href="$url" class=lnk0 id="_pager_prev" onFocus="blur()"><b><u>&lt;</u></b></a>&nbsp;};
 	}
 	
-	$options -> {total} or return qq {<td nowrap>$$i18n{toolbar_pager_empty_list}<td><img height=15  hspace=4 src="/i/toolbars/razd1.gif" width=2 border=0></td>};
+	$options -> {total} or return qq {<td nowrap>$$i18n{toolbar_pager_empty_list}<td><img height=15 vspace=1 hspace=4 src="/i/toolbars/razd1.gif" width=2 border=0></td>};
 	
 #	$label .= qq {<input type=text size=4 name=start value=@{[$start+1]} onFocus="scrollable_table_is_blocked = true; q_is_focused = true" onBlur="scrollable_table_is_blocked = false; q_is_focused = false" onchange="s=document.toolbar_form.start.value; s=(isNaN(s) ? 1 : s); s=(s < 1 ? 1 : s); lp=$$options{total}; s=(s > lp ? lp : s); document.toolbar_form.start.value=s-1; toolbar_form.submit()">};
 #	$label .= ' - ' . ($start + $$options{cnt}) . $$i18n{toolbar_pager_of} . $$options{total};
@@ -1273,7 +1358,7 @@ sub draw_toolbar_pager {
 	
 	return <<EOH
 		<td nowrap>$label</td>
-		<td><img height=15  hspace=4 src="/i/toolbars/razd1.gif" width=2 border=0></td>
+		<td><img height=15 vspace=1 hspace=4 src="/i/toolbars/razd1.gif" width=2 border=0></td>
 EOH
 
 }
@@ -1306,7 +1391,7 @@ sub draw_row_button {
 	if ($conf -> {core_show_icons}) {	
 		my $label = $options -> {label};
 		$options -> {label} = qq|<img src="/i/buttons/$$options{icon}.gif" alt="$$options{label}" border=0 hspace=0 vspace=0 align=absmiddle>|;
-		$options -> {label} .= "&nbsp;$label" if $options -> {force_label};
+		$options -> {label} .= "&nbsp;$label" if $options -> {force_label} || $conf -> {core_hide_row_buttons} > -1;
 	}
 	else {
 		$options -> {label} = "\&nbsp;[$$options{label}]\&nbsp;";
@@ -1388,10 +1473,12 @@ sub draw_form_field {
 	$field -> {label_width} = '20%' unless $field -> {is_slave};
 	my $label_width = $field -> {label_width} ? 'width=' . $field -> {label_width} : '';
 	my $cell_width  = $field -> {cell_width}  ? 'width=' . $field -> {cell_width}  : '';
+	
+	my $state = $_REQUEST {__read_only} ? 'passive' : 'active';
 		
 	return $type eq 'hidden' ? $html : <<EOH;
-		<td class='header5' nowrap align=right $label_width>$$field{label}</td>
-		<td class=bgr4 colspan=$$field{colspan} $cell_width>$html</td>
+		<td class='form-$state-label' nowrap align=right $label_width>$$field{label}</td>
+		<td class='form-$state-inputs' colspan=$$field{colspan} $cell_width>$html</td>
 EOH
 
 }
@@ -1414,11 +1501,14 @@ sub draw_form {
 
 	my ($options, $data, $fields) = @_;
 	
-	if ($conf -> {core_auto_esc} && $_REQUEST {__last_query_string}) {
+	if ($_REQUEST {__edit}) {
+		$options -> {esc} = create_url ();
+	}	
+	elsif ($conf -> {core_auto_esc} && $_REQUEST {__last_query_string}) {
 		$options -> {esc} = esc_href ();
 	}	
 
-	my $menu = $options -> {menu} ? draw_menu ($options -> {menu}) : '';
+#	my $menu = $options -> {menu} ? draw_menu ($options -> {menu}) : '';
 
 	my $action = exists $options -> {action} ? $options -> {action} : 'update';	
 	
@@ -1450,7 +1540,8 @@ sub draw_form {
 
 	foreach my $field (@$fields) {
 					
-		next if ref $field eq HASH and $field -> {off};
+		next if ref $field eq HASH  and $field -> {off};
+		next if ref $field eq HASH  and $field -> {type} eq 'password' and $_REQUEST {__read_only};
 		next if ref $field eq ARRAY and @$field == 0;
 		
 		my $id_tr = ref $field eq HASH ? "tr_$$field{name}" : '';
@@ -1463,21 +1554,101 @@ sub draw_form {
 	
 	my $bottom_toolbar = 
 		exists $options -> {bottom_toolbar} ? $options -> {bottom_toolbar} :		
-		$_REQUEST {__no_navigation} ? draw_close_toolbar ($options) :
+		($_REQUEST {__no_navigation} && !$_REQUEST {select}) ? draw_close_toolbar ($options) :
 		$options -> {back} ? draw_back_next_toolbar ($options) :
 		$options -> {no_ok} ? draw_esc_toolbar ($options) :
-		draw_ok_esc_toolbar ($options);
+		draw_ok_esc_toolbar ($options, $data);
 
-	return <<EOH
-$path<table cellspacing=1 cellpadding=5 width="100%">
+	my $bottom = '';
+	
+	if ($options -> {menu} && !$_REQUEST {__edit}) {
+	
+		my $items = $options -> {menu};
+		
+		foreach my $item (@$items) {
+		
+			if ($item -> {type}) {
+				$item -> {href} = {type => $item -> {type}};
+				$item -> {is_active} = $item -> {type} eq $_REQUEST {type} ? 1 : 0;
+			}
+			else {
+				$item -> {is_active} += 0;
+			}
 
-			@{[ js_ok_escape ($options) ]}
+			check_href ($item);
+			
+		}
+	
+		my ($tr1, $tr2, $tr3) = ('', '');
+
+		$tr3 .= qq{<td></td>};
+		$tr2 .= qq{<td></td>};
+		$tr1 .= qq{<td class='bgr6' width=100%><img src="/0.gif" border=0 hspace=0 vspace=0 width=1 height=1></td>};
+
+		my $class = $items -> [0] -> {is_active} ? 'bgr8' : 'bgr6';
+		$tr1 .= qq{<td class='$class'><img src="0.gif" border=0 hspace=0 vspace=0 width=1 height=1></td>};
+
+		$tr3 .= qq{<td rowspan=2 valign=top><img src="/tab_l_${$$items[0]}{is_active}.gif" border=0 hspace=0 vspace=0 width=6 height=17></td>};
+
+		for (my $i = 0; $i < 0 + @$items; $i++) {
+
+			my $item = $items -> [$i];	
+			my $active = $item -> {is_active};
+
+			my $class = $active ? 'bgr8' : 'bgr6';
+			$tr1 .= qq{<td class='$class'><img src="/0.gif" border=0 hspace=0 vspace=0 width=1 height=1></td>};
+
+			$tr2 .= qq{<td class="tabs-$active"><a href="$$item{href}" class="main-menu"><nobr>&nbsp;$$item{label}&nbsp;</nobr></a></td>};
+
+			$tr3 .= qq{<td background="/tab_b_$active.gif"><img src="/0.gif" border=0 hspace=0 vspace=0 width=1 height=2></td>};
+
+			if ($i < -1 + @$items) {
+				my $aa = $active . ($items -> [$i + 1] -> {is_active});
+				my $class = $aa ne '00' ? 'bgr8' : 'bgr6';
+				$tr1 .= qq{<td class='$class'><img src="/0.gif" border=0 hspace=0 vspace=0 width=1 height=1></td>};
+				$tr3 .= qq{<td rowspan=2><img src="/tab_$aa.gif" border=0 hspace=0 vspace=0 width=8 height=17></td>};
+			}
+			else {
+				my $class = $active ? 'bgr8' : 'bgr6';
+				$tr1 .= qq{<td class='$class'><img src="/0.gif" border=0 hspace=0 vspace=0 width=1 height=1></td>};
+				$tr3 .= qq{<td rowspan=2 valign=top><img src="/tab_r_${$$items[-1]}{is_active}.gif" border=0 hspace=0 vspace=0 width=6 height=17></td>};
+			}
+
+		}	
+
+		$tr3 .= qq{<td rowspan=2 valign=top><img src="/0.gif" border=0 hspace=0 vspace=0 width=1 height=1></td>};
+		$tr1 .= qq{<td class='bgr6' width=30><img src="/0.gif" border=0 hspace=0 vspace=0 width=1 height=1></td>};
+	
+		$bottom = <<EOH;
+			<table border=0 cellspacing=0 cellpadding=0 width=100%>
+				<tr>$tr3
+				<tr>$tr2
+				<tr>$tr1
+			<table>
+EOH
+
+	
+	} else {
+		$bottom = <<EOH;
+		<table cellspacing=0 cellpadding=0 width="100%">
+			<tr>
+				<td class=bgr6><img height=1 src="$_REQUEST{__uri}0.gif" width=1 border=0></td>
+			</tr>
+		</table>
+EOH
+	}
+
+	return draw_hr (height => 10) . <<EOH
+		$bottom
+		$path				
+		<table cellspacing=1 cellpadding=5 width="100%">
 			
 			<form name=$name action=$_REQUEST{__uri} method=post enctype=multipart/form-data target=$target>
 				<input type=hidden name=type value=$type> 
 				<input type=hidden name=id value=$id> 
 				<input type=hidden name=action value=$action> 
 				<input type=hidden name=sid value=$_REQUEST{sid}>
+				<input type=hidden name=select value=$_REQUEST{select}>
 				<input type=hidden name=__last_query_string value="$_REQUEST{__last_query_string}">
 				@{[ map {<<EO} @{$options -> {keep_params}} ]}
 					<input type=hidden name=$_ value=$_REQUEST{$_}>
@@ -1498,33 +1669,35 @@ EOH
 
 sub js_ok_escape {
 	
-	my ($options) = @_;
+#	my ($options) = @_;
 	
-	$options -> {name} ||= 'form';
-	$options -> {confirm_ok} ||= $i18n -> {confirm_ok};	
-	$options -> {confirm_esc} ||= $i18n -> {confirm_esc};
+#	$options -> {name} ||= 'form';
+#	$options -> {confirm_ok} ||= $i18n -> {confirm_ok};	
+#	$options -> {confirm_esc} ||= $i18n -> {confirm_esc};
 	
-	$options -> {confirm_ok} = js_escape ($options -> {confirm_ok});
-	$options -> {confirm_esc} = js_escape ($options -> {confirm_esc});
+#	$options -> {confirm_ok} = js_escape ($options -> {confirm_ok});
+#	$options -> {confirm_esc} = js_escape ($options -> {confirm_esc});
 
-	return <<EOH
+#	return <<EOH
 	
-		<script for="body" event="onkeypress">
+#		<script for="body" event="onkeypress">
 		
-			if (window.event.keyCode == 27 && (!is_dirty || window.confirm ($$options{confirm_esc}))) {
-				activate_link (document.getElementById ('esc').href);
-			}
+#			if (window.event.keyCode == 27 && (!is_dirty || window.confirm ($$options{confirm_esc}))) {
+#				activate_link (document.getElementById ('esc').href);
+#			}
 			
-			@{[ $options -> {no_ok} ? '' : <<EOOK ]}
+#			@{[ $options -> {no_ok} ? '' : <<EOOK ]}
 		
-			if (window.event.keyCode == 10 && window.confirm ($$options{confirm_ok})) {
-				document.$$options{name}.submit ();
-			}
-EOOK
+#			if (window.event.keyCode == 10 && window.confirm ($$options{confirm_ok})) {
+#				document.$$options{name}.submit ();
+#			}
+#EOOK
 													
-		</script>
+#		</script>
 		
-EOH
+#EOH
+
+	return '';
 
 }
 
@@ -1901,7 +2074,7 @@ sub draw_toolbar_input_select {
 			$html
 		</select>
 		</td>
-		<td><img height=15  hspace=4 src="/i/toolbars/razd1.gif" width=2 border=0></td>
+		<td><img height=15 vspace=1 hspace=4 src="/i/toolbars/razd1.gif" width=2 border=0></td>
 EOH
 	
 }
@@ -1923,7 +2096,7 @@ sub draw_toolbar_input_checkbox {
 		<td>
 			<input type=checkbox value=1 $checked name="$$options{name}" onClick="submit()">
 		</td>
-		<td><img height=15  hspace=4 src="/i/toolbars/razd1.gif" width=2 border=0></td>
+		<td><img height=15 vspace=1 hspace=4 src="/i/toolbars/razd1.gif" width=2 border=0></td>
 EOH
 	
 }
@@ -1946,15 +2119,49 @@ sub draw_form_field_select {
 		$html .= qq {<option value="$$value{id}" $selected>$label</option>\n};
 	}
 	
+	my $iframe = '';
 	if (defined $options -> {other}) {
 		check_href ($options -> {other});
+		$options -> {other} -> {href} =~ s{([\&\?])select\=\w+}{$1};
 		$options -> {other} -> {width}  ||= 600;
 		$options -> {other} -> {height} ||= 400;
 		$html .= qq {<option value=-1>${$$options{other}}{label}</option>};
+		my $root = $_REQUEST{__uri};
+		
+		$iframe = <<EOH;
+			<div id="_$$options{name}_div" style="{position:absolute; display:none; width:expression(getElementById('_$$options{name}_select').offsetParent.offsetWidth - 10)}">
+				<iframe name="_$$options{name}_iframe" id="_$$options{name}_iframe" width=100% height=${$$options{other}}{height} src="${root}0.html" application="yes">
+				</iframe>
+			</div>
+EOH
+		
+#		$options -> {onChange} = <<EOJS;
+#			if (this.options[this.selectedIndex].value == -1 && window.confirm ('$$i18n{confirm_open_vocabulary}')) {
+#				var w = window.open ('${$$options{other}}{href}&select=$$options{name}','_dialog_$$options{name}', 'directories=0,location=0,menubar=0,status=0,titlebar=0,toolbar=0,width=${$$options{other}}{width},height=${$$options{other}}{height}');
+#				w.focus ();
+#			}
+#EOJS
+
 		$options -> {onChange} = <<EOJS;
 			if (this.options[this.selectedIndex].value == -1 && window.confirm ('$$i18n{confirm_open_vocabulary}')) {
-				var w = window.open ('${$$options{other}}{href}','_dialog_$$options{name}', 'directories=0,location=0,menubar=0,status=0,titlebar=0,toolbar=0,width=${$$options{other}}{width},height=${$$options{other}}{height}');
-				w.focus ();
+
+				var fname = '_$$options{name}_iframe';
+				var f = document.getElementById (fname);
+
+				var dname = '_$$options{name}_div';
+				var d = document.getElementById (dname);
+
+				f.src = '${$$options{other}}{href}&select=$$options{name}';
+//				f.style.display = 'block';
+				
+				d.style.top   = this.offsetTop + this.offsetParent.offsetTop + this.offsetParent.offsetParent.offsetTop;
+				d.style.left  = this.offsetLeft + this.offsetParent.offsetLeft + this.offsetParent.offsetParent.offsetLeft;
+				d.style.display = 'block';
+				this.style.display = 'none';
+				
+//				f.document.body.focus ();
+				d.focus ();
+				
 			}
 EOJS
 	}
@@ -1964,9 +2171,10 @@ EOJS
 	$tabindex ++;
 		
 	return <<EOH;
-		<select name="_$$options{name}" onChange="is_dirty=true; $$options{onChange}" onkeypress="typeAhead()" $multiple  tabindex='$tabindex'>
+		<select name="_$$options{name}" id="_$$options{name}_select" onChange="is_dirty=true; $$options{onChange}" onkeypress="typeAhead()" $multiple  tabindex='$tabindex'>
 			$html
 		</select>
+		$iframe
 EOH
 	
 }
@@ -1985,10 +2193,8 @@ sub draw_esc_toolbar {
 		@{$options -> {left_buttons}},
 		@{$options -> {additional_buttons}},
 		{
-			icon => 'cancel', 
-			label => $i18n -> {cancel}, 
+			preset => 'cancel',
 			href => $options -> {href}, 
-			id => 'esc'
 		},
 		@{$options -> {right_buttons}},
 	])
@@ -1999,7 +2205,7 @@ sub draw_esc_toolbar {
 
 sub draw_ok_esc_toolbar {
 
-	my ($options) = @_;		
+	my ($options, $data) = @_;		
 	
 	$options -> {href} = $options -> {esc};
 	$options -> {href} ||= "/?type=$_REQUEST{type}";
@@ -2010,23 +2216,33 @@ sub draw_ok_esc_toolbar {
 	
 	$options -> {label_ok}     ||= $i18n -> {ok};
 	$options -> {label_cancel} ||= $i18n -> {cancel};
+	$options -> {label_choose} ||= $i18n -> {choose};
+	$options -> {label_edit}   ||= $i18n -> {edit};
 
 	draw_centered_toolbar ($options, [
 		@{$options -> {left_buttons}},
 		{
-			icon => 'ok',     
+			preset => 'ok',
 			label => $options -> {label_ok}, 
-#			href => '#', 
-#			onclick => "document.$name.submit()",
 			href => "javaScript:document.$name.submit()", 
-			id   => 'ok',
+			off  => $_REQUEST {__read_only},
+		},
+		{
+			preset => 'edit',
+			href  => create_url () . '&__edit=1',
+			off   => (!$conf -> {core_auto_edit} || !$_REQUEST{__read_only} || $options -> {no_edit}),
+		},
+		{
+			preset => 'choose',
+			label => $options -> {label_choose},
+			href  => js_set_select_option ('', $data),
+			off   => (!$_REQUEST {__read_only} || !$_REQUEST {select}),
 		},
 		@{$options -> {additional_buttons}},
 		{
-			icon => 'cancel', 
+			preset => 'cancel',
 			label => $options -> {label_cancel}, 
 			href => $options -> {href}, 
-			id => 'esc'
 		},
 		@{$options -> {right_buttons}},
 	 ])
@@ -2043,10 +2259,8 @@ sub draw_close_toolbar {
 		@{$options -> {left_buttons}},
 		@{$options -> {additional_buttons}},
 		{
-			icon => 'ok',     
-			label => $i18n -> {'close'}, 
+			preset => 'close',     
 			href => 'javascript:window.close()',
-			id => 'esc',
 		},
 		@{$options -> {right_buttons}},
 	 ])
@@ -2070,9 +2284,16 @@ sub draw_back_next_toolbar {
 
 	draw_centered_toolbar ($options, [
 		@{$options -> {left_buttons}},
-		{icon => 'back', label => $i18n -> {back}, href => $back, id => 'esc'},
+		{
+			preset => 'back', 
+			href => $back, 
+		},
 		@{$options -> {additional_buttons}},
-		{icon => 'next', label => $i18n -> {'next'}, href => '#', onclick => "document.$name.submit()"},
+		{
+			preset => 'next', 
+			href => '#', 
+			onclick => "document.$name.submit()",
+		},
 		@{$options -> {right_buttons}},
 	])
 	
@@ -2085,7 +2306,25 @@ sub draw_centered_toolbar_button {
 	my ($options) = @_;
 	
 	return '' if $options -> {off};
-	
+
+	if ($options -> {preset}) {
+		my $preset = $conf -> {button_presets} -> {$options -> {preset}};
+		$options -> {hotkey}  ||= $preset -> {hotkey};
+		$options -> {icon}    ||= $preset -> {icon};
+		$options -> {label}   ||= $i18n -> {$preset -> {label}};
+		$options -> {label}   ||= $preset -> {label};
+		$options -> {confirm} ||= $i18n -> {$preset -> {confirm}};
+		$options -> {confirm} ||= $preset -> {confirm};
+	}	
+
+	if ($options -> {hotkey}) {
+		$options -> {id} ||= $options;
+		$options -> {hotkey} -> {data}    = $options -> {id};
+		$options -> {hotkey} -> {off}     = $options -> {off};
+#		$options -> {hotkey} -> {confirm} = $options -> {confirm};
+		hotkey ($options -> {hotkey});
+	}
+
 	check_href ($options);
 	
 	my $target = $options -> {target};
@@ -2109,7 +2348,7 @@ sub draw_centered_toolbar_button {
 	return <<EOH
 		$icon
 		<td nowrap>&nbsp;<a class=lnk0 onclick="$$options{onclick}" id="$$options{id}" href="$$options{href}" target="$$options{target}">${bra}$$options{label}${ket}</a>&nbsp;</td>
-		<td><img height=15 hspace=4 src="/i/toolbars/razd1.gif" width=2 border=0></td>
+		<td><img height=15 vspace=1 hspace=4 src="/i/toolbars/razd1.gif" width=2 border=0></td>
 EOH
 
 }
@@ -2123,12 +2362,12 @@ sub draw_centered_toolbar {
 	my ($options, $list) = @_;
 
 	my $colspan = 3 * (1 + @$list) + 1;
-
+	
 	return <<EOH;
 	
 		<table cellspacing=0 cellpadding=0 width="100%" border=0>
 			<tr>
-				<td class=bgr5>
+				<td class=bgr8>
 					<table cellspacing=0 cellpadding=0 width="100%" border=0>
 						<tr>
 							<td class=bgr0 colspan=$colspan><img height=1 src="$_REQUEST{__uri}0.gif" width=1 border=0></td>
@@ -2143,7 +2382,7 @@ sub draw_centered_toolbar {
 											</tr>
 										</table>
 									</td>
-									<td><img height=15 hspace=4 src="/i/toolbars/razd1.gif" width=2 border=0></td>
+									<td><img height=15 vspace=1 hspace=4 src="/i/toolbars/razd1.gif" width=2 border=0></td>
 									@{[ map {draw_centered_toolbar_button ($_)} @$list]}
 									<td width="45%">
 										<table cellspacing=0 cellpadding=0 width="100%" border=0>
@@ -2229,10 +2468,6 @@ EOEXIT
 			</tr>
 		</table>
 		$top_banner
-		<table cellSpacing=0 cellPadding=0 border=0 width=100%>
-			<tr><td class=bgr7><img height=1 src="$_REQUEST{__uri}0.gif" width=1 height=1 border=0></td></tr>
-			<tr><td class=bgr1><img height=1 src="$_REQUEST{__uri}0.gif" width=1 height=1 border=0></td></tr>
-		</table>
 
 EOH
 
@@ -2265,7 +2500,7 @@ sub draw_form_field_iframe {
 	$options -> {height} ||= '100%';
 
 	return <<EOH;
-		<iframe name="$$options{name}" src="$$options{href}" width="$$options{width}" height="$$options{height}"></iframe>
+		<iframe name="$$options{name}" src="$$options{href}" width="$$options{width}" height="$$options{height}" application="yes"></iframe>
 EOH
 
 }

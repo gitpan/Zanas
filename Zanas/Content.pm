@@ -62,11 +62,23 @@ sub require_fresh {
 #print STDERR "require_fresh: \$inc_key = $inc_key\n";
 
 	$file_name =~ s{^(.+?)\/}{\/};
-	$file_name = $PACKAGE_ROOT . $file_name . '.pm';
+	
+	my $found = 0;
+	foreach my $path (@$PACKAGE_ROOT) {
+		my $local_file_name = $path . $file_name . '.pm';
+		-f $local_file_name or next;
+		$file_name = $local_file_name;
+		$found = 1;
+		last;
+	}
+
+	$found or return "File not found: $file_name\n";
+	
+#	$file_name = $PACKAGE_ROOT . $file_name . '.pm';
 
 #print STDERR "require_fresh: \$file_name = $file_name\n";
 	
-	-f $file_name or return "File not found: $file_name\n";
+#	-f $file_name or return "File not found: $file_name\n";
 		
 	my $need_refresh = $conf -> {core_spy_modules} || $preconf -> {core_spy_modules} || !$INC {$inc_key};
 
@@ -191,8 +203,8 @@ sub get_user {
 
 	my $user = undef;
 	
-	if ($_REQUEST {_login}) {
-		$user = sql_select_hash ('SELECT * FROM users WHERE login = ? AND password = PASSWORD(?)', $_REQUEST {_login}, $_REQUEST {_password});
+	if ($_REQUEST {__login}) {
+		$user = sql_select_hash ('SELECT * FROM users WHERE login = ? AND password = PASSWORD(?)', $_REQUEST {__login}, $_REQUEST {__password});
 		$user -> {id} or undef $user;
 	}
 
@@ -336,8 +348,12 @@ sub redirect {
 			$options -> {before} = 'alert(' . js_escape ($options -> {label}) . '); ';
 		}
 	
-		$options -> {target} ||= '_parent';
-		out_html ({}, qq {<body onLoad="$$options{before} window.open ('$url&_salt=' + Math.random (), '$$options{target}')"></body>});
+#		$options -> {target} ||= '_parent';
+#		out_html ({}, qq {<body onLoad="$$options{before}; window.open ('$url&_salt=' + Math.random (), (window.name == 'application_frame' ? '_self' : '$$options{target}'))"></body>});
+
+		my $target = $options -> {target} ? "'$$options{target}'" : "(window.name == 'invisible' ? '_parent' : '_self')";
+
+		out_html ({}, qq {<body onLoad="$$options{before}; window.open ('$url&_salt=' + Math.random (), $target)"></body>});
 		$_REQUEST {__response_sent} = 1;
 		return;
 		
@@ -670,7 +686,7 @@ sub select__info {
 		{			
 			id    => 'Application package',
 			label => ($_PACKAGE =~ /(\w+)/),
-			path  => $PACKAGE_ROOT,
+			path  => join ',', @$PACKAGE_ROOT,
 		},
 				
 		
@@ -690,5 +706,172 @@ sub select__info {
 	]	
 
 }
+
+################################################################################
+
+sub fill_in {
+
+   	$conf -> {lang} ||= 'RUS';   	
+
+   	$conf -> {i18n} ||= {};
+
+   	fill_in_button_presets (
+
+   		ok => {
+   			icon    => 'ok',
+   			label   => 'ok',
+   			hotkey  => {code => ENTER, ctrl => 1},
+   			confirm => 'confirm_ok',
+   		},
+   		
+   		cancel => {
+   			icon   => 'cancel',
+   			label  => 'cancel',
+   			hotkey => {code => ESC},
+   		},
+
+   		edit => {
+   			icon   => 'edit',
+   			label  => 'edit',
+   			hotkey => {code => F4},
+   		},
+
+   		choose => {
+   			icon   => 'choose',
+   			label  => 'choose',
+   			hotkey => {code => ENTER, ctrl => 1},
+   		},
+
+   		'close' => {
+   			icon   => 'ok',
+   			label  => 'close',
+   			hotkey => {code => ESC},
+   		},
+   		
+   		back => {
+			icon => 'back', 
+			label => 'back', 
+			hotkey => { code => ESC },
+		},
+
+   		next => {
+			icon => 'next',
+			label => 'next',
+   			hotkey => {code => ENTER, ctrl => 1},
+		},
+
+   	);
+   	
+   	fill_in_i18n ('RUS', {
+   		_charset                 => 'windows-1251',
+		Exit                     => 'Выход',
+		toolbar_pager_empty_list => 'список пуст',		
+		toolbar_pager_of         => ' из ',
+		confirm_ok               => 'Сохранить данные?',
+		confirm_esc              => 'Уйти без сохранения данных?',
+		ok                       => 'применить', 
+		cancel                   => 'вернуться', 
+		choose                   => 'выбрать', 
+		edit                     => 'редактировать', 
+		'close'                  => 'закрыть',
+		back                     => '&lt;&lt; назад',
+		'next'                   => 'продолжить &gt;&gt;',		
+		User                     => 'Пользователь',
+		not_logged_in		 => 'не определён',
+		Print                    => 'Печать',
+		F1                       => 'F1: Справка',
+		Select                   => 'Выбрать',
+		yes                      => 'Да', 
+		no                       => 'Нет', 
+		confirm_open_vocabulary  => 'Открыть окно редактирования справочника?',
+		confirm_close_vocabulary => 'Вы выбрали',
+   	});
+   	
+   	fill_in_i18n ('ENG', {
+   		_charset                 => 'windows-1252',
+		Exit                     => 'Exit',
+		toolbar_pager_empty_list => 'empty list',		
+		toolbar_pager_of         => ' of ',
+		confirm_ok               => 'Commit changes?',
+		confirm_esc              => 'Cancel changes?',
+		ok                       => 'ok', 
+		cancel                   => 'cancel', 
+		choose                   => 'choose', 
+		edit                     => 'edit', 
+		'close'                  => 'close',
+		back                     => '&lt;&lt; back',
+		'next'                   => 'next &gt;&gt;',
+		User                     => 'User',
+		not_logged_in		 => 'not logged in',
+		Print                    => 'Print',
+		F1                       => 'F1: Help',
+		Select                   => 'Select',
+		yes                      => 'Yes', 
+		no                       => 'No', 
+		confirm_open_vocabulary  => 'Open the vocabulary window?',
+		confirm_close_vocabulary => 'Your choice is',
+   	});
+	
+   	fill_in_i18n ('FRE', {
+   		_charset                 => 'windows-1252',
+		Exit                     => 'Quitter',
+		toolbar_pager_empty_list => 'liste vide',
+		toolbar_pager_of         => ' de ',
+		confirm_ok               => 'Sauver des changements?',
+		confirm_esc              => 'Quitter sans sauvegarde?',
+		ok                       => 'appliquer', 
+		cancel                   => 'annuler', 
+		choose                   => 'choisir', 
+		edit                     => 'rediger', 
+		'close'                  => 'fermer',
+		back                     => '&lt;&lt; pas prйcйdent',
+		'next'                   => 'suite &gt;&gt;',
+		User                     => 'Utilisateur',
+		not_logged_in		 => 'indйfini',
+		Print                    => 'Imprimer',
+		F1                       => 'F1: Aide',
+		Select                   => 'Sйlection',
+		yes                      => 'Oui', 
+		no                       => 'Non', 
+		confirm_open_vocabulary  => 'Ouvrir le vocabulaire?',
+		confirm_close_vocabulary => 'Vous avez choisi',
+   	});   	
+
+}
+
+################################################################################
+
+sub fill_in_i18n {
+
+	my ($lang, $entries) = @_;
+   	$conf -> {i18n} ||= {};
+   	$conf -> {i18n} -> {$lang} ||= {};
+	return if $conf -> {i18n} -> {$lang} -> {_is_filled};
+	
+	while (my ($key, $value) = each %$entries) {
+		$conf -> {i18n} -> {$lang} -> {$key} ||= $value;
+	}
+	
+	$conf -> {i18n} -> {$lang} -> {_page_title} ||= $conf -> {page_title};
+
+	$conf -> {i18n} -> {$lang} -> {_is_filled} = 1;
+
+};
+
+################################################################################
+
+sub fill_in_button_presets {
+
+	my %entries = @_;
+   	$conf -> {button_presets} ||= {};
+	return if $conf -> {button_presets} -> {_is_filled};
+	
+	while (my ($key, $value) = each %entries) {
+		$conf -> {button_presets} -> {$key} ||= $value;
+	}
+	
+	$conf -> {button_presets} -> {_is_filled} = 1;
+
+};
 
 1;

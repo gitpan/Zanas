@@ -1,24 +1,5 @@
 no warnings;
 
-################################################################################
-
-sub fill_in_i18n {
-
-	my ($lang, $entries) = @_;
-   	$conf -> {i18n} ||= {};
-   	$conf -> {i18n} -> {$lang} ||= {};
-	return if $conf -> {i18n} -> {$lang} -> {_is_filled};
-	
-	while (my ($key, $value) = each %$entries) {
-		$conf -> {i18n} -> {$lang} -> {$key} ||= $value;
-	}
-	
-	$conf -> {i18n} -> {$lang} -> {_page_title} ||= $conf -> {page_title};
-
-	$conf -> {i18n} -> {$lang} -> {_is_filled} = 1;
-
-};
-
 #################################################################################
 
 sub get_request {
@@ -67,6 +48,8 @@ sub handler {
 	undef %_REQUEST;
 	our %_REQUEST = %{$parms};
 	
+	$_REQUEST {__no_navigation} ||= $_REQUEST {select};
+		
 	$_REQUEST {type} =~ s/_for_.*//;
 	$_REQUEST {__uri} = $r -> uri;
 	$_REQUEST {__uri} =~ s{/cgi-bin/.*}{/};
@@ -86,81 +69,10 @@ sub handler {
 	require_fresh ($_PACKAGE . 'Config');
 
    	$conf -> {dbf_dsn} and our $dbf = DBI -> connect ($conf -> {dbf_dsn}, {RaiseError => 1});
-   	
-   	$conf -> {lang} ||= 'RUS';
-   	
-   	$conf -> {i18n} ||= {};
-   	
-   	fill_in_i18n ('RUS', {
-   		_charset                 => 'windows-1251',
-		Exit                     => 'Выход',
-		toolbar_pager_empty_list => 'список пуст',		
-		toolbar_pager_of         => ' из ',
-		confirm_ok               => 'Сохранить данные?',
-		confirm_esc              => 'Уйти без сохранения данных?',
-		ok                       => 'применить', 
-		cancel                   => 'вернуться', 
-		'close'                  => 'закрыть',
-		back                     => '&lt;&lt; назад',
-		'next'                   => 'продолжить &gt;&gt;',		
-		User                     => 'Пользователь',
-		not_logged_in		 => 'не определён',
-		Print                    => 'Печать',
-		F1                       => 'F1: Справка',
-		Select                   => 'Выбрать',
-		yes                      => 'Да', 
-		no                       => 'Нет', 
-		confirm_open_vocabulary  => 'Открыть окно редактирования справочника?',
-		confirm_close_vocabulary => 'Вы выбрали',
-   	});
-   	
-   	fill_in_i18n ('ENG', {
-   		_charset                 => 'windows-1252',
-		Exit                     => 'Exit',
-		toolbar_pager_empty_list => 'empty list',		
-		toolbar_pager_of         => ' of ',
-		confirm_ok               => 'Commit changes?',
-		confirm_esc              => 'Cancel changes?',
-		ok                       => 'ok', 
-		cancel                   => 'cancel', 
-		'close'                  => 'close',
-		back                     => '&lt;&lt; back',
-		'next'                   => 'next &gt;&gt;',
-		User                     => 'User',
-		not_logged_in		 => 'not logged in',
-		Print                    => 'Print',
-		F1                       => 'F1: Help',
-		Select                   => 'Select',
-		yes                      => 'Yes', 
-		no                       => 'No', 
-		confirm_open_vocabulary  => 'Open the vocabulary window?',
-		confirm_close_vocabulary => 'Your choice is',
-   	});
-	
-   	fill_in_i18n ('FRE', {
-   		_charset                 => 'windows-1252',
-		Exit                     => 'Quitter',
-		toolbar_pager_empty_list => 'liste vide',
-		toolbar_pager_of         => ' de ',
-		confirm_ok               => 'Sauver des changements?',
-		confirm_esc              => 'Quitter sans sauvegarde?',
-		ok                       => 'appliquer', 
-		cancel                   => 'annuler', 
-		'close'                  => 'fermer',
-		back                     => '&lt;&lt; pas prйcйdent',
-		'next'                   => 'suite &gt;&gt;',
-		User                     => 'Utilisateur',
-		not_logged_in		 => 'indйfini',
-		Print                    => 'Imprimer',
-		F1                       => 'F1: Aide',
-		Select                   => 'Sйlection',
-		yes                      => 'Oui', 
-		no                       => 'Non', 
-		confirm_open_vocabulary  => 'Ouvrir le vocabulaire?',
-		confirm_close_vocabulary => 'Vous avez choisi',
-   	});   	
    	   	
-	$_REQUEST {type} = '_static_files' if $r -> uri =~ m{/(navigation\.js|0\.html|0\.gif|zanas\.css)};
+	fill_in ();
+   	   	
+	$_REQUEST {type} = '_static_files' if $r -> uri =~ m{/(navigation\.js|0\.html|0\.gif|folder\.gif|zanas\.css|favicon\.ico|tab_([blr]_)?[01]{1,2}\.gif)};
 
 	$conf -> {include_js}  ||= ['js'];
    	
@@ -352,6 +264,7 @@ sub out_html {
 		}
 
 		$_REQUEST {__content_type} ||= 'text/html; charset=' . $i18n -> {_charset};
+#		$_REQUEST {__content_type} ||= 'application/hta';
 
 		$r -> content_type ($_REQUEST {__content_type});
 		$r -> header_out ('X-Powered-By' => 'Zanas/' . $Zanas::VERSION);

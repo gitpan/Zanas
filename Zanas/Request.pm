@@ -16,6 +16,8 @@ sub new {
 		preconf => $preconf,
 		conf => $conf,
 	};
+	
+	undef @CGI::QUERY_PARAM;
 	$self -> {Q} = new CGI;
 	
 #	if ($ENV{PATH_TRANSLATED} =~ /$ENV{DOCUMENT_ROOT}\/+index\.html/) {

@@ -1,3 +1,51 @@
+0.9979:
+
+	- stripping __last_query_string off {href};
+	- keeping   __last_query_string in draw_table;
+	- button presets;
+
+0.9978:
+
+	- $PACKAGE_ROOT is now ARRAY;
+
+0.9977:
+
+	- $_REQUEST {select} now contain the field name and is appended automatically, js_set_select_option takes it by default when !$_[0];
+	- $_REQUEST {__no_navigation} is on when $_REQUEST {select} is on;
+	- {title} is not shown in draw_table when $_REQUEST {select} is on;
+	- {href} is overridden with js_set_select_option ('', $data) in draw_text_cell when $_REQUEST {select} is on;
+	- js_set_select_option now return $_[2] || $_[1] when $_REQUEST {select} is off;
+	- $_REQUEST {select} is now always passed in draw_form as hidden input;
+	- OK button is off in draw_ok_esc_toolbar when $_REQUEST {select} is on && $_REQUEST {__edit} is off;
+	- OK button is off in draw_ok_esc_toolbar when $_REQUEST {__read_only} is on;
+	- $conf -> {core_auto_edit} introduced;
+	- close button is added in draw_table when $_REQUEST {select} is on and {top_toolbar} is set;
+	- password input fields are not shown when $_REQUEST {__read_only} is on;
+	- $_REQUEST {select} is now passed through check_href (like sid);
+	- redirect (kind=js) fixed: target defaults to '_parent' only if window.name=='invisible';
+
+0.9976:
+
+	- menu option in draw_form now means tabbed notebook (shifted to the top right corner);
+	- main menu, path & tabbed notebook are not shown when $_REQUEST {__edit} is on;
+	- $_REQUEST {__edit} is color highlighted;
+	- esc href defaults to create_url () when $_REQUEST {__edit};
+
+0.9975:
+
+	- draw_menu & draw_vert_menu redesigned;
+	- added support for HTA (application=yes);
+
+0.9974:
+
+	- focus on first input fixed (for selects & texareas);
+	- $_REQUEST {__edit} introduced (esc = {} when core_auto_esc is on);
+
+0.9973:
+
+	- Zanas::Request::new fixed for fastcgi compatibility (by Pashka);
+	- get_user fixed for parameter name conflict (_login);
+
 0.9972:
 
 	- added nested <select> for radio;

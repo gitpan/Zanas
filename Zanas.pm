@@ -15,7 +15,7 @@ use constant OK => 200;
 
 BEGIN {	
 
-	$Zanas::VERSION = '0.9972';
+	$Zanas::VERSION = '0.9979';
 	
 	eval {
 		require Storable;
@@ -50,9 +50,10 @@ BEGIN {
 	unless ($PACKAGE_ROOT) {
 		$PACKAGE_ROOT = $INC {__PACKAGE__ . '/Config.pm'} || '';
 		$PACKAGE_ROOT =~ s{\/Config\.pm}{};
+		$PACKAGE_ROOT = [$PACKAGE_ROOT];
 	}
 
-	my $pkg_banner = $PACKAGE_ROOT . ' => ' . ($_NEW_PACKAGE ? $_NEW_PACKAGE : __PACKAGE__);
+	my $pkg_banner = '[' . (join ',', @$PACKAGE_ROOT) . '] => ' . ($_NEW_PACKAGE ? $_NEW_PACKAGE : __PACKAGE__);
 
 	print STDERR "\nZanas $Zanas::VERSION [$Zanas::VERSION_NAME]: loading $pkg_banner...";
 	
@@ -88,19 +89,23 @@ BEGIN {
 
 	$conf = {%$conf, %$preconf};
 	if ($conf -> {core_load_modules}) {
+	
+		foreach my $path (@$PACKAGE_ROOT) {
 
-		opendir (DIR, "$PACKAGE_ROOT/Content") || die "can't opendir $PACKAGE_ROOT/Content: $!";
-		my @files = grep {/\.pm$/} map { "Content/$_" } readdir(DIR);
-		closedir DIR;	
+			opendir (DIR, "$path/Content") || die "can't opendir $PACKAGE_ROOT/Content: $!";
+			my @files = grep {/\.pm$/} map { "Content/$_" } readdir(DIR);
+			closedir DIR;	
 
-		opendir (DIR, "$PACKAGE_ROOT/Presentation") || die "can't opendir $PACKAGE_ROOT/Presentation: $!";
-		push @files, grep {/\.pm$/} map { "Presentation/$_" } readdir(DIR);
-		closedir DIR;	
+			opendir (DIR, "$path/Presentation") || die "can't opendir $PACKAGE_ROOT/Presentation: $!";
+			push @files, grep {/\.pm$/} map { "Presentation/$_" } readdir(DIR);
+			closedir DIR;	
 
-		foreach my $file (@files) {
-			$file =~ s{\.pm$}{};
-			$file =~ s{\/}{\:\:};
-			require_fresh (__PACKAGE__ . "::$file");
+			foreach my $file (@files) {
+				$file =~ s{\.pm$}{};
+				$file =~ s{\/}{\:\:};
+				require_fresh (__PACKAGE__ . "::$file");
+			}
+
 		}
 
 	}
