@@ -89,6 +89,7 @@ function focus_on_first_input (td) {
 	var inputs = td.getElementsByTagName ('input');
 	if (!inputs || !inputs.length) return blur_all_inputs ();
 	inputs [0].focus ();
+	inputs [0].select ();
 	return 0;
 }
 
@@ -157,13 +158,13 @@ function handle_basic_navigation_keys () {
 		}
 
 		if (window.event.keyCode == 37 && scrollable_table_row_cell > 0) {
-			effective_scrollable_cell = Math.min (scrollable_table_row_cell, scrollable_rows [scrollable_table_row].cells.length - 1);													
+			effective_scrollable_cell = Math.min (scrollable_table_row_cell, scrollable_rows [scrollable_table_row].cells.length - 1);
 			if (effective_scrollable_cell > 0) {
 				scrollable_rows [scrollable_table_row].cells [scrollable_table_row_cell].className = scrollable_table_row_cell_old_style;
 				scrollable_table_row_cell --;
 				scrollable_table_row_cell_old_style = scrollable_rows [scrollable_table_row].cells [scrollable_table_row_cell].className;
 				scrollable_rows [scrollable_table_row].cells [scrollable_table_row_cell].className = 'txt6';
-				focus_on_first_input (scrollable_rows [scrollable_table_row].cells [effective_scrollable_cell]);
+				focus_on_first_input (scrollable_rows [scrollable_table_row].cells [scrollable_table_row_cell]);
 				return false;
 			}
 		}
@@ -174,7 +175,7 @@ function handle_basic_navigation_keys () {
 			scrollable_table_row_cell ++;
 			scrollable_table_row_cell_old_style = scrollable_rows [scrollable_table_row].cells [scrollable_table_row_cell].className;
 			scrollable_rows [scrollable_table_row].cells [scrollable_table_row_cell].className = 'txt6';
-			focus_on_first_input (scrollable_rows [scrollable_table_row].cells [effective_scrollable_cell]);
+			focus_on_first_input (scrollable_rows [scrollable_table_row].cells [scrollable_table_row_cell]);
 			return false;
 
 		}
@@ -182,8 +183,10 @@ function handle_basic_navigation_keys () {
 		if (window.event.keyCode == 32) {
 
 			var children = scrollable_rows [scrollable_table_row].cells [scrollable_table_row_cell].getElementsByTagName ('input');
-			if (children != null && children.length > 0) children [0].checked = !children [0].checked;
-		//	return false;
+			if (children != null && children.length > 0 && children [0].type == 'checkbox') {
+				children [0].focus ();
+				return false;
+			}
 
 		}
 

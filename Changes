@@ -1,3 +1,10 @@
+0.9911: 
+
+	- js fix: checkboxes (draw_checkbox_cell) are now toggled by spacebar even when focused;
+	- js fixes related to focus handling on slider move;
+	- 'undocumented' warnings in docs generator;
+
+
 0.9910: 
 
 	- 'keep_params' option added to draw_form and draw_toolbar_input_text subs;

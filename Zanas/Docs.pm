@@ -1,6 +1,13 @@
 package Zanas::Docs;
 
+package Zanas;
+use Zanas;
+
 package main;
+use Data::Dumper;
+use B::Deparse;
+
+our $deparse = B::Deparse -> new ();	
 
 @langs = qw(en ru);
 
@@ -1796,6 +1803,12 @@ sub generate_sub {
 
 	my ($lang, $s) = @_;
 	
+	my $body = '';
+	eval '$body = $deparse -> coderef2text(\&Zanas::' . $s -> {name} . ')';
+	
+	my @soptions = ($body =~ m{\$\$options\{\'(\w+)\'\}});
+	my %soptions = map {$_ => 1} @soptions;
+
 	my $options = '';
 	foreach my $o (@{$s -> {options}}) {
 		my ($name, $default) = split /\//, $o;
@@ -1804,7 +1817,10 @@ sub generate_sub {
 		$o_def or die "Option not defined: $name.\n";
 		my $label = $o_def -> {"label_$lang"};
 		$options .= qq{<tr bgcolor=white><td>$name<td>$label<td>$default};
+		delete $soptions {$name};
 	}
+	
+	print STDERR join '', map {"Warning! undocumented option '$_' in sub '$$s{name}': \n"} sort keys %soptions;
 	
 	$options and $options = <<EOF;
 					<dt>${$i18n{OPTIONS}}{$lang}
@@ -1952,6 +1968,15 @@ sub generate_for_lang {
 
 ################################################################################
 
+sub subs_in ($) {
+	my $package = shift;
+	my @result = ();
+	eval '@result = grep { defined *{$' . $package . '::{$_}}{CODE} } sort keys %' . $package . '::';
+	return @result;
+}
+
+################################################################################
+
 sub generate {
 	map { generate_for_lang ($_) } @langs;
 	mkdir 'css';
@@ -2000,6 +2025,14 @@ sub generate {
     		};
 EOF
 	close (F);
+	
+	my @subs_in_zanas = subs_in 'Zanas';
+	my %imported_subs = map {$_ => 1} (map {subs_in $_} qw(Apache::Constants Data::Dumper URI::Escape));
+	my %documented_subs = map {$_ -> {name} => 1} @subs;
+	my @undocumented_subs = grep {!exists $imported_subs {$_} && !exists $documented_subs {$_}} @subs_in_zanas;
+
+	print STDERR join '', map {"Warning! undocumented sub '$_'\n"} @undocumented_subs;
+		
 }
 
 1;
