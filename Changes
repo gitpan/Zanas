@@ -1,3 +1,12 @@
+0.9928: 
+
+	- draw_select_cell sub added (by pashka);
+	- draw_text_cell fixed for {off => 1} (by pashka);
+
+0.9927: 
+
+	- fixed a js bug introduced in 0.9926 (popup menus rendering);
+
 0.9926: 
 
 	- new option no_clear_button in draw_form_field_datetime (thanks RomALo);

@@ -507,7 +507,7 @@ EOH
 						nowrap 
 						onmouseover="this.style.background='#efefef'" 
 						onmouseout="this.style.background='#d5d5d5'"
-						onclick="parent.location.href='$$type{href}'
+						onclick="parent.location.href='$$type{href}'"
 						style="font-weight: normal; font-size: 11px; color: #000000; font-family: verdana; text-decoration: none"
 					>
 						&nbsp;&nbsp;$$type{label}&nbsp;&nbsp;
@@ -620,7 +620,7 @@ sub draw_text_cell {
 	
 	ref $data eq HASH or $data = {label => $data};	
 		
-	return '' if $data -> {off};
+#	return '' if $data -> {off};
 	
 	$data -> {max_len} ||= $conf -> {max_len};
 	$data -> {max_len} ||= 30;
@@ -657,6 +657,8 @@ sub draw_text_cell {
 	}
 	
 	my $attributes = dump_attributes ($data -> {attributes});
+
+	return qq {<td $attributes>&nbsp;} if $data -> {off};	
 	
 	check_title ($data);
 	
@@ -1990,6 +1992,36 @@ sub draw_radio_cell {
 
 	return qq {<td $$options{title} $attributes><input type=radio name=$$options{name} $checked value='$value'></td>};
 
+}
+
+################################################################################
+
+sub draw_select_cell {
+
+	my ($data, $options) = @_;
+
+	$data -> {attributes} ||= {};
+	$data -> {attributes} -> {class} ||= 'txt4';
+
+	my $attributes = dump_attributes ($data -> {attributes});
+	return qq {<td $attributes>&nbsp;} if $data -> {off};	
+
+	my $html = exists $data -> {empty} ? qq {<option value="0">$$data{empty}</option>\n} : '';
+
+	$data -> {max_len} ||= $conf -> {max_len};
+
+	foreach my $value (@{$data -> {values}}) {
+		my $selected = ($value -> {id} eq $data -> {value}) ? 'selected' : '';
+		my $label = trunc_string ($value -> {label}, $data -> {max_len});						
+		my $id = $value -> {id};
+		$value -> {id} =~ s{\"}{\&quot;}g;
+		$html .= qq {<option value="$$value{id}" $selected>$label</option>\n};
+	}
+	
+	my $multiple = $data -> {rows} > 1 ? "multiple size=$$options{rows}" : '';
+
+	return qq {<td $attributes><nobr><select name="$$data{name}" onChange="is_dirty=true; $$options{onChange}" onkeypress="typeAhead()" $multiple>$html</select></nobr></td>};
+	
 }
 
 ################################################################################
