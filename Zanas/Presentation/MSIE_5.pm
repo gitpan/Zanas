@@ -1494,6 +1494,8 @@ EOH
 
 	$top_banner = interpolate ($conf -> {top_banner});
 	
+	$conf -> {exit_url} ||= '/';
+	
 	return <<EOH;
 
 		<table cellSpacing=0 cellPadding=0 border=0 width=100%>
@@ -1533,7 +1535,7 @@ EOLPT
 <!--				
 				<td class=bgr1><img src="/i/top_tb_icons/exit.gif" border=0 hspace=3 align=absmiddle></td>
 -->				
-				<td class=bgr1><nobr><A class=lnk2 href="/">[Выход]</A>&nbsp;&nbsp;</nobr></td>
+				<td class=bgr1><nobr><A class=lnk2 href="$$conf{exit_url}">[Выход]</A>&nbsp;&nbsp;</nobr></td>
 EOEXIT
 
 				<td class=bgr1><img height=22 src="/0.gif" width=4 border=0></td>

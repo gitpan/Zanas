@@ -1,3 +1,7 @@
+0.90: 12.02.04 10:30
+
+	- added a configuration option: $conf -> {exit_url};
+
 0.89:
 	- fixed a bug in draw_toolbar_input_text (useless sid hidden input);
 	- fixed a bug in check_href (useless sid appending);
