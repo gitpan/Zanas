@@ -153,14 +153,26 @@ sub download_file {
 	$options -> {type} .= '; charset=' . $options -> {charset} if $options -> {charset};
 
 	my $path = $r -> document_root . $options -> {path};
+	
+	my $start = 0;
+	my $content_length = -s $path;
+	my $range_header = $r -> header_in ("Range");
+	if ($range_header =~ /bytes=(\d+)/) {
+		$start = $1;
+		my $finish = $content_length - 1;
+		$r -> header_out ('Content-Range', "bytes $start-$finish/$content_length");
+		$content_length -= $start;
+	}
 
 	$r -> content_type ($options -> {type});
 	$options -> {no_force_download} or $r -> header_out ('Content-Disposition' => "attachment;filename=" . $options -> {file_name}); 
-	$r -> header_out ('Content-Length' => -s $path);
+	$r -> header_out ('Content-Length' => $content_length);
+	$r -> header_out ('Accept-Ranges' => 'bytes');
+	
 	$r -> send_http_header ();
 
 	open (F, $path) or die ("Can't open file $path: $!");
-
+	seek (F, $start, 0);
 	$r -> send_fd (F);
 	close F;
 

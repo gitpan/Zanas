@@ -19,7 +19,7 @@ sub handler {
 
 	our %_REQUEST = %{$parms};
 	
-	$conf -> {include_js}  ||= ['js'];
+	$conf -> {include_js}  ||= ['js', 'navigation'];
    	$_REQUEST {__include_js} = $conf -> {include_js};
 
 	$conf -> {include_css} ||= ['new'];
@@ -143,8 +143,22 @@ sub out_html {
 		redirect ("/$fn");
 	}	
 	else {
+	
+		if ($conf -> {core_sweep_spaces}) {
+			$html =~ s{^\s+}{}gsm; 
+			$html =~ s{[ \t]+}{ }g;
+		}
+
 		$_REQUEST {__content_type} ||= 'text/html; charset=windows-1251';
 		$r -> content_type ($_REQUEST {__content_type});
+		
+		if ($conf -> {core_gzip}) {
+			$r -> header_out ('Content-Encoding' => 'gzip');
+			$html = Compress::Zlib::memGzip ($html);
+		}		
+
+		$r -> header_out ('Content-Length' => length $html);
+		
 		$r -> send_http_header;
 		print $html;
 	}	

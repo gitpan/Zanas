@@ -111,6 +111,10 @@ sub require_fresh_internal {
 
 BEGIN {
 
+	eval 'require Compress::Zlib';
+
+	delete $conf -> {core_gzip} if $@;
+
 	our %INC_FRESH = ();
 	
 	while (my ($name, $path) = each %INC) {
@@ -236,7 +240,7 @@ BEGIN {
 
 package Zanas;
 
-$VERSION = '0.78';
+$VERSION = '0.79';
 
 =head1 NAME
 
