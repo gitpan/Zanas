@@ -450,8 +450,8 @@ sub MSIE_5_draw_checkbox_cell {
 sub MSIE_5_draw_text_cells {
 
 	my $options = (ref $_[0] eq HASH) ? shift () : {};
-	
-	return join '', map { MSIE_5_draw_text_cell ($_) } @{$_[0]};
+		
+	return join '', map { MSIE_5_draw_text_cell ($_, $options) } @{$_[0]};
 	
 }
 
@@ -460,7 +460,9 @@ sub MSIE_5_draw_text_cells {
 
 sub MSIE_5_draw_text_cell {
 
-	my ($data) = @_;
+	my ($data, $options) = @_;
+	
+	ref $data eq HASH or $data = {label => $data};	
 		
 	return '' if $data -> {off};
 	
@@ -488,6 +490,7 @@ sub MSIE_5_draw_text_cell {
 	
 	$txt ||= '&nbsp;';
 	
+	$data -> {href} ||= $options -> {href};
 	if ($data -> {href}) {
 		check_href ($data);
 		$data -> {title} ||= $data -> {label};
@@ -577,6 +580,29 @@ sub MSIE_5_draw_table {
 	my $ths = @$headers ? '<thead>' . MSIE_5_draw_table_header ($headers) . '</thead>' : '';
 	
 	my $trs = '';
+
+	if ($options -> {'..'}) {
+	
+		my $url = $_REQUEST {__path} -> [-2];
+	
+		$trs = <<EOH;
+			<script for="body" event="onkeypress">
+				if (window.event.keyCode == 27) {
+					activate_link ('$url');
+				}
+			</script>
+			<tr>
+				@{[ draw_text_cell ({
+					label => '..',
+					href  => $url,
+					attributes => {
+						colspan => 0 + @$headers,
+					},
+				})]}
+			</tr>
+EOH
+	
+	}
 	
 	my @tr_callbacks = ref $tr_callback eq ARRAY ? @$tr_callback : ($tr_callback);
 	
@@ -648,6 +674,9 @@ sub MSIE_5_draw_path {
 	my $nowrap = $options -> {multiline} ? '' : 'nowrap';
 	
 	my $n = 2;
+	
+	$_REQUEST {__path} = [];
+	
 	foreach my $item (@$list) {		
 	
 		my $name = trunc_string ($item -> {name}, $options -> {max_len});
@@ -660,9 +689,13 @@ sub MSIE_5_draw_path {
 		$id_param ||= $options -> {id_param};
 		
 		$item -> {cgi_tail} ||= $options -> {cgi_tail};
+		
+		my $url = "/?type=$$item{type}&$id_param=$$item{id}&sid=$_REQUEST{sid}&$$item{cgi_tail}";
+		
+		push @{$_REQUEST {__path}}, $url;
 
 		$path .= <<EOH;
-			<a class=lnk1 href="/?type=$$item{type}&$id_param=$$item{id}&sid=$_REQUEST{sid}&$$item{cgi_tail}">$name</a>
+			<a class=lnk1 href="$url">$name</a>
 EOH
 	
 	}
@@ -980,8 +1013,8 @@ sub MSIE_5_draw_form {
 	$target ||= 'invisible';
 
 	my $trs = '';
-	my $n = 0;	
-	
+	my $n = 0;
+		
 	my $max_cols = 1;
 	
 	foreach my $field (@$fields) {

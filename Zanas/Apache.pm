@@ -114,7 +114,7 @@ EOH
 				}
 				else {						
 					my $url = create_url (action => '');
-					out_html ({}, qq {<body onLoad="window.open ('$url&salt=' + Math.random (), '_top')"></body>});
+					out_html ({}, qq {<body onLoad="window.open ('$url&salt=' + Math.random (), '_top', 'location=0,menubar=0,status=0,toolbar=0')"></body>});
 				}
 				
 			}

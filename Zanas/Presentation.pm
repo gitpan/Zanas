@@ -2,7 +2,7 @@ use Data::Dumper;
 use URI::Escape;
 
 use Zanas::Presentation::MSIE_5;
-use Zanas::Presentation::Mozilla_3;
+#use Zanas::Presentation::Mozilla_3;
 use Zanas::Presentation::Unsupported;
 
 =head1 NAME

@@ -1,3 +1,10 @@
+0.92: 19.02.04 10:40
+
+	- added href option in draw_text_cells sub;
+	- draw_text_cell now receives 2 args: data and options, data can be scalar (label only);
+	- '..' option in draw_table;
+	- don't load Mozilla3;
+
 0.91: 13.02.04 10:30
 
 	- added a 'no_nobr' option in draw_text_cell;
