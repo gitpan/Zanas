@@ -489,12 +489,23 @@ sub MSIE_5_draw_menu {
 			<td class=bgr8 rowspan=2><img src="/i/toolbars/n_right.gif" border=0></td>
 EOH
 	
-		my $aclass = $$type{name} eq $cursor ? 'lnk1' : 'lnk0';
-		my $tclass = $$type{name} eq $cursor ? 'bgr4' : 'bgr8';
+#		my $aclass = $$type{name} eq $cursor ? 'lnk1' : 'lnk0';
+#		my $tclass = $$type{name} eq $cursor ? 'bgr4' : 'bgr8';
+
+		my ($aclass, $tclass);
+		if ($type -> {role}) {
+			$aclass = "$$type{name}_for_$$type{role}" eq $cursor ? 'lnk1' : 'lnk0';
+			$tclass = "$$type{name}_for_$$type{role}" eq $cursor ? 'bgr4' : 'bgr8';
+		} else {
+			$aclass = $$type{name} eq $cursor ? 'lnk1' : 'lnk0';
+			$tclass = $$type{name} eq $cursor ? 'bgr4' : 'bgr8';
+		}
+
+#			<td class=$tclass nowrap>&nbsp;&nbsp;<a class=$aclass id="main_menu_$$type{name}" href="/?type=$$type{name}&sid=$_REQUEST{sid}@{[$_REQUEST{period} ? '&period=' . $_REQUEST {period} : '']}">$$type{label}</a>&nbsp;&nbsp;</td>
 
 		$tr2 .= <<EOH;
 			<td class=bgr1><img height=20 src="/i/0.gif" width=1 border=0></td>
-			<td class=$tclass nowrap>&nbsp;&nbsp;<a class=$aclass id="main_menu_$$type{name}" href="/?type=$$type{name}&sid=$_REQUEST{sid}@{[$_REQUEST{period} ? '&period=' . $_REQUEST {period} : '']}">$$type{label}</a>&nbsp;&nbsp;</td>
+			<td class=$tclass nowrap>&nbsp;&nbsp;<a class=$aclass id="main_menu_$$type{name}" href="/?type=$$type{name}&sid=$_REQUEST{sid}@{[$_REQUEST{period} ? '&period=' . $_REQUEST {period} : '']}@{[$type->{role} ? '&role=' . $type->{role} : '']}">$$type{label}</a>&nbsp;&nbsp;</td>
 EOH
 
 		$tr3 .= <<EOH;

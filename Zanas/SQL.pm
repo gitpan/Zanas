@@ -1,6 +1,7 @@
 use DBI;
 
 use Data::Dumper;
+use DBIx::ModelUpdate;
 
 =head1 NAME
 
@@ -451,7 +452,11 @@ EOH
 
 sub sql_reconnect {
 
-   	($db and $db -> ping) or our $db  = DBI -> connect ($conf -> {'db_dsn'}, $conf -> {'db_user'}, $conf -> {'db_password'}, {RaiseError => 1});
+	return if $db and $db -> ping;
+
+	our $db  = DBI -> connect ($conf -> {'db_dsn'}, $conf -> {'db_user'}, $conf -> {'db_password'}, {RaiseError => 1});
+	
+	our $model_update = DBIx::ModelUpdate -> new ($db, dump_to_stderr => 1);
 
 }   	
 

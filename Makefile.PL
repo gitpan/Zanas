@@ -7,6 +7,7 @@ WriteMakefile(
 	'DBD::mysql'		=> '2.9002',
 	'Apache::Request'	=> '0.33',
 	'Number::Format'	=> '1.45',
+	'DBIx::ModelUpdate'	=> '0.1',
     },
     ($] >= 5.005 ?    
 	(ABSTRACT_FROM => 'Zanas.pm', 

@@ -115,7 +115,7 @@ sub create_url {
 		$param {$key} = $value;
 	}
 	
-	return '/?' . join ('&', map {$_ !~ /^_/ && $param {$_} ? ($_ . '=' . uri_escape ($param {$_})) : ()} keys %param);
+	return '/?' . join ('&', map {($_ !~ /^_/ || $_ eq '__no_navigation') && $param {$_} ? ($_ . '=' . uri_escape ($param {$_})) : ()} keys %param);
 	
 }
 
@@ -143,7 +143,7 @@ sub check_href {
 
 	my ($options) = @_;
 	
-	if ($options -> {href} !~ /^(\#|java)/ and $options -> {href} !~ /\&sid=/) {	
+	if ($options -> {href} !~ /^(\#|java|\/i\/)/ and $options -> {href} !~ /\&sid=/) {	
 		$options -> {href} .= "\&sid=$_REQUEST{sid}";
 		$options -> {href} .= '&_salt=' . rand;
 	}	

@@ -53,6 +53,36 @@ sub get_user {
 			sessions.id = ?
 EOS
 
+	if ($_REQUEST {role}) {
+	
+		my @tables = map { $_ =~ s/.*\.//; $_ } $db -> tables();
+		@tables = map { $_ =~ s/\`//g; $_ } @tables;
+		my $multiple_roles = grep {$_ eq 'map_roles_to_users'} @tables;
+		
+		if ($multiple_roles) {
+		
+			my $id_role = sql_select_array (<<EOS, $user -> {id}, $_REQUEST {role});
+				SELECT 
+					roles.id 
+				FROM 
+					roles, 
+					map_roles_to_users 
+				WHERE 
+					map_roles_to_users.id_user=? 
+				AND 
+					roles.id=map_roles_to_users.id_role 
+				AND 
+					roles.name = ?
+EOS
+			if ($id_role) {
+				sql_do ("UPDATE users SET id_role = ? WHERE id = ? ", $id_role, $user->{id});
+				$user -> {role} = $_REQUEST{role};
+			}
+			
+		}
+		
+	}
+
 	$user -> {label} ||= $user -> {name} if $user;
 	
 	return $user;

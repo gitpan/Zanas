@@ -1,3 +1,10 @@
+0.77: 17.12.03 10:30
+
+	- added db schema autocheck with DBIx::ModelUpdate;
+	- added support for multiroled users (by pashka);
+	- __no_navigation is now passed through URL rewriting (by pashka);
+	- fixed check_href for /i/ (by pashka);
+
 0.76: 16.12.03 10:30
 
 	- various js fixes in table scrolling/focus handling;

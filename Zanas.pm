@@ -150,14 +150,81 @@ BEGIN {
 		
 		sql_reconnect ();
 		
-		sql_adjust_schema [
-		
-			{
-				name => 'sessions',
+		$model_update -> assert (
+
+			tables => {		
+
+				sessions => {
 				
-			}
-		
-		]
+					columns => {
+
+						id => {
+							TYPE_NAME  => 'bigint',
+							_PK    => 1,
+						},
+
+						id_user => {
+							TYPE_NAME  => 'int',
+						},
+
+						ts => {
+							TYPE_NAME  => 'timestamp',
+						},
+					
+					}
+
+				},
+
+			},
+
+		);
+
+		$model_update -> assert (
+
+			default_columns => {
+				id   => {TYPE_NAME  => 'int', _EXTRA => 'auto_increment', _PK => 1},
+				fake => {TYPE_NAME  => 'bigint', COLUMN_DEF => 0, NULLABLE => 0},
+			},	
+
+			tables => {		
+
+				roles => {
+
+					columns => {
+						name  => {TYPE_NAME    => 'varchar', COLUMN_SIZE  => 255},
+						label => {TYPE_NAME    => 'varchar', COLUMN_SIZE  => 255},
+					},
+
+				},
+
+				users => {
+
+					columns => {
+						name =>     {TYPE_NAME => 'varchar', COLUMN_SIZE => 255},
+						login =>    {TYPE_NAME => 'varchar', COLUMN_SIZE => 255},
+						label =>    {TYPE_NAME => 'varchar', COLUMN_SIZE => 255},
+						password => {TYPE_NAME => 'varchar', COLUMN_SIZE => 255},
+						id_role =>  {TYPE_NAME => 'int'},
+					}
+
+				},
+
+				log => {
+
+					columns => {
+						id_user =>  {TYPE_NAME => 'int'},
+						type =>     {TYPE_NAME => 'varchar', COLUMN_SIZE => 255},
+						action =>   {TYPE_NAME => 'varchar', COLUMN_SIZE => 255},
+						error =>    {TYPE_NAME => 'varchar', COLUMN_SIZE => 255},
+						params =>   {TYPE_NAME => 'text'},
+						dt =>       {TYPE_NAME => 'timestamp'},
+					}
+
+				},
+
+			},
+
+		)
 		
 	}	
 		
@@ -167,7 +234,7 @@ BEGIN {
 
 package Zanas;
 
-$VERSION = '0.76';
+$VERSION = '0.77';
 
 =head1 NAME
 
