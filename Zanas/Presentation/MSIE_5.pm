@@ -1024,6 +1024,8 @@ sub draw_toolbar_input_text {
 	my $value = $options -> {value};
 	$value ||= $_REQUEST{$$options{name}};
 	
+	$options -> {size} ||= 15;
+	
 	my $hiddens = '';
 	
 	$options -> {keep_params} ||= [keys %_REQUEST];
@@ -1034,7 +1036,20 @@ sub draw_toolbar_input_text {
 	}
 		
 	return <<EOH
-		<td nowrap>$$options{label}: <input type=text name=$$options{name} value="$value" onFocus="scrollable_table_is_blocked = true; q_is_focused = true" onBlur="scrollable_table_is_blocked = false; q_is_focused = false">$hiddens</td>
+		<td nowrap>$$options{label}: <input type=text size=$$options{size} name=$$options{name} value="$value" onFocus="scrollable_table_is_blocked = true; q_is_focused = true" onBlur="scrollable_table_is_blocked = false; q_is_focused = false">$hiddens</td>
+		<td><img height=15  hspace=4 src="/i/toolbars/razd1.gif" width=2 border=0></td>
+EOH
+
+}
+
+################################################################################
+
+sub draw_toolbar_input_submit {
+
+	my ($options) = @_;
+	return '' if $options -> {off};
+	return <<EOH
+		<td nowrap><input type=submit name="$$options{name}" value="$$options{label}"></td>
 		<td><img height=15  hspace=4 src="/i/toolbars/razd1.gif" width=2 border=0></td>
 EOH
 
@@ -1600,6 +1615,7 @@ sub draw_toolbar_input_select {
 			$html
 		</select>
 		</td>
+		<td><img height=15  hspace=4 src="/i/toolbars/razd1.gif" width=2 border=0></td>
 EOH
 	
 }
@@ -1621,6 +1637,7 @@ sub draw_toolbar_input_checkbox {
 		<td>
 			<input type=checkbox value=1 $checked name="$$options{name}" onClick="submit()">
 		</td>
+		<td><img height=15  hspace=4 src="/i/toolbars/razd1.gif" width=2 border=0></td>
 EOH
 	
 }
@@ -1953,7 +1970,7 @@ sub draw_form_field_htmleditor {
 		<SCRIPT language="javascript">
 <!--
 var oFCKeditor_$$options{name} ;
-oFCKeditor_$$options{name} = new FCKeditor('_$$options{name}', '$$options{width}', '$$options{height}, '$$options{toolbar}');
+oFCKeditor_$$options{name} = new FCKeditor('_$$options{name}', '$$options{width}', '$$options{height}', '$$options{toolbar}');
 oFCKeditor_$$options{name}.Value = '$s';
 oFCKeditor_$$options{name}.Create() ;
 //-->

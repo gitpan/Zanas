@@ -11,7 +11,7 @@ use Zanas::Request;
 sub require_fresh {
 
 	my ($module_name) = @_;	
-	
+		
 	if ($_USER and $$_USER{role} and $module_name =~ /Content|Presentation/) {
 	
 		my $specific_module_name = $module_name;
@@ -72,7 +72,7 @@ sub require_fresh_internal {
 
 		$file_name =~ s{^(.+?)\/}{\/};
 		$file_name = $PACKAGE_ROOT . $file_name . '.pm';
-		
+
 		-f $file_name or return "File not found: $file_name\n";
 		
 		fix_module_for_role ($file_name) if $conf -> {core_fix_modules} and $module_name =~ /Content|Presentation/;
@@ -85,8 +85,6 @@ sub require_fresh_internal {
 
 		$need_refresh or return;
 
-#		eval { do $file_name };
-
 		delete $INC {$inc_key};
 
 		eval "require $module_name";
@@ -94,7 +92,7 @@ sub require_fresh_internal {
 	}	
 	
 	else {
-		
+				
 		eval "require $module_name";
 
 	}
@@ -113,8 +111,6 @@ sub require_fresh_internal {
 ################################################################################
 
 BEGIN {
-
-#	print STDERR Dumper ($preconf);
 
 	if ($ENV {GATEWAY_INTERFACE} =~ m{^CGI/} || $conf -> {use_cgi} || $preconf -> {use_cgi}) {
  		eval 'require CGI';
@@ -257,7 +253,7 @@ BEGIN {
 
 package Zanas;
 
-$VERSION = '0.9914';
+$VERSION = '0.9916';
 
 =head1 NAME
 

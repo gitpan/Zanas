@@ -1205,7 +1205,7 @@ EO
 
 	{
 		name     => 'draw_toolbar_input_text',
-		options  => [qw(name label value off keep_params)],
+		options  => [qw(name label value size off keep_params)],
 		syn      => <<EO,	
 	draw_toolbar_input_text ({
 		label  => 'Search',
@@ -1247,6 +1247,21 @@ EO
 EO
 		label_en => 'Draws the checkbox input (usually, for quick filter).',
 		label_ru => 'Отрисовывает поле для галочки на панели над таблицей (обычно для быстрого фильтра).',
+		see_also => [qw(draw_toolbar)]
+	},
+
+					#######################################
+
+	{
+		name     => 'draw_toolbar_input_submit',
+		options  => [qw(name label)],
+		syn      => <<EO,	
+	draw_toolbar_input_submit ({
+		label  => 'Refresh',
+	}),						
+EO
+		label_en => 'Draws the submit button (usually, for top toolbars with many quick filters).',
+		label_ru => 'Отрисовывает submit-кнопку (для верхней панели со множеством быстрых фильтров).',
 		see_also => [qw(draw_toolbar)]
 	},
 

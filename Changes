@@ -1,3 +1,14 @@
+0.9916: 
+
+	- added size option for draw_toolbar_input_text;
+	- fixed HTML for toolbar inputs;
+	- new widget: draw_toolbar_input_submit;
+	- create_url fixed for setting 'salt' directly (by pashka) (why?!);
+
+0.9915: 
+
+	- fixed a typo in draw_form_field_htmleditor;
+
 0.9914: 
 	
 	- fixed minor bug in i18n ($$i18n{toolbar_pager_empty_list} wasn't interpolated);
