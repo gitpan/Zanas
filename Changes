@@ -1,4 +1,32 @@
-0.97: 10.03.2004 
+0.98: 12.03.2004 11:00
+
+	- new feature: 2-level main menu;
+	
+		sub get_menu_for_my_role {
+
+			return [
+				{
+					name  => 'type1',
+					label => 'Screen Type 1',
+					items => [
+						{
+							name  => 'type11',
+							label => 'Screen Type 11',
+						},
+						{
+							name  => 'type12',
+							label => 'Screen Type 12',
+						},
+					]
+				},
+				{
+					name  => 'type2',
+					label => 'Screen Type 2',
+				},
+			]
+		}
+
+0.97: 10.03.2004 16:40
 
 	- sql_reconnect and Config reloading order fixed;
 	- target option added in draw_toolbar_button sub;

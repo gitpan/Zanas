@@ -216,6 +216,27 @@ EOCSS
 					var scrollable_table_is_blocked = false;
 					var q_is_focused = false;					
 					var scrollable_rows = new Array();		
+					
+					
+					function open_popup_menu (type) {
+					
+						var oPopup = window.createPopup ();
+						var div = document.getElementById ('vert_menu_' + type);
+						var table = document.getElementById ('vert_menu_table_' + type);
+						
+						div.style.display = 'block';
+						var w = table.offsetWidth;
+						var h = table.offsetHeight;
+						div.style.display = 'none';
+						
+						oPopup.document.body.innerHTML = div.innerHTML;
+						
+//						alert ('w = ' + w + ', h = ' + h);
+						
+						oPopup.show (-9, 17, w, h, document.getElementById ('main_menu_' + type));
+						
+					}
+					
 				</script>
 				
 			</head>
@@ -332,7 +353,7 @@ sub draw_menu {
 	
 	$_REQUEST {__no_navigation} and return '';
 	
-	my ($tr1, $tr2, $tr3) = ('', '', '');
+	my ($tr1, $tr2, $tr3, $divs) = ('', '', '', '');
 
 	foreach my $type (@$types)	{
 	
@@ -358,9 +379,18 @@ EOH
 
 #			<td class=$tclass nowrap>&nbsp;&nbsp;<a class=$aclass id="main_menu_$$type{name}" href="/?type=$$type{name}&sid=$_REQUEST{sid}@{[$_REQUEST{period} ? '&period=' . $_REQUEST {period} : '']}">$$type{label}</a>&nbsp;&nbsp;</td>
 
+
+		my $onhover = '';
+		if (ref $type -> {items} eq ARRAY) {
+			$divs .= draw_vert_menu ($type -> {name}, $type -> {items});
+			$onhover = qq {onmouseover="open_popup_menu ('$$type{name}')"};
+		}
+		
+		my $href = $type -> {no_page} ? '#' : "/?type=$$type{name}&sid=$_REQUEST{sid}@{[$_REQUEST{period} ? '&period=' . $_REQUEST {period} : '']}@{[$type->{role} ? '&role=' . $type->{role} : '']}";
+		
 		$tr2 .= <<EOH;
 			<td class=bgr1><img height=20 src="/0.gif" width=1 border=0></td>
-			<td class=$tclass nowrap>&nbsp;&nbsp;<a class=$aclass id="main_menu_$$type{name}" href="/?type=$$type{name}&sid=$_REQUEST{sid}@{[$_REQUEST{period} ? '&period=' . $_REQUEST {period} : '']}@{[$type->{role} ? '&role=' . $type->{role} : '']}">$$type{label}</a>&nbsp;&nbsp;</td>
+			<td $onhover class=$tclass nowrap>&nbsp;&nbsp;<a class=$aclass id="main_menu_$$type{name}" href="$href">$$type{label}</a>&nbsp;&nbsp;</td>
 EOH
 
 		$tr3 .= <<EOH;
@@ -384,7 +414,64 @@ EOH
 				<td class=bgr8 width=100%><img height=1 src="/0.gif" width=1 border=0></td>
 				
 		</table>	
+		$divs
 EOH
+}
+
+################################################################################
+
+sub draw_vert_menu {
+
+	my ($name, $types) = @_;
+	
+	my $tr2 = '';
+
+	foreach my $type (@$types) {
+	
+		if ($type eq BREAK) {
+		
+			$tr2 .= <<EOH;
+				<tr height=1>
+					<td bgcolor=#485F70 colspan=3><img height=1 src=/0.gif width=1 border=0></td>
+				<tr>
+					<td bgcolor=#485F70><img height=1 src=/0.gif width=1 border=0></td>
+					<td><img height=1 src=/0.gif width=1 border=0></td>
+					<td bgcolor=#485F70><img height=1 src=/0.gif width=1 border=0></td>
+EOH
+		
+		}
+		else {
+		
+			$tr2 .= <<EOH;
+				<tr height=1>
+					<td bgcolor=#485F70 colspan=3><img height=1 src=/0.gif width=1 border=0></td>
+				<tr>
+					<td bgcolor=#485F70><img height=20 src=/0.gif width=1 border=0></td>
+					<td 
+						nowrap 
+						onmouseover="this.style.background='#efefef'" 
+						onmouseout="this.style.background='#d5d5d5'"
+						onclick="parent.location.href='/?type=$$type{name}&sid=$_REQUEST{sid}@{[$_REQUEST{period} ? '&period=' . $_REQUEST {period} : '']}@{[$type->{role} ? '&role=' . $type->{role} : '']}'"
+						style="font-weight: normal; font-size: 11px; color: #000000; font-family: verdana; text-decoration: none"
+					>
+						&nbsp;&nbsp;$$type{label}&nbsp;&nbsp;
+					</td>
+					<td bgcolor=#485F70><img height=20 src=/0.gif width=1 border=0></td>
+EOH
+		}
+	
+	}
+
+	return <<EOH;
+		<div id="vert_menu_$name" style="display:none; position:absolute; z-index:-100">
+			<table id="vert_menu_table_$name" width=1% bgcolor=#d5d5d5 cellspacing=0 cellpadding=0 border=0>
+				$tr2
+				<tr height=1>
+					<td bgcolor=#485F70 colspan=3><img height=1 src=/0.gif width=1 border=0></td>
+			</table>
+		</div>
+EOH
+	
 }
 
 ################################################################################

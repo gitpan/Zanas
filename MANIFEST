@@ -4,7 +4,6 @@ Makefile.PL
 Zanas.pm
 Zanas/Apache.pm
 Zanas/Content.pm
-Zanas/Install.pm
 Zanas/Presentation.pm
 Zanas/Presentation/MSIE_5.pm
 Zanas/Presentation/Mozilla_3.pm
@@ -16,7 +15,6 @@ Zanas/static/0.gif.pm
 Zanas/static/0.html.pm
 Zanas/static/navigation.js.gz.pm
 Zanas/static/navigation.js.pm
-Zanas/static/sample.tar.gz.pm
 Zanas/static/zanas.css.gz.pm
 Zanas/static/zanas.css.pm
 t/use.t
