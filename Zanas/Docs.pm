@@ -9,6 +9,30 @@ package main;
 @options = (
 
 	{
+		name     => 'code',
+		label_en => "Keyboard scan code. Can be set as /F(\d+)/ for function keys.",
+		label_ru => "Клавиатурный scan code. Для функциональных клавиш может быть задан как /F(\d+)/.",
+	},
+
+	{
+		name     => 'data',
+		label_en => "ID attibute of an A tag to activate with the hotkey.",
+		label_ru => "Атрибут ID тега A, который требуется активизировать при нажатии на горячую клавишу.",
+	},
+
+	{
+		name     => 'ctrl',
+		label_en => "If true, Ctrl key must be pressed.",
+		label_ru => "Если истина, требуется нажатие на Ctrl.",
+	},
+
+	{
+		name     => 'alt',
+		label_en => "If true, Alt key must be pressed.",
+		label_ru => "Если истина, требуется нажатие на Alt.",
+	},
+
+	{
 		name     => 'no_force_download',
 		label_en => "Unless true, the 'File download' ialog is forced on the client.",
 		label_ru => "Если не true, то на клиенте должен появиться диалог открытия файла.",
@@ -202,8 +226,8 @@ package main;
 	
 	{
 		name     => 'href',
-		label_en => "URL pointed by the element (HREF attribute of the A tag). Magic parameters 'sid' and 'salt' are appended automatically.",
-		label_ru => "URL, на который ссылается данный элемент (атрибут HREF тега A). Магические параметры 'sid' и 'salt' приписываются автоматически.",
+		label_en => "URL pointed by the element (HREF attribute of the A tag). Magic parameters 'sid' and 'salt' are appended automatically. See <a href='check_href.html'>check_href</a>, <a href='create_url.html'>create_url</a>",
+		label_ru => "URL, на который ссылается данный элемент (атрибут HREF тега A). Магические параметры 'sid' и 'salt' приписываются автоматически. См. также <a href='check_href.html'>check_href</a>, <a href='create_url.html'>create_url</a>",
 	},
 	
 	{
@@ -401,6 +425,69 @@ package main;
 					#######################################
 
 	{
+		name     => 'create_url',
+#		options  => [qw()],
+		syn      => <<EO,	
+	create_url (
+		type => 'some_other_type',
+	);
+	
+	# /?type=my_type&id=1&sid=123456&_foo=bar --> /?type=some_other_type&id=1&sid=123456
+	
+EO
+		label_en => 'Creates the URL inheriting all parameter values but explicitely set and starting with one underscore. Automatically applied to any HASHREF valued "href" option.',
+		label_ru => 'Генерирует URL, наследующий значения всех параметров, кроме упомянутых в списке аргументов и тех, чьи имена начинаются с символа \'_\'. Неявно применяется ко всем значениям опции "href", которые заданы как ссылка на хэш',
+		see_also => [qw(check_href)],
+	},
+				
+					#######################################
+
+	{
+		name     => 'check_href',
+#		options  => [qw()],
+		syn      => <<EO,	
+	check_href ({
+		...
+		href => "/?type=users",
+		...
+	});
+	
+	# /?type=users --> /?type=users&sid=3543522543214387&_salt=0.635735452454
+	
+EO
+		label_en => 'Ensures the sid parameter inheritance (session support through URL rewriting) and _salt parameter randomness (prevents from client side cacheing). Automatically applied to any option set with scalar "href" option.',
+		label_ru => 'Обеспечивает наследование параметра sid (сессии через URL rewriting) и случайность параметра _salt (защипа от кэширования на клиенте). Неявно применяется ко всем наборам опциий со скалярной "href"',
+		see_also => [qw(create_url)],
+	},
+
+
+					#######################################
+
+	{
+		name     => 'hotkeys',
+		options  => [qw(code data ctrl alt off)],
+		syn      => <<EO,	
+	hotkeys (
+		{
+			code => F4,
+			data => 'edit_button',
+			off  => \$_REQUEST {edit},
+		},
+		{
+			code => F10,
+			data => 'ok',
+			off  => \$_REQUEST {__read_only},
+		},
+	);
+EO
+		label_en => 'Setting hotkeys for anchors with known IDs.',
+		label_ru => 'Установка клавиатурных ускорителей для гиперссылок с известными атрибутами ID.',
+#		see_also => [qw()],
+	},
+
+					#######################################
+
+	{
 		name     => 'delete_fakes',
 		syn      => <<EO,	
 	delete_fakes ('users');
@@ -409,7 +496,6 @@ EO
 		label_ru => 'Сборка мусора: удаление всех fake-записей, принадлежащих неактивным сессиям. Автоматически вызывается перед каждой callback-процедурой "do_create_$type".',
 #		see_also => [qw()],
 	},
-
 
 					#######################################
 
@@ -951,7 +1037,7 @@ EO
 
 	{
 		name     => 'draw_form_field_select',
-		options  => [qw(name label value values off empty max_len onChange)],
+		options  => [qw(name label value values off empty max_len onChange height)],
 		label_en => 'Draws the drop down listbox. Invoked by draw_form.',
 		label_ru => 'Отрисовывает выпадающий список опций. Вызывается процедурой draw_form.',
 		see_also => [qw(draw_form sql_select_vocabulary)]
@@ -1083,6 +1169,23 @@ EO
 		see_also => [qw(draw_toolbar)]
 	},
 
+					#######################################
+
+	{
+		name     => 'draw_toolbar_input_select',
+		options  => [qw(name values value empty)],
+		syn      => <<EO,	
+	draw_toolbar_input_select ({
+		name   => 'id_topic',
+		values => \$data -> {topics},
+		empty  => '[All topics]',
+	}),						
+EO
+		label_en => 'Draws the drop-down input (usually, for quick filter).',
+		label_ru => 'Отрисовывает выпадающий список на панели над таблицей (обычно для быстрого фильтра).',
+		see_also => [qw(draw_toolbar)]
+	},
+
 
 					#######################################
 
@@ -1146,7 +1249,7 @@ EO
 EO
 		label_en => 'Draws the toolbar on top of the table.',
 		label_ru => 'Отрисовывает панель с кнопками поверх таблицы.',
-		see_also => [qw(draw_toolbar_button draw_toolbar_input_text draw_toolbar_pager)]
+		see_also => [qw(draw_toolbar_button draw_toolbar_input_text draw_toolbar_input_select draw_toolbar_pager)]
 	},
 
 					#######################################

@@ -4,7 +4,7 @@ no warnings;
 
 sub register_hotkey {
 
-	my ($hashref, $type, $data) = @_;
+	my ($hashref, $type, $data, $options) = @_;
 
 	$hashref -> {label} =~ s{\&(.)}{<u>$1</u>} or return;
 	
@@ -29,13 +29,39 @@ sub register_hotkey {
 		$code = (ord ($c) - 32);
 	}
 
-
 	push @scan2names, {
 		code => $code,
 		type => $type,
 		data => $data,
+		ctrl => $options -> {ctrl},
+		alt  => $options -> {alt},
 	};
 
+}
+
+################################################################################
+
+sub hotkeys {
+
+	map { hotkey ($_) } @_;
+
+}
+
+################################################################################
+
+sub hotkey {
+
+	my ($def) = $_[0];
+	
+	return if $def -> {off};
+	
+	$def -> {type} ||= 'href';
+	if ($def -> {code} =~ /^F(\d+)/) {
+		$def -> {code} = 111 + $1;
+	}
+	
+	push @scan2names, $def;
+	
 }
 
 ################################################################################
@@ -47,7 +73,9 @@ sub handle_hotkey_focus {
 	<<EOJS
 		if (window.event.keyCode == $$r{code} && window.event.altKey && window.event.ctrlKey) {
 			document.form.$$r{data}.focus ();
-			event.returnValue = false;
+			event.keyCode      = 0;
+			event.returnValue  = false;
+			event.cancelBubble = true;
 		}
 EOJS
 
@@ -59,9 +87,17 @@ sub handle_hotkey_href {
 
 	my ($r) = @_;
 	
+	my $ctrl = $r -> {ctrl} ? '' : '!';
+	my $alt  = $r -> {alt}  ? '' : '!';
+
 	<<EOJS
-		if (window.event.keyCode == $$r{code} && window.event.altKey && window.event.ctrlKey) {
-			window.location.href = document.getElementById ('$$r{data}').href + '&_salt=@{[rand]}';
+		if (window.event.keyCode == $$r{code} && $alt window.event.altKey && $ctrl window.event.ctrlKey) {
+//			window.location.href = document.getElementById ('$$r{data}').href + '&_salt=@{[rand]}';
+			var a = document.getElementById ('$$r{data}');
+			activate_link (a.href, a.target);
+			event.keyCode      = 0;
+			event.returnValue  = false;
+			event.cancelBubble = true;
 		}
 EOJS
 
@@ -365,7 +401,9 @@ sub draw_menu {
 	
 		next if $type -> {off};
 	
-		register_hotkey ($type, 'href', 'main_menu_' . $type -> {name});
+		$conf -> {kb_options_menu} ||= {ctrl => 1, alt => 1};
+	
+		register_hotkey ($type, 'href', 'main_menu_' . $type -> {name}, $conf -> {kb_options_menu});
 	
 		$tr1 .= <<EOH;
 			<td class=bgr8 rowspan=2><img src="/i/toolbars/n_left.gif" border=0></td>
@@ -929,7 +967,9 @@ sub draw_toolbar_button {
 	
 	$options -> {target} ||= '_self';
 	
-	register_hotkey ($options, 'href', $options);
+	$conf -> {kb_options_buttons} ||= {ctrl => 1, alt => 1};	
+	
+	register_hotkey ($options, 'href', $options, $conf -> {kb_options_buttons});
 	
 	check_href ($options);
 
@@ -983,13 +1023,16 @@ sub draw_toolbar_pager {
 
 	my $label = '';	
 
+	$conf -> {kb_options_pager} ||= $conf -> {kb_options_buttons};
+	$conf -> {kb_options_pager} ||= {ctrl => 1, alt => 1};
+
 	if ($start > $options -> {portion}) {
 		$url = create_url (start => 0);
 		$label .= qq {&nbsp;<a href="$url" class=lnk0 onFocus="blur()"><b>&lt;&lt;</b></a>&nbsp;};
 	}
 
 	if ($start > 0) {
-		register_hotkey ({label => '&<'}, 'href', '_pager_prev');
+		register_hotkey ({label => '&<'}, 'href', '_pager_prev', $conf -> {kb_options_pager});
 		$url = create_url (start => $start - $options -> {portion});
 		$label .= qq {&nbsp;<a href="$url" class=lnk0 id="_pager_prev" onFocus="blur()"><b><u>&lt;</u></b></a>&nbsp;};
 	}
@@ -1000,7 +1043,7 @@ sub draw_toolbar_pager {
 	
 	if ($start + $$options{cnt} < $$options{total}) {
 	
-		register_hotkey ({label => '&>'}, 'href', '_pager_next');
+		register_hotkey ({label => '&>'}, 'href', '_pager_next', $conf -> {kb_options_pager});
 		$url = create_url (start => $start + $options -> {portion});
 		$label .= qq {&nbsp;<a href="$url" class=lnk0 id="_pager_next" onFocus="blur()"><b><u>&gt;</u></b></a>&nbsp;};
 	}
@@ -1084,7 +1127,10 @@ sub draw_form_field {
 	
 	my $html = &{"draw_form_field_$type"} ($field, $data);
 	
-	register_hotkey ($field, 'focus', '_' . $field -> {name});	
+	$conf -> {kb_options_focus} ||= $conf -> {kb_options_buttons};
+	$conf -> {kb_options_focus} ||= {ctrl => 1, alt => 1};
+	
+	register_hotkey ($field, 'focus', '_' . $field -> {name}, $conf -> {kb_options_focus});
 
 	$field -> {label} .= '&nbsp;*' if $field -> {mandatory};
 	
@@ -1361,10 +1407,29 @@ sub draw_form_field_static {
 	$hidden_value ||= $$options{value};
 	$hidden_value =~ s/\"/\&quot\;/gsm; #"
 	
-	my $static_value = 
-		ref $options -> {values} eq ARRAY ? (map {$_ -> {label}} grep {$_ -> {id} == $data -> {$options -> {name}}} @{$options -> {values}})[0] : 
-		ref $options -> {values} eq HASH ?  $options -> {values} -> {$data -> {$options -> {name}}} : 
-		($options -> {value} || $data -> {$options -> {name}});
+	my $value = $data -> {$options -> {name}};
+	
+	my $static_value = '';
+	
+	if (ref $value eq ARRAY) {
+		
+		foreach my $v (@$value) {
+			$static_value .= ', ' if $static_value;
+			foreach my $pv (@{$options -> {values}}) {
+				$pv -> {id} eq $v or next;
+				$static_value .= $pv -> {label};
+			}						
+		}
+		
+	}
+	else {
+		$static_value = 
+			ref $options -> {values} eq ARRAY ? (map {$_ -> {label}} grep {$_ -> {id} == $value} @{$options -> {values}})[0] : 
+			ref $options -> {values} eq HASH ?  $options -> {values} -> {$value} : 
+			($options -> {value} || $value);
+	}
+				
+		
 		
 	$static_value = $number_format -> format_picture ($static_value, $options -> {picture}) if $options -> {picture};	
 		
@@ -1421,12 +1486,62 @@ sub draw_form_field_checkboxes {
 	
 	my $html = '';
 	
-	foreach my $value (@{$options -> {values}}) {
-		my $checked = $data -> {$options -> {name}} == $value -> {id} ? 'checked' : '';
-		$html .= qq {<input type="checkbox" name="_$$options{name}" value="$$value{id}" $checked onChange="is_dirty=true">&nbsp;$$value{label} <br>};
+	my $v = $data -> {$options -> {name}};
+	
+	if (ref $v eq ARRAY) {
+	
+		foreach my $value (@{$options -> {values}}) {
+			my $checked = 0 + (grep {$_ eq $value -> {id}} @$v) ? 'checked' : '';
+			$html .= qq {<input type="checkbox" name="_$$options{name}_$$value{id}" value="1" $checked onChange="is_dirty=true">&nbsp;$$value{label} <br>};
+		}		
+	
+	}
+	else {
+	
+		foreach my $value (@{$options -> {values}}) {
+			my $checked = $v eq $value -> {id} ? 'checked' : '';
+			$html .= qq {<input type="checkbox" name="_$$options{name}" value="$$value{id}" $checked onChange="is_dirty=true">&nbsp;$$value{label} <br>};
+		}
+		
+	}
+		
+	if ($options -> {height}) {
+		$html = <<EOH;
+			<div style="height: $$options{height}px; overflow: auto;">
+				$html
+			</div>
+EOH
 	}
 		
 	return $html;
+	
+}
+
+################################################################################
+
+sub draw_toolbar_input_select {
+
+	my ($options, $data) = @_;
+	
+	my $html = '';
+	
+	$options -> {max_len} ||= $conf -> {max_len};
+	
+	unshift @{$options -> {values}}, {id => 0, label => $options -> {empty}} if exists $options -> {empty};
+
+	foreach my $value (@{$options -> {values}}) {		
+		my $selected = (($value -> {id} eq $_REQUEST {$options -> {name}}) or ($value -> {id} eq $options -> {value})) ? 'selected' : '';
+		my $label = trunc_string ($value -> {label}, $options -> {max_len});						
+		$html .= qq {<option value="$$value{id}" $selected>$label</option>};
+	}
+		
+	return <<EOH;
+		<td>
+		<select name="$$options{name}" onChange="submit()" onkeypress="typeAhead()">
+			$html
+		</select>
+		</td>
+EOH
 	
 }
 
@@ -1448,9 +1563,11 @@ sub draw_form_field_select {
 		my $label = trunc_string ($value -> {label}, $options -> {max_len});						
 		$html .= qq {<option value="$$value{id}" $selected>$label</option>};
 	}
+	
+	my $multiple = $options -> {rows} > 1 ? "multiple size=$$options{rows}" : '';
 		
 	return <<EOH;
-		<select name="_$$options{name}" onChange="is_dirty=true; $$options{onChange}" onkeypress="typeAhead()">
+		<select name="_$$options{name}" onChange="is_dirty=true; $$options{onChange}" onkeypress="typeAhead()" $multiple>
 			$html
 		</select>
 EOH
@@ -1494,8 +1611,10 @@ sub draw_ok_esc_toolbar {
 		{
 			icon => 'ok',     
 			label => $options -> {label_ok}, 
-			href => '#', 
-			onclick => "document.$name.submit()"
+#			href => '#', 
+#			onclick => "document.$name.submit()",
+			href => "javaScript:document.$name.submit()", 
+			id   => 'ok',
 		},
 		@{$options -> {additional_buttons}},
 		{
