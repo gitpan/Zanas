@@ -119,9 +119,11 @@ sub download_file {
 	$r -> status (200);
 
 	$options -> {file_name} =~ s{.*\\}{};
+	
+	$options -> {type} .= '; charset=' . $options -> {charset} if $options -> {charset};
 
 	$r -> content_type ($options -> {type});
-	$r -> header_out ('Content-Disposition' => "attachment;filename=" . $options -> {file_name}); #if $options -> {file_name};
+	$options -> {no_force_download} or $r -> header_out ('Content-Disposition' => "attachment;filename=" . $options -> {file_name}); #if $options -> {file_name};
 	$r -> send_http_header ();
 
 	my $path = $r -> document_root . $options -> {path};

@@ -172,9 +172,15 @@ EOH
 				<title>$$conf{page_title}</title>
 				<meta name="Generator" content="Zanas/MSIE5 $Zanas::VERSION">
 				$meta_refresh
-				<LINK href="/i/new.css" type=text/css rel=STYLESHEET>
-				<script src="/i/js.js">
-				</script>
+				
+				@{[ map {<<EOJS} @{$_REQUEST{__include_css}} ]}
+					<LINK href="/i/$_.css" type=text/css rel=STYLESHEET>
+EOJS
+
+				@{[ map {<<EOCSS} @{$_REQUEST{__include_js}} ]}
+					<script src="/i/${_}.js">
+					</script>
+EOCSS
 				<script>
 					var scrollable_table = null;
 					var scrollable_table_row = 0;
@@ -243,7 +249,6 @@ EOH
 					
 										
 				</script>
-				<SCRIPT language="javascript" src="/i/rte/fckeditor.js"></SCRIPT>
 			</head>
 			<body bgcolor=white leftMargin=0 topMargin=0 marginwidth="0" marginheight="0" name="body" id="body">
 
@@ -1167,6 +1172,69 @@ sub MSIE_5_draw_form_field_string {
 
 ################################################################################
 
+sub MSIE_5_draw_form_field_datetime {
+
+	my ($options, $data) = @_;
+	
+	$options -> {max_len} ||= $conf -> {max_len};	
+	$options -> {max_len} ||= $options -> {size};
+	
+	unless ($options -> {format}) {
+	
+		if ($options -> {no_time}) {
+			$conf -> {format_d}   ||= '%d.%m.%Y';
+			$options -> {format}  ||= $conf -> {format_d};
+			$options -> {max_len} ||= 20;		
+			$options -> {size}    ||= 11;
+		}
+		else {
+			$conf -> {format_dt}  ||= '%d.%m.%Y %k:%M';
+			$options -> {format}  ||= $conf -> {format_dt};
+			$options -> {size}    ||= 16;
+		}
+	
+	}
+	
+	$options -> {format}  ||= $options -> {no_time} ? $conf -> {format_d} : $conf -> {format_dt};
+
+	my $s = $options -> {value};
+	$s ||= $$data{$$options{name}};
+	$s =~ s/\"/\&quot\;/gsm; #";
+	
+	$options -> {attributes} -> {id} = 'input_' . $options -> {name};
+	
+	$options -> {attributes} -> {readonly} = 1;
+	
+	my $attributes = dump_attributes ($options -> {attributes});
+	
+	my $size = $options -> {size} ? "size=$$options{size} maxlength=$$options{size}" : "size=30";	
+	
+	push @{$_REQUEST {__include_js}},  'jscalendar/calendar', 'jscalendar/calendar-setup', 'jscalendar/lang/calendar-ru';
+	push @{$_REQUEST {__include_css}}, 'jscalendar/calendar-win2k-1';
+	
+	my $shows_time = $options -> {no_time} ? 'false' : 'true';
+	
+	return <<EOH
+		<input $attributes onFocus="scrollable_table_is_blocked = true; q_is_focused = true" onBlur="scrollable_table_is_blocked = false; q_is_focused = false" autocomplete="off" type="text" maxlength="$$options{max_len}" name="_$$options{name}" value="$s" $size onKeyPress="if (window.event.keyCode != 27) is_dirty=true">
+		<button id="calendar_trigger_$$options{name}" class="txt7">...</button>
+		
+		<script type="text/javascript">
+			Calendar.setup(
+				{
+					inputField : "input_$$options{name}",
+					ifFormat : "%d.%m.%Y %k:%M",
+					showsTime : $shows_time,
+					button : "calendar_trigger_$$options{name}"
+				}
+			);
+		</script>
+
+EOH
+	
+}
+
+################################################################################
+
 sub MSIE_5_draw_form_field_file {
 	my ($options, $data) = @_;	
 	$options -> {size} ||= 60;
@@ -1575,7 +1643,13 @@ EOS
 ################################################################################
 
 sub MSIE_5_draw_form_field_htmleditor {
+	
 	my ($options, $data) = @_;
+	
+	return '' if $options -> {off};
+	
+	push @{$_REQUEST{__include_js}}, 'rte/fckeditor';
+	
 	my $s = $$data{$$options{name}};
 		
 	$s =~ s{\"}{\\\"}gsm;

@@ -18,6 +18,12 @@ sub handler {
    	$conf -> {dbf_dsn} and our $dbf = DBI -> connect ($conf -> {dbf_dsn}, {RaiseError => 1});
 
 	our %_REQUEST = %{$parms};
+	
+	$conf -> {include_js}  ||= ['js'];
+   	$_REQUEST {__include_js} = $conf -> {include_js};
+
+	$conf -> {include_css} ||= ['new'];
+   	$_REQUEST {__include_css} = $conf -> {include_css};
    	
 	if ($_REQUEST {keepalive}) {
 		my $timeout = 60 * $conf -> {session_timeout} - 1;

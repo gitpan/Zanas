@@ -864,6 +864,45 @@ sub draw_form_field_string {
 	drawer_call ('draw_form_field_string', @_);
 }
 
+################################################################################
+
+=head1 draw_form_field_datetime
+
+Отрисовка поля формы типа 'datetime' (требуется скачать DHTML с http://dynarch.com/mishoo/calendar.epl). Вызывается автоматически из-под C<draw_form>.
+
+=head2 Опции
+
+=over
+
+=item name
+
+Имя CGI-параметра и одновременно ключа в хэшрефе C<$data>.
+
+=item label
+
+Отображаемое имя
+
+=item size
+
+Значение атрибутов C<size> и C<maxlength>
+
+=item no_time
+
+Не вводить время.
+
+=item format
+
+Формат даты (описание формата см. там же, где download).
+
+=back
+
+=cut
+
+################################################################################
+
+sub draw_form_field_datetime {
+	drawer_call ('draw_form_field_datetime', @_);
+}
 
 ################################################################################
 

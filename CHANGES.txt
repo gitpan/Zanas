@@ -1,3 +1,19 @@
+0.75:
+
+	- new field type: 'calendar' (control taken from http://dynarch.com/mishoo/calendar.epl);
+
+	- added support for:
+	
+		$conf -> {include_js}  ||= ['js'];
+		$_REQUEST {__include_js} = $conf -> {include_js};
+
+		$conf -> {include_css} ||= ['new'];
+		$_REQUEST {__include_css} = $conf -> {include_css};
+		
+		Fckeditor js include moved there.
+		
+	- added off option to draw_toolbar_input_htmleditor sub;
+
 0.74: 04.12.03 14:00
 
 	- added confirm option to draw_toolbar_button sub;
@@ -116,7 +132,7 @@
 
 0.54: 30.09.03 10:28
 	- added check_href sub;
-	- new field types: 'image' & 'htmleditor';
+	- new field types: 'image' & 'htmleditor' (htmleditor taken from http://www.fredck.com/FCKeditor/);
 	
 0.53: 26.09.03 13:18
 	- added error reporting when reloading modules;
