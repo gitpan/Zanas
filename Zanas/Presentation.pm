@@ -385,7 +385,15 @@ sub draw_one_cell_table {
 
 	draw_table (
 	
-		['Номер', {label => 'Имя', off => 0}, ''],
+		[
+			'Номер', 
+			{
+				label => 'Имя', 
+				off => 0, 
+				href => 'javaScript:alert("Joke!")'
+			}, 
+			''
+		],
 		
 		sub {		
 			draw_text_cell ({label => $i -> {id}}) . 
@@ -875,11 +883,15 @@ sub draw_form_field_hgroup {
 
 =item rows
 
-Колиество строк. По умоланию 25.
+Количество строк. По умоланию 25.
 
 =item cols
 
-Колиество столбцов. По умоланию 60.
+Колчиество столбцов. По умоланию 60.
+
+=item value
+
+Значение по умолчанию.
 
 =back
 

@@ -1,5 +1,10 @@
+0.62: 13.11.03 09:40
+	- added href attribute for table headers in draw_table sub (by hekima)
+	- added value option in draw_form_field_text sub (by hekima)
 	- fixed a bug with '$name.submit'
 	- added 'off' parameter in draw_toolbar_button sub
+
+0.61: ... Can't remember at all :-((
 
 0.60: 06.11.03 10:40
 	- added draw_form_field_button sub (by hekima)

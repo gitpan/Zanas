@@ -507,7 +507,7 @@ sub MSIE_5_draw_table {
 	return '' if $options -> {off};
 	
 	if (@$headers) {
-		$ths = '<tr>' . (join '', map { ref $_ eq HASH ? ($$_{off} ? '' : "<th class=bgr4>$$_{label}\&nbsp;") : "<th class=bgr4>$_\&nbsp;" } @$headers);
+		$ths = '<tr>' . (join '', map { ref $_ eq HASH ? ($$_{off} ? '' : "<th class=bgr4".($$_{colspan} ? " colspan=$$_{colspan}>" : ">"). ($$_{href} ? "<a class=lnk4 href=\"$$_{href}\"><b>": '') . $$_{label} . ($$_{href} ? "</b></a>":'') . "\&nbsp;") : "<th class=bgr4".($$_{colspan} ? " colspan=$$_{colspan} " : "").">$_\&nbsp;" } @$headers);
 	}
 	
 	my $trs = '';
@@ -919,8 +919,6 @@ sub MSIE_5_draw_form_field_string {
 	$options -> {max_len} ||= $options -> {size};
 	$options -> {max_len} ||= 30;		
 	
-	my $s = $$data{$$options{name}};
-	
 	my $s = $options -> {value};
 	$s ||= $$data{$$options{name}};
 	$s =~ s/\"/\&quot\;/gsm; #";
@@ -959,7 +957,10 @@ sub MSIE_5_draw_form_field_text {
 	my $rows = $options -> {rows};
 	$rows ||= 25;
 
-	return qq {<textarea rows=$rows cols=$cols name="_$$options{name}" onKeyPress="if (window.event.keyCode != 27) is_dirty=true">$s</textarea>};
+	my $value = $options -> {value};
+	$value ||= '';
+
+	return qq {<textarea rows=$rows cols=$cols name="_$$options{name}" value="$value" onKeyPress="if (window.event.keyCode != 27) is_dirty=true">$s</textarea>};
 }
 
 ################################################################################
