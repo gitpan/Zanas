@@ -1,3 +1,8 @@
+0.9950:
+
+	- no more error messages for 'validate_... not found';
+
+
 0.9949:
 
 	- DHTML fix: tabindex is now set for <select>s;

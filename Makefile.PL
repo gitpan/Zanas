@@ -10,6 +10,7 @@ WriteMakefile(
 	'DBIx::ModelUpdate'	=> '0.2',
 	'Storable'		=> '',
 	'MIME::Base64'		=> '',
+	'Time::HiRes'		=> '',
     },
     ($] >= 5.005 ?    
 	(ABSTRACT_FROM => 'Zanas.pm', 

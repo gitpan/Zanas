@@ -1,61 +1,14 @@
 no warnings;
 
 use Carp;
+
+use Time::HiRes 'time';
+	
 use Zanas::Presentation;
 use Zanas::Content;
 use Zanas::Apache;
 use Zanas::SQL;
 use Zanas::Request;
-
-################################################################################
-#
-#sub require_fresh {
-
-#	my ($module_name) = @_;	
-		
-#	if ($_USER and $$_USER{role} and $module_name =~ /Content|Presentation/) {
-	
-#		my $specific_module_name = $module_name;
-#		
-#		$specific_module_name =~ s/(Content|Presentation)/$$_USER{role}::$1/;
-		
-#		my $error;
-		
-#		eval {$error = require_fresh_internal ($specific_module_name)};
-		
-#		return unless $error;
-		
-#	}
-	
-#	require_fresh_internal ($module_name, 1);
-
-#}
-
-################################################################################
-
-#sub fix_module_for_role {
-
-#	my ($file_name) = @_;
-	
-#	my $tmp_file_name = $file_name . '~';
-	
-#	open (IN, $file_name) or die "Cannot open $file_name: $!\n";
-#	open (OUT, ">$tmp_file_name") or die "Cannot write to $tmp_file_name: $!\n";
-	
-#	my $suffix = ($_USER and $$_USER{role}) ? '_for_' . $_USER -> {role} : '';
-	
-#	while (my $s = <IN>) {
-	
-#		$s =~ s/sub\s+get_menu\w*/sub get_menu$suffix/;
-		
-#		print OUT $s;
-		
-#	}
-	
-#	close (OUT);
-#	close (IN);		
-
-#}
 
 ################################################################################
 
@@ -111,7 +64,7 @@ sub require_fresh {
 
 ################################################################################
 
-BEGIN {
+BEGIN {	
 
 #	return if $Apache::Server::Starting && !$Apache::Server::ReStarting;
 
@@ -303,7 +256,7 @@ print STDERR "\rZanas.pm: loading ("  . __PACKAGE__ .  ") ok.\n";
 
 package Zanas;
 
-$VERSION = '0.9949';
+$VERSION = '0.9950';
 
 =head1 NAME
 

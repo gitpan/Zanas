@@ -204,6 +204,7 @@ EOH
 			<html xmlns:x="urn:schemas-microsoft-com:office/excel" xmlns:o="urn:schemas-microsoft-com:office:office">
 				<head>
 					<title>$$i18n{_page_title}</title>
+					<meta http-equiv=Content-Type content="text/html; charset=$$i18n{_charset}">
 					$_REQUEST{_xml}
 					<style>
 						TD {

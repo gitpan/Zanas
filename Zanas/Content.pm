@@ -37,6 +37,7 @@ sub add_totals {
 
 sub call_for_role {
 	my $sub_name = shift;
+	my $time = $preconf -> {core_debug_profiling} ? time : undef;
 	my $role = $_USER ? $_USER -> {role} : '';	
 	my $full_sub_name = $sub_name . '_for_' . $role;
 	my $name_to_call = 
@@ -45,10 +46,12 @@ sub call_for_role {
 		undef;
 	
 	if ($name_to_call) {
-		return &$name_to_call (@_);
+		my $result = &$name_to_call (@_);
+		print STDERR "Profiling [$$] " . 1000 * (time - $time) . " ms $name_to_call\n" if $preconf -> {core_debug_profiling};
+		return $result;
 	}
 	else {
-		print STDERR "call_for_role: callback procedure not found: \$sub_name = $sub_name, \$role = $role \n";
+		$sub_name =~ '^validate_' or print STDERR "call_for_role: callback procedure not found: \$sub_name = $sub_name, \$role = $role \n";
 	}
 
 	return $name_to_call ? &$name_to_call (@_) : undef;
