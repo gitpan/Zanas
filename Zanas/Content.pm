@@ -224,7 +224,7 @@ sub select__static_files {
 
 #	$r -> filename =~ /\w+\.\w+/;
 	
-	$ENV{PATH_INFO} =~ /\w+\.\w+/;
+	$ENV{PATH_INFO} =~ /\w+\.\w+/ or $r -> filename =~ /\w+\.\w+/;
 	
 	my $filename = $&;
 

@@ -1,3 +1,8 @@
+0.9919: 
+
+	- fixed a bug introduced in 0.9918 (current path resolution);
+	- 0.gif & 0.html are moved to $_REQUEST {__uri};
+
 0.9918: 
 
 	- saving files fith original extensions in upload_file;

@@ -110,8 +110,10 @@ sub handler {
    	});
 
 #	$_REQUEST {type} = '_static_files' if $r -> filename =~ /\w\.\w/;
+
+#print STDERR Dumper (\%ENV);
 	
-	$_REQUEST {type} = '_static_files' if $ENV{PATH_INFO} =~ /\w\.\w/;
+	$_REQUEST {type} = '_static_files' if ($ENV{PATH_INFO} =~ /\w\.\w/ || $r -> filename =~ /\w\.\w/);
 
 	$conf -> {include_js}  ||= ['js'];
    	
@@ -128,7 +130,7 @@ sub handler {
 		$r -> send_http_header;
 		print <<EOH;
 			<html><head>
-				<META HTTP-EQUIV=Refresh CONTENT="$timeout; URL=/?keepalive=$_REQUEST{keepalive}">
+				<META HTTP-EQUIV=Refresh CONTENT="$timeout; URL=$_REQUEST {__uri}?keepalive=$_REQUEST{keepalive}">
 			</head></html>			
 EOH
 		return;
@@ -147,8 +149,8 @@ EOH
 	require_fresh ($_PACKAGE . '::Calendar');
 	
 	eval "our \$_CALENDAR = new ${_PACKAGE}Calendar (\\\%_REQUEST)";
-
-	if (!$_USER and $_REQUEST {type} ne 'logon' and $_REQUEST {type} ne '_static_files') {
+	
+	if ((!$_USER and $_REQUEST {type} ne 'logon' and $_REQUEST {type} ne '_static_files')) {
 
 		delete $_REQUEST {sid};
 		delete $_REQUEST {salt};

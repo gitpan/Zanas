@@ -365,7 +365,7 @@ EOHELP
 					$menu
 					$body
 				</div>
-				<iframe name=invisible src="/0.html" width=0 height=0>
+				<iframe name=invisible src="$_REQUEST{__uri}0.html" width=0 height=0>
 				</iframe>
 				$keepalive
 			</body>
@@ -407,7 +407,7 @@ sub draw_menu {
 	
 		$tr1 .= <<EOH;
 			<td class=bgr8 rowspan=2><img src="/i/toolbars/n_left.gif" border=0></td>
-			<td bgcolor=#ffffff><img height=1 src="/0.gif" width=1 border=0></td>				
+			<td bgcolor=#ffffff><img height=1 src="$_REQUEST{__uri}0.gif" width=1 border=0></td>				
 			<td class=bgr8 rowspan=2><img src="/i/toolbars/n_right.gif" border=0></td>
 EOH
 	
@@ -435,13 +435,13 @@ EOH
 		my $href = $type -> {no_page} ? '#' : "$_REQUEST{__uri}?type=$$type{name}&sid=$_REQUEST{sid}@{[$_REQUEST{period} ? '&period=' . $_REQUEST {period} : '']}@{[$type->{role} ? '&role=' . $type->{role} : '']}";
 		
 		$tr2 .= <<EOH;
-			<td class=bgr1><img height=20 src="/0.gif" width=1 border=0></td>
+			<td class=bgr1><img height=20 src="$_REQUEST{__uri}0.gif" width=1 border=0></td>
 			<td $onhover class=$tclass nowrap>&nbsp;&nbsp;<a class=$aclass id="main_menu_$$type{name}" href="$href">$$type{label}</a>&nbsp;&nbsp;</td>
 EOH
 
 		$tr3 .= <<EOH;
-			<td class=bgr1><img height=1 src="/0.gif" width=1 border=0></td>
-			<td class=bgr1 nowrap><img height=1 src="/0.gif" width=1 border=0></td>
+			<td class=bgr1><img height=1 src="$_REQUEST{__uri}0.gif" width=1 border=0></td>
+			<td class=bgr1 nowrap><img height=1 src="$_REQUEST{__uri}0.gif" width=1 border=0></td>
 EOH
 
 	}
@@ -449,15 +449,15 @@ EOH
 	return <<EOH;
 		<table width="100%" class=bgr8 cellspacing=0 cellpadding=0 border=0>
 			<tr>
-				<td class=bgr8 width=7><img height=1 src="/0.gif" width=7 border=0></td>
+				<td class=bgr8 width=7><img height=1 src="$_REQUEST{__uri}0.gif" width=7 border=0></td>
 				$tr2
-				<td class=bgr1><img height=20 src="/0.gif" width=1 border=0></td>
-				<td class=bgr8 width=100%><img height=1 src="/0.gif" width=1 border=0></td>
+				<td class=bgr1><img height=20 src="$_REQUEST{__uri}0.gif" width=1 border=0></td>
+				<td class=bgr8 width=100%><img height=1 src="$_REQUEST{__uri}0.gif" width=1 border=0></td>
 			<tr>
-				<td class=bgr8><img height=1 src="/0.gif" width=1 border=0></td>
+				<td class=bgr8><img height=1 src="$_REQUEST{__uri}0.gif" width=1 border=0></td>
 				$tr3
-				<td class=bgr1><img height=1 src="/0.gif" width=1 border=0></td>
-				<td class=bgr8 width=100%><img height=1 src="/0.gif" width=1 border=0></td>
+				<td class=bgr1><img height=1 src="$_REQUEST{__uri}0.gif" width=1 border=0></td>
+				<td class=bgr8 width=100%><img height=1 src="$_REQUEST{__uri}0.gif" width=1 border=0></td>
 				
 		</table>	
 		$divs
@@ -478,11 +478,11 @@ sub draw_vert_menu {
 		
 			$tr2 .= <<EOH;
 				<tr height=1>
-					<td bgcolor=#485F70 colspan=3><img height=1 src=/0.gif width=1 border=0></td>
+					<td bgcolor=#485F70 colspan=3><img height=1 src=$_REQUEST{__uri}0.gif width=1 border=0></td>
 				<tr>
-					<td bgcolor=#485F70><img height=1 src=/0.gif width=1 border=0></td>
-					<td><img height=1 src=/0.gif width=1 border=0></td>
-					<td bgcolor=#485F70><img height=1 src=/0.gif width=1 border=0></td>
+					<td bgcolor=#485F70><img height=1 src=$_REQUEST{__uri}0.gif width=1 border=0></td>
+					<td><img height=1 src=$_REQUEST{__uri}0.gif width=1 border=0></td>
+					<td bgcolor=#485F70><img height=1 src=$_REQUEST{__uri}0.gif width=1 border=0></td>
 EOH
 		
 		}
@@ -490,9 +490,9 @@ EOH
 		
 			$tr2 .= <<EOH;
 				<tr height=1>
-					<td bgcolor=#485F70 colspan=3><img height=1 src=/0.gif width=1 border=0></td>
+					<td bgcolor=#485F70 colspan=3><img height=1 src=$_REQUEST{__uri}0.gif width=1 border=0></td>
 				<tr>
-					<td bgcolor=#485F70><img height=20 src=/0.gif width=1 border=0></td>
+					<td bgcolor=#485F70><img height=20 src=$_REQUEST{__uri}0.gif width=1 border=0></td>
 					<td 
 						nowrap 
 						onmouseover="this.style.background='#efefef'" 
@@ -502,7 +502,7 @@ EOH
 					>
 						&nbsp;&nbsp;$$type{label}&nbsp;&nbsp;
 					</td>
-					<td bgcolor=#485F70><img height=20 src=/0.gif width=1 border=0></td>
+					<td bgcolor=#485F70><img height=20 src=$_REQUEST{__uri}0.gif width=1 border=0></td>
 EOH
 		}
 	
@@ -513,7 +513,7 @@ EOH
 			<table id="vert_menu_table_$name" width=1% bgcolor=#d5d5d5 cellspacing=0 cellpadding=0 border=0>
 				$tr2
 				<tr height=1>
-					<td bgcolor=#485F70 colspan=3><img height=1 src=/0.gif width=1 border=0></td>
+					<td bgcolor=#485F70 colspan=3><img height=1 src=$_REQUEST{__uri}0.gif width=1 border=0></td>
 			</table>
 		</div>
 EOH
@@ -531,7 +531,7 @@ sub draw_hr {
 	
 	return <<EOH;
 		<table border=0 cellspacing=0 cellpadding=0 width="100%">
-			<tr><td class=$options{class}><img src="/0.gif" width=1 height=$options{height}></td></tr>
+			<tr><td class=$options{class}><img src="$_REQUEST{__uri}0.gif" width=1 height=$options{height}></td></tr>
 		</table>
 EOH
 	
@@ -864,7 +864,7 @@ sub draw_path {
 		
 		$item -> {cgi_tail} ||= $options -> {cgi_tail};
 		
-		my $url = "/?type=$$item{type}&$id_param=$$item{id}&sid=$_REQUEST{sid}&$$item{cgi_tail}";
+		my $url = "$_REQUEST{__uri}?type=$$item{type}&$id_param=$$item{id}&sid=$_REQUEST{sid}&$$item{cgi_tail}";
 		
 		push @{$_REQUEST {__path}}, $url;
 
@@ -881,7 +881,7 @@ EOH
 				<td class=bgr5>
 					<table cellspacing=0 cellpadding=0 width="100%" border=0>
 						<tr>
-							<td class=bgr6 colspan=4><img height=1 src="/0.gif" width=1 border=0></td>
+							<td class=bgr6 colspan=4><img height=1 src="$_REQUEST{__uri}0.gif" width=1 border=0></td>
 						</tr>
 						<tr>
 <!--						
@@ -891,17 +891,17 @@ EOH
 							<td>
 								<table cellspacing=0 cellpadding=0 width="100%" border=0>
 									<tr>
-										<td _background="/i/toolbars/4pt.gif" height=15><img height=15  hspace=0 src="/0.gif" width=1 border=0></td>
+										<td _background="/i/toolbars/4pt.gif" height=15><img height=15  hspace=0 src="$_REQUEST{__uri}0.gif" width=1 border=0></td>
 									</tr>
 								</table>
 							</td>
-							<td align=right><img height=15  src="/0.gif" width=4 border=0></td>
+							<td align=right><img height=15  src="$_REQUEST{__uri}0.gif" width=4 border=0></td>
 						</tr>
 						<tr>
-							<td class=bgr8 colspan=4><img height=1 src="/0.gif" width=1 border=0></td>
+							<td class=bgr8 colspan=4><img height=1 src="$_REQUEST{__uri}0.gif" width=1 border=0></td>
 						</tr>
 						<tr>
-							<td class=bgr6 colspan=4><img height=1 src="/0.gif" width=1 border=0></td>
+							<td class=bgr6 colspan=4><img height=1 src="$_REQUEST{__uri}0.gif" width=1 border=0></td>
 						</tr>
 					</table>
 				</td>
@@ -920,7 +920,7 @@ sub draw_window_title {
 	return '' if $options -> {off};
 	
 	return <<EOH
-		<table cellspacing=0 cellpadding=0 width="100%"><tr><td class='header15'><img src="/0.gif" width=1 height=20 align=absmiddle>&nbsp;&nbsp;&nbsp;$$options{label}</table>
+		<table cellspacing=0 cellpadding=0 width="100%"><tr><td class='header15'><img src="$_REQUEST{__uri}0.gif" width=1 height=20 align=absmiddle>&nbsp;&nbsp;&nbsp;$$options{label}</table>
 EOH
 
 }
@@ -949,16 +949,16 @@ sub draw_toolbar {
 EO
 					<input type=hidden name=sid value=$_REQUEST{sid}>
 				<tr>
-					<td class=bgr0 colspan=15><img height=1 src="/0.gif" width=1 border=0></td>
+					<td class=bgr0 colspan=15><img height=1 src="$_REQUEST{__uri}0.gif" width=1 border=0></td>
 				</tr>
 				<tr>
-					<td class=bgr6 colspan=15><img height=1 src="/0.gif" width=1 border=0></td>
+					<td class=bgr6 colspan=15><img height=1 src="$_REQUEST{__uri}0.gif" width=1 border=0></td>
 				</tr>
 				<tr>
 					<td width=20>
 						<table cellspacing=0 cellpadding=0 width=20 border=0>
 							<tr>
-								<td _background="/i/toolbars/6ptbg.gif"><img height=17 hspace=0 src="/0.gif" width=1 border=0></td>
+								<td _background="/i/toolbars/6ptbg.gif"><img height=17 hspace=0 src="$_REQUEST{__uri}0.gif" width=1 border=0></td>
 							</tr>
 						</table>
 					</td>
@@ -966,17 +966,17 @@ EO
 					<td width="100%">
 						<table cellspacing=0 cellpadding=0 width="100%" border=0>
 							<tr>
-								<td _background="/i/toolbars/6ptbg.gif"><img height=17 hspace=0 src="/0.gif" width=1 border=0></td>
+								<td _background="/i/toolbars/6ptbg.gif"><img height=17 hspace=0 src="$_REQUEST{__uri}0.gif" width=1 border=0></td>
 							</tr>
 						</table>
 					</td>
-					<td align=right><img height=23 src="/0.gif" width=4 border=0></td>
+					<td align=right><img height=23 src="$_REQUEST{__uri}0.gif" width=4 border=0></td>
 				</tr>
 				<tr>
-					<td class=bgr8 colspan=15><img height=1 src="/0.gif" width=1 border=0></td>
+					<td class=bgr8 colspan=15><img height=1 src="$_REQUEST{__uri}0.gif" width=1 border=0></td>
 				</tr>
 				<tr>
-					<td class=bgr6 colspan=15><img height=1 src="/0.gif" width=1 border=0></td>
+					<td class=bgr6 colspan=15><img height=1 src="$_REQUEST{__uri}0.gif" width=1 border=0></td>
 				</tr>
 			</form>
 		</table>
@@ -1810,15 +1810,15 @@ sub draw_centered_toolbar {
 				<td class=bgr5>
 					<table cellspacing=0 cellpadding=0 width="100%" border=0>
 						<tr>
-							<td class=bgr0 colspan=$colspan><img height=1 src="/0.gif" width=1 border=0></td>
+							<td class=bgr0 colspan=$colspan><img height=1 src="$_REQUEST{__uri}0.gif" width=1 border=0></td>
 						</tr>
 						<tr>
-							<td class=bgr6 colspan=$colspan><img height=1 src="/0.gif" width=1 border=0></td></tr>
+							<td class=bgr6 colspan=$colspan><img height=1 src="$_REQUEST{__uri}0.gif" width=1 border=0></td></tr>
 								<tr>
 									<td width="45%">
 										<table cellspacing=0 cellpadding=0 width="100%" border=0>
 											<tr>
-												<td _background="/i/toolbars/6ptbg.gif"><img height=17 hspace=0 src="/0.gif" width=1 border=0></td>
+												<td _background="/i/toolbars/6ptbg.gif"><img height=17 hspace=0 src="$_REQUEST{__uri}0.gif" width=1 border=0></td>
 											</tr>
 										</table>
 									</td>
@@ -1827,17 +1827,17 @@ sub draw_centered_toolbar {
 									<td width="45%">
 										<table cellspacing=0 cellpadding=0 width="100%" border=0>
 											<tr>
-												<td _background="/i/toolbars/6ptbg.gif"><img height=17 hspace=0 src="/0.gif" width=1 border=0></td>
+												<td _background="/i/toolbars/6ptbg.gif"><img height=17 hspace=0 src="$_REQUEST{__uri}0.gif" width=1 border=0></td>
 											</tr>
 										</table>
 									</td>
-									<td align=right><img height=23 src="/0.gif" width=4 border=0></td>
+									<td align=right><img height=23 src="$_REQUEST{__uri}0.gif" width=4 border=0></td>
 								</tr>
 								<tr>
-									<td class=bgr8 colspan=$colspan><img height=1 src="/0.gif" width=1 border=0></td>
+									<td class=bgr8 colspan=$colspan><img height=1 src="$_REQUEST{__uri}0.gif" width=1 border=0></td>
 								</tr>
 								<tr>
-									<td class=bgr6 colspan=$colspan><img height=1 src="/0.gif" width=1 border=0></td>
+									<td class=bgr6 colspan=$colspan><img height=1 src="$_REQUEST{__uri}0.gif" width=1 border=0></td>
 								</tr>
 							</table>
 						</tr>
@@ -1860,9 +1860,9 @@ sub draw_auth_toolbar {
 	my ($options) = @_;		
 	
 	my $calendar = <<EOH;
-		<td class=bgr1><img height=22 src="/0.gif" width=4 border=0></td>
+		<td class=bgr1><img height=22 src="$_REQUEST{__uri}0.gif" width=4 border=0></td>
 		<td class=bgr1><A class=lnk2>@{[ $_CALENDAR -> draw () ]}</A></td>
-		<td class=bgr1><img height=22 src="/0.gif" width=4 border=0></td>				
+		<td class=bgr1><img height=22 src="$_REQUEST{__uri}0.gif" width=4 border=0></td>				
 EOH
 
 	$top_banner = interpolate ($conf -> {top_banner});
@@ -1872,14 +1872,14 @@ EOH
 	return <<EOH;
 
 		<table cellSpacing=0 cellPadding=0 border=0 width=100%>
-			<tr><td class=bgr1><img height=1 src="/0.gif" width=1 height=1 border=0></td></tr>
-			<tr><td class=bgr6><img height=1 src="/0.gif" width=1 height=1 border=0></td></tr>
+			<tr><td class=bgr1><img height=1 src="$_REQUEST{__uri}0.gif" width=1 height=1 border=0></td></tr>
+			<tr><td class=bgr6><img height=1 src="$_REQUEST{__uri}0.gif" width=1 height=1 border=0></td></tr>
 		</table>
 		<table cellSpacing=0 cellPadding=0 border=0 width=100%>
 			<tr>
 				<td class=bgr1><nobr>&nbsp;&nbsp;</nobr></td>
 
-				<td class=bgr1><img height=22 src="/0.gif" width=4 border=0></td>
+				<td class=bgr1><img height=22 src="$_REQUEST{__uri}0.gif" width=4 border=0></td>
 				<td class=bgr1><nobr><A class=lnk2>$$i18n{User}: @{[ $_USER && $_USER -> {label} ? $_USER -> {label} : $i18n -> {not_logged_in}]}</a>&nbsp;&nbsp;</nobr></td>
 
 				$calendar
@@ -1887,31 +1887,31 @@ EOH
 				<td class=bgr1 nowrap width="100%"></td>							
 				
 				@{[ $options -> {lpt} ? <<EOLPT : '']}
-				<td class=bgr1><img height=22 src="/0.gif" width=4 border=0></td>
+				<td class=bgr1><img height=22 src="$_REQUEST{__uri}0.gif" width=4 border=0></td>
 				<td class=bgr1><nobr><A class=lnk2 href="@{[ create_url (lpt => 1) ]}" target="_blank">[$$i18n{Print}]</a>&nbsp;&nbsp;</nobr></td>
 
-				<td class=bgr1><img height=22 src="/0.gif" width=4 border=0></td>
+				<td class=bgr1><img height=22 src="$_REQUEST{__uri}0.gif" width=4 border=0></td>
 				<td class=bgr1><nobr><A class=lnk2 href="@{[ create_url (xls => 1, salt => rand) ]}" target="_blank">[MS Excel]</a>&nbsp;&nbsp;</nobr></td>
 EOLPT
 
 				@{[ $_REQUEST {__help_url} ? <<EOHELP : '' ]}
-				<td class=bgr1><img height=22 src="/0.gif" width=4 border=0></td>
+				<td class=bgr1><img height=22 src="$_REQUEST{__uri}0.gif" width=4 border=0></td>
 				<td class=bgr1><nobr><A id="help" class=lnk2 href="$_REQUEST{__help_url}" target="_blank">[$$i18n{F1}]</A>&nbsp;&nbsp;</nobr></td>
 EOHELP
 
 				@{[ $$_USER{id} ? <<EOEXIT : '' ]}
-				<td class=bgr1><img height=22 src="/0.gif" width=4 border=0></td>
+				<td class=bgr1><img height=22 src="$_REQUEST{__uri}0.gif" width=4 border=0></td>
 				<td class=bgr1><nobr><A class=lnk2 href="$exit_url">[$$i18n{Exit}]</A>&nbsp;&nbsp;</nobr></td>
 EOEXIT
 
-				<td class=bgr1><img height=22 src="/0.gif" width=4 border=0></td>
-				<td class=bgr1><img height=1 src="/0.gif" width=7 border=0></td>
+				<td class=bgr1><img height=22 src="$_REQUEST{__uri}0.gif" width=4 border=0></td>
+				<td class=bgr1><img height=1 src="$_REQUEST{__uri}0.gif" width=7 border=0></td>
 			</tr>
 		</table>
 		$top_banner
 		<table cellSpacing=0 cellPadding=0 border=0 width=100%>
-			<tr><td class=bgr7><img height=1 src="/0.gif" width=1 height=1 border=0></td></tr>
-			<tr><td class=bgr1><img height=1 src="/0.gif" width=1 height=1 border=0></td></tr>
+			<tr><td class=bgr7><img height=1 src="$_REQUEST{__uri}0.gif" width=1 height=1 border=0></td></tr>
+			<tr><td class=bgr1><img height=1 src="$_REQUEST{__uri}0.gif" width=1 height=1 border=0></td></tr>
 		</table>
 
 EOH
