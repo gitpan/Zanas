@@ -451,6 +451,34 @@ EOH
 
 ################################################################################
 
+sub MSIE_5_draw_input_cell {
+
+	my ($data) = @_;
+	
+	return '' if $data -> {off};
+	
+	$data -> {max_len} ||= $conf -> {max_len};
+	$data -> {max_len} ||= 30;
+
+	$data -> {size} ||= 30;
+	
+	$data -> {attributes} ||= {};
+	$data -> {attributes} -> {class} ||= 'txt4';
+			
+	$data -> {a_class} ||= 'lnk4';
+
+	my $txt = trunc_string ($data -> {label}, $data -> {max_len});
+	
+	$txt ||= '';
+	
+	my $attributes = join ' ', map {"$_='" . $data -> {attributes} -> {$_} . "'"} keys %{$data -> {attributes}};
+	
+	return qq {<td $attributes><nobr><input type="text" name="$$data{name}" value="$txt" maxlength="$$data{max_len}" size="$$data{size}"></nobr></td>};
+
+}
+
+################################################################################
+
 sub MSIE_5_draw_checkbox_cell {
 
 	my ($data) = @_;
@@ -619,7 +647,7 @@ sub MSIE_5_draw_table {
 
 	return <<EOH
 		
-		@{[ $options -> {js_ok_escape} ? MSIE_5_js_ok_escape ({name => $options -> {name}}) : '' ]}
+		@{[ $options -> {js_ok_escape} ? MSIE_5_js_ok_escape ({name => $options -> {name}, no_ok => $options -> {no_ok}}) : '' ]}
 		
 		<table cellspacing=0 cellpadding=0 width="100%"><tr><td class=bgr8>
 		
@@ -926,6 +954,7 @@ sub MSIE_5_draw_form_field {
 	
 		for (my $i = 0; $i < @$field; $i++) {		
 			my $subfield = $field -> [$i];					
+			$subfield -> {is_slave} = 1;
 			$subfield -> {colspan} = $i == @$field - 1 ? $_REQUEST {__max_cols} - 2 * $i - 1 : 1;
 			$html .= MSIE_5_draw_form_field ($subfield, $data);		
 		}
@@ -949,11 +978,13 @@ sub MSIE_5_draw_form_field {
 	
 	$field -> {colspan} ||= $_REQUEST {__max_cols} - 1;
 	
-	my $width = $field -> {is_slave} ? '' : 'width="20%"';
+	$field -> {label_width} = '20%' unless $field -> {is_slave};
+	my $label_width = $field -> {label_width} ? 'width=' . $field -> {label_width} : '';
+	my $cell_width  = $field -> {cell_width}  ? 'width=' . $field -> {cell_width}  : '';
 		
 	return $type eq 'hidden' ? $html : <<EOH;
-		<td class='header5' nowrap align=right $width>$$field{label}</td>
-		<td class=bgr4 colspan=$$field{colspan}>$html</td>
+		<td class='header5' nowrap align=right $label_width>$$field{label}</td>
+		<td class=bgr4 colspan=$$field{colspan} $cell_width>$html</td>
 EOH
 
 }
@@ -988,6 +1019,9 @@ sub MSIE_5_draw_form {
 	$_REQUEST {__max_cols} = $max_cols * 2;
 
 	foreach my $field (@$fields) {
+					
+		next if ref $field eq HASH and $field -> {off};
+		next if ref $field eq ARRAY and @$field == 0;
 					
 		$trs .= '<tr>' . MSIE_5_draw_form_field ($field, $data) . '</tr>';
 	
@@ -1036,10 +1070,13 @@ sub MSIE_5_js_ok_escape {
 			if (window.event.keyCode == 27 && (!is_dirty || window.confirm ('”йти без сохранени€ данных?'))) {
 				window.location.href = document.getElementById ('esc').href + '&_salt=@{[rand]}';
 			}
+			
+			@{[ $options -> {no_ok} ? '' : <<EOOK ]}
 		
 			if (window.event.keyCode == 10 && window.confirm ($$options{confirm_ok})) {
 				document.$$options{name}.submit ();
 			}
+EOOK
 													
 		</script>
 		
@@ -1129,7 +1166,17 @@ sub MSIE_5_draw_form_field_static {
 	$hidden_value ||= $$options{value};
 	$hidden_value =~ s/\"/\&quot\;/gsm;
 	
-	my $static_value = $options -> {values} ? $options -> {values} -> {$data -> {$options -> {name}}} : $options -> {value} || $data -> {$options -> {name}};
+	my $static_value = $options -> {values} ? 
+		(map {$_ -> {label}} grep {$_ -> {id} == $data -> {$options -> {name}}} @{$options -> {values}})[0] : 
+		($options -> {value} || $data -> {$options -> {name}});
+		
+	if ($options -> {href}) {
+	
+		check_href ($options);
+		$options -> {a_class} ||= 'lnk4';
+		$static_value = qq{<a href="$$options{href}" target="$$options{target}" class="$$options{a_class}">$static_value</a>}
+	
+	}
 
 	return $$options{add_hidden} ? qq {$static_value <input type=hidden name="$hidden_name" value="$hidden_value">} : $static_value;
 	

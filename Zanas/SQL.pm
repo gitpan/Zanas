@@ -168,6 +168,20 @@ sub sql_select_array {
 
 ################################################################################
 
+sub sql_select_scalar {
+
+	my ($sql, @params) = @_;
+	my $st = $db -> prepare ($sql);
+	$st -> execute (@params);
+	my @result = $st -> fetchrow_array ();
+	$st -> finish;
+	
+	return $result [0];
+
+}
+
+################################################################################
+
 sub sql_select_path {
 	
 	my ($table_name, $id, $options) = @_;

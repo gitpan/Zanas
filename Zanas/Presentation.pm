@@ -356,6 +356,12 @@ sub draw_checkbox_cell {
 
 ################################################################################
 
+sub draw_input_cell {
+	drawer_call ('draw_input_cell', @_);	
+}
+
+################################################################################
+
 =head1 draw_tr
 
 Отрисовка строки таблицы из заданных клеток.
@@ -1139,6 +1145,18 @@ sub draw_form_field_password {
 =item values 
 
 Маппинг от hidden_value к value.
+
+=item href 
+
+Гиперссылка.
+
+=item target
+
+Целевое окно гиперссылки.
+
+=item a_class
+
+CSS-класс гиперссылки.
 
 =back
 

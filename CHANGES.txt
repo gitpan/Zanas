@@ -1,3 +1,12 @@
+0.70: 26.11.03 12:00
+	- added draw_input_cell sub (by hekima);
+	- fixed MSIE_5_js_ok_escape sub (case: no_ok option is set);
+	- fixed a bug in draw_form_field_static (case: values option defined);
+	- added label_width and cell_width options to all draw_form_field_... subs;
+	- added href, target and a_class options in draw_form_field_static sub;
+	- fixed draw_form sub (empty <tr>s when $field -> {off});
+	- fixed upload_file sub (case: no file upload field at all);
+
 0.69: 25.11.03 15:50
 	- added picture option in draw_text_cell sub (Number::Format is now required for install);
 	- added draw_text_cells sub;

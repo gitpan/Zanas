@@ -143,7 +143,7 @@ sub upload_file {
 	
 	my $upload = $apr -> upload ('_' . $options -> {name});
 	
-	return undef unless $upload -> size;
+	return undef unless ($upload and $upload -> size);
 	
 	my $fh = $upload -> fh;
 	
