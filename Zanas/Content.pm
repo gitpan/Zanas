@@ -211,10 +211,16 @@ sub log_action {
 
 	my ($id_user, $type, $action, $error, $id) = @_;
 	
-	my $ip = $ENV {REMOTE_ADDR};
-	my $ip_fw = $ENV {HTTP_X_FORWARDED_FOR};
+	my $id_user = $_USER -> {id};
+	my $type    = $_OLD_REQUEST {type};
+	my $action  = $_OLD_REQUEST {action};
+	my $error   = $_REQUEST {error};
+	my $id      = $_OLD_REQUEST {id} || $_REQUEST {id};
 	
-	sql_do ("INSERT INTO log (id_user, type, action, error, params, ip, id_object, ip_fw) VALUES (?, ?, ?, ?, ?, ?, ?, ?)", $id_user, $type, $action, $error, Data::Dumper -> Dump ([\%_REQUEST], ['_REQUEST']), $ip, $id, $ip_fw);
+	my $ip      = $ENV {REMOTE_ADDR};
+	my $ip_fw   = $ENV {HTTP_X_FORWARDED_FOR};
+	
+	sql_do ("INSERT INTO log (id_user, type, action, error, params, ip, id_object, ip_fw) VALUES (?, ?, ?, ?, ?, ?, ?, ?)", $id_user, $type, $action, $error, Data::Dumper -> Dump ([\%_OLD_REQUEST], ['_REQUEST']), $ip, $id, $ip_fw);
 	
 }
 

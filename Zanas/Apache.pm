@@ -236,6 +236,8 @@ EOH
 		
 		if ($action) {
 		
+			our %_OLD_REQUEST = %_REQUEST;
+		
 			my $sub_name = "validate_${action}_$$page{type}";		
 			
 			my $error_code = call_for_role ($sub_name);
@@ -278,22 +280,13 @@ EOH
 					$_REQUEST {error} = $@;
 					out_html ({}, draw_page ($page));
 				}
-				else {
-				
-					$_REQUEST {__response_sent} or redirect ({action => '', redirect_params => ''}, {kind => 'js'});
-				
-#					unless ($_REQUEST {__response_sent}) {
-				
-#						my $url = create_url (action => '', redirect_params => '');
-#						out_html ({}, qq {<body onLoad="window.open ('$url&salt=' + Math.random (), '_parent', 'location=0,menubar=0,status=0,toolbar=0')"></body>});
-				
-#					}
-				
+				else {				
+					$_REQUEST {__response_sent} or redirect ({action => '', redirect_params => ''}, {kind => 'js'});								
 				}
 				
 			}
 			
-			log_action ($_USER -> {id}, $$page{type}, $action, $_REQUEST {error}, $_REQUEST {id});
+			log_action ();
 
 		}
 		else {

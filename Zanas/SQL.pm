@@ -255,7 +255,15 @@ sub sql_do_delete {
 		map {sql_delete_file ({table => $table_name, path_column => $_})} @{$options -> {file_path_columns}}
 		
 	}
-		
+	
+	our %_OLD_REQUEST = %_REQUEST;	
+	eval {
+		my $item = sql_select_hash ($table_name);
+		while (my ($key, $value) = each %$item) {
+			$_OLD_REQUEST {'_' . $key} = $value;
+		}
+	};
+	
 	sql_do ("DELETE FROM $table_name WHERE id = ?", $_REQUEST{id});
 	
 }

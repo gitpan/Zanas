@@ -1,9 +1,15 @@
+0.9936: 
+
+	- logging changed (keep original %_REQUEST state);
+	- sql_do_delete enhanced: Post Mortem Photo feature added.
+
 0.9935: 
 
 	- {lpt => 1} tables where $_REQUEST {id} is set are now allowed;
 	- draw_row_button is off when $_REQUEST {lpt} is set;
 	- js enhancement: click on td moves the slider;
 	- {empty} now is cheched with defined, not exists (by pashka);
+	- calendars are no more rendered for MSIE 5.0;
 
 0.9934: 
 
