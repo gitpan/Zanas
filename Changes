@@ -1,3 +1,10 @@
+0.9935: 
+
+	- {lpt => 1} tables where $_REQUEST {id} is set are now allowed;
+	- draw_row_button is off when $_REQUEST {lpt} is set;
+	- js enhancement: click on td moves the slider;
+	- {empty} now is cheched with defined, not exists (by pashka);
+
 0.9934: 
 
 	- draw_input_cell now returns empty <td> insteaf of '' when off => 1;

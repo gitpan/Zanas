@@ -217,7 +217,8 @@ EOH
 
 	}
 	
-	$_USER -> {role} eq 'admin' and $_REQUEST{id} or my $lpt = $body =~ s{<table[^\>]*lpt\=\"?1\"?[^\>]*\>}{\<table cellspacing\=1 cellpadding\=5 id='scrollable_table' width\=100\%\>}gsm; #"
+#	$_USER -> {role} eq 'admin' and $_REQUEST{id} or my $lpt = $body =~ s{<table[^\>]*lpt\=\"?1\"?[^\>]*\>}{\<table cellspacing\=1 cellpadding\=5 id='scrollable_table' width\=100\%\>}gsm; #"
+	my $lpt = $body =~ s{<table[^\>]*lpt\=\"?1\"?[^\>]*\>}{\<table cellspacing\=1 cellpadding\=5 id='scrollable_table' width\=100\%\>}gsm; #"
 	
 	my $menu = draw_menu ($page -> {menu}, $page -> {highlighted_type});
 	
@@ -266,6 +267,23 @@ EOCSS
 					var scrollable_table_is_blocked = false;
 					var q_is_focused = false;					
 					var scrollable_rows = new Array();		
+					var td2sr = new Array ();
+					var td2sc = new Array ();
+					
+					function td_on_click () {
+						var uid = window.event.srcElement.uniqueID;
+						var new_scrollable_table_row = td2sr [uid];
+						var new_scrollable_table_row_cell = td2sc [uid];
+						if (new_scrollable_table_row == null || new_scrollable_table_row_cell == null) return;
+						scrollable_rows [scrollable_table_row].cells [scrollable_table_row_cell].className = scrollable_table_row_cell_old_style;
+						scrollable_table_row = new_scrollable_table_row;
+						scrollable_table_row_cell = new_scrollable_table_row_cell;
+						scrollable_table_row_cell_old_style = scrollable_rows [scrollable_table_row].cells [scrollable_table_row_cell].className;
+						scrollable_rows [scrollable_table_row].cells [scrollable_table_row_cell].className = 'txt6';
+						focus_on_first_input (scrollable_rows [scrollable_table_row].cells [scrollable_table_row_cell]);
+						return false;
+					}
+					
 				</script>
 				
 			</head>
@@ -293,6 +311,17 @@ EOF
 								scrollable_rows = scrollable_rows.concat (rows [j]);
 							}
 						}					
+					}
+					
+					for (var i = 0; i < scrollable_rows.length; i++) {
+					
+						var cells = scrollable_rows [i].cells;
+						for (var j = 0; j < cells.length; j++) {
+							var scrollable_cell = cells [j];
+							td2sr [scrollable_cell.uniqueID] = i;
+							td2sc [scrollable_cell.uniqueID] = j;
+							scrollable_cell.onclick = td_on_click;
+						}
 					}
 									
 					scrollable_table = getElementById ('scrollable_table');
@@ -1125,7 +1154,7 @@ sub draw_row_button {
 
 	my ($options) = @_;	
 	
-	return '<td class=bgr0 valign=top nowrap width="1%">&nbsp;' if $options -> {off};	
+	return '<td class=bgr0 valign=top nowrap width="1%">&nbsp;' if $options -> {off} || $_REQUEST {lpt};	
 	
 	check_href  ($options);
 
@@ -1358,6 +1387,11 @@ sub draw_form_field_date {
 sub draw_form_field_datetime {
 
 	my ($options, $data) = @_;
+		
+	if ($r -> header_in ('User-Agent') =~ /MSIE 5\.0/) {
+		$options -> {size} ||= $options -> {no_time} ? 11 : 16;
+		return draw_form_field_string ($options, $data);
+	}	
 		
 	unless ($options -> {format}) {
 	
@@ -1637,7 +1671,7 @@ sub draw_toolbar_input_select {
 	
 	$options -> {max_len} ||= $conf -> {max_len};
 	
-	if (exists $options -> {empty}) {
+	if (defined $options -> {empty}) {
 		$html .= qq {<option value=0 $selected>$$options{empty}</option>};
 	}
 
@@ -1686,7 +1720,7 @@ sub draw_form_field_select {
 
 	my ($options, $data) = @_;
 	
-	my $html = exists $options -> {empty} ? qq {<option value="0" $selected>$$options{empty}</option>\n} : '';
+	my $html = defined $options -> {empty} ? qq {<option value="0" $selected>$$options{empty}</option>\n} : '';
 	
 	$options -> {max_len} ||= $conf -> {max_len};
 	
@@ -2025,7 +2059,7 @@ sub draw_select_cell {
 	my $attributes = dump_attributes ($data -> {attributes});
 	return qq {<td $attributes>&nbsp;} if $data -> {off};	
 
-	my $html = exists $data -> {empty} ? qq {<option value="0">$$data{empty}</option>\n} : '';
+	my $html = defined $data -> {empty} ? qq {<option value="0">$$data{empty}</option>\n} : '';
 
 	$data -> {max_len} ||= $conf -> {max_len};
 
