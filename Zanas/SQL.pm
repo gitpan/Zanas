@@ -289,16 +289,21 @@ sub sql_do_insert {
 
 	my ($table_name, $pairs) = @_;
 		
-	my $fields = 'fake';
-	my $args   = '?';
-	my @params = $_REQUEST {sid};
+#	my $fields = 'fake';
+#	my $args   = '?';
+#	my @params = $_REQUEST {sid};
+
+	my $fields = '';
+	my $args   = '';
+	my @params = ();
+
+	$pairs -> {fake} ||= $_REQUEST {sid};
 	
-	while (my ($field, $value) = each %$pairs) {
-	
-		$fields .= ', ' . $field;
-		$args   .= ', ?';
-		push @params, $value;
-	
+	while (my ($field, $value) = each %$pairs) {	
+		my $comma = @params ? ', ' : '';	
+		$fields .= "$comma $field";
+		$args   .= "$comma ?";
+		push @params, $value;	
 	}
 	
 	sql_do ("INSERT INTO $table_name ($fields) VALUES ($args)", @params);	
@@ -331,7 +336,11 @@ sub sql_delete_file {
 	
 	my $path = sql_select_array ("SELECT $$options{path_column} FROM $$options{table} WHERE id = ?", $_REQUEST {id});
 	
+#print STDERR "sql_delete_file: unlinking '$path'\n";
+
 	unlink $path;
+
+#print STDERR "sql_delete_file: '$path' unlinked\n";
 
 }
 
@@ -423,6 +432,13 @@ name of the column containing the file size (in bytes)
 sub sql_upload_file {
 	
 	my ($options) = @_;
+
+print STDERR "sql_upload_file: purge started\n";
+	
+	sql_delete_file ($options);
+
+print STDERR "sql_upload_file: purge finished\n";
+	
 	my $uploaded = upload_file ($options) or return;
 	
 	my (@fields, @params) = ();

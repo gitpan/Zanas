@@ -1,3 +1,37 @@
+0.88:
+	added 'headers' sub:
+	
+		draw_table (
+		
+			headers (qw(
+				¹		no
+				Label		label
+				_
+			)),
+		
+			sub {
+				...
+			}
+			
+		)
+	
+	
+	- added 'hrefs' sub (for column ordering):
+	
+		href      => create_url (order => $order, desc => 0),
+		href_asc  => create_url (order => $order, desc => 0),
+		href_desc => create_url (order => $order, desc => 1),	
+	
+	- added 'href_asc' and 'href_desc' options to draw_text_cell.
+	- new magic parameter: __pack. Resizes the new opened window to fit its contents.
+	- added js function: nop. Does nothing.
+	- new magic parameter: __read_only. All form inputs are static.
+	- added 'picture' option to draw_form_field_string and draw_form_field_static subs
+
+0.87: 30.01.04 10:30
+
+	- added 'value' option to draw_checkbox_cell sub
+
 0.86: 29.01.04 16:30
 
 	- added 'confirm' option to draw_centered_toolbar_button sub

@@ -5,6 +5,8 @@ var typeAheadInfo = {last:0,
 	reset:function() {this.last=0; this.accumString=""}
 };
 
+function nop() {}
+
 function typeAhead() { // borrowed from http://www.oreillynet.com/javascript/2003/09/03/examples/jsdhtmlcb_bonus2_example.html
    if (window.event && !window.event.ctrlKey) {
       var now = new Date();

@@ -83,6 +83,12 @@ sub MSIE_5_draw_page {
 	
 	$_REQUEST {lpt} ||= $_REQUEST {xls};
 	
+	if ($_REQUEST {__popup}) {
+		$_REQUEST {__read_only} = 1;
+		$_REQUEST {__pack} = 1;
+		$_REQUEST {__no_navigation} = 1;
+	}
+	
 	delete $_REQUEST {__response_sent};
 	
 	my $body = '';
@@ -209,6 +215,13 @@ EOCSS
 			<body bgcolor=white leftMargin=0 topMargin=0 marginwidth="0" marginheight="0" name="body" id="body">
 
 				<script for="body" event="onload">
+
+					@{[ $_REQUEST {__pack} ? <<EOF : '']}
+						var newWidth  = document.all ['bodyArea'].offsetWidth + 10;
+						var newHeight = document.all ['bodyArea'].offsetHeight + 30;
+						window.resizeTo (newWidth, newHeight);						
+						window.moveTo ((screen.width - newWidth) / 2, (screen.height - newHeight) / 2);
+EOF
 							
 					var tables = document.body.getElementsByTagName ('table');
 
@@ -270,7 +283,6 @@ EOCSS
 					}
 
 EOF
-
 				</script>
 
 				<script for="body" event="onkeydown">												
@@ -278,9 +290,11 @@ EOF
 					handle_basic_navigation_keys ();
 					@{[ map {&{"MSIE_5_handle_hotkey_$$_{type}"} ($_)} @scan2names ]}							
 				</script>						
-				$auth_toolbar			
-				$menu
-				$body
+				<div id="bodyArea">
+					$auth_toolbar			
+					$menu
+					$body
+				</div>
 				<iframe name=invisible src="/0.html" width=0 height=0>
 				</iframe>
 				$keepalive
@@ -416,6 +430,7 @@ sub MSIE_5_draw_input_cell {
 sub MSIE_5_draw_checkbox_cell {
 
 	my ($data) = @_;
+	my $value = $data -> {value} || 1;
 	
 	my $checked = $data -> {checked} ? 'checked' : '';
 
@@ -426,8 +441,8 @@ sub MSIE_5_draw_checkbox_cell {
 
 	return qq {<td $attributes>&nbsp;} if $data -> {off};	
 
-	return qq {<td $attributes><input type=checkbox name=$$data{name} $checked value=1></td>};
-
+	return qq {<td $attributes><input type=checkbox name=$$data{name} $checked value='$value'></td>};
+	
 }
 
 ################################################################################
@@ -532,6 +547,8 @@ sub MSIE_5_draw_table_header {
 	return '' if $cell -> {off};
 	
 	$cell -> {label} = "<a class=lnk4 href=\"$$cell{href}\"><b>" . $cell -> {label} . "</b></a>" if $cell -> {href};
+	$cell -> {label} .= "\&nbsp;\&nbsp;<a class=lnk4 href=\"$$cell{href_asc}\"><b>\&uarr;</b></a>" if $cell -> {href_asc};
+	$cell -> {label} .= "\&nbsp;\&nbsp;<a class=lnk4 href=\"$$cell{href_desc}\"><b>\&darr;</b></a>" if $cell -> {href_desc};
 	$cell -> {colspan} ||= 1;
 	
 	return "<th class=bgr4 colspan=$$cell{colspan}>$$cell{label}\&nbsp;";
@@ -911,6 +928,7 @@ sub MSIE_5_draw_form_field {
 	return '' if $field -> {off};
 	
 	my $type = $field -> {type};
+	$type = 'static' if $_REQUEST {__read_only} and $type ne 'hgroup';	
 	$type ||= 'string';
 	
 	my $html = &{"draw_form_field_$type"} ($field, $data);
@@ -975,7 +993,7 @@ sub MSIE_5_draw_form {
 	
 	}
 	
-	my $path = $data -> {path} ? draw_path ($options, $data -> {path}) : '';
+	my $path = ($data -> {path} && !$_REQUEST{__no_navigation}) ? draw_path ($options, $data -> {path}) : '';
 	
 	my $bottom_toolbar = 
 		exists $options -> {bottom_toolbar} ? $options -> {bottom_toolbar} :		
@@ -1036,6 +1054,7 @@ EOH
 ################################################################################
 
 sub MSIE_5_draw_form_field_string {
+
 	my ($options, $data) = @_;
 	
 	$options -> {max_len} ||= $conf -> {max_len};	
@@ -1044,12 +1063,18 @@ sub MSIE_5_draw_form_field_string {
 	
 	my $s = $options -> {value};
 	$s ||= $$data{$$options{name}};
+	if ($options -> {picture}) {
+		$s = $number_format -> format_picture ($s , $options -> {picture});
+		$s =~ s/^\s+//g; 
+	}
+	
 	$s =~ s/\"/\&quot\;/gsm; #";
 	
 	my $attributes = dump_attributes ($options -> {attributes});
 	
 	my $size = $options -> {size} ? "size=$$options{size} maxlength=$$options{size}" : "size=120";	
 	return qq {<input $attributes onFocus="scrollable_table_is_blocked = true; q_is_focused = true" onBlur="scrollable_table_is_blocked = false; q_is_focused = false" autocomplete="off" type="text" maxlength="$$options{max_len}" name="_$$options{name}" value="$s" $size onKeyPress="if (window.event.keyCode != 27) is_dirty=true">};
+	
 }
 
 ################################################################################
@@ -1141,7 +1166,7 @@ sub MSIE_5_draw_form_field_hgroup {
 	
 	map {$_ -> {label} .= '&nbsp;*' if $_ -> {mandatory}} @{$options -> {items}};
 	
-	return join '&nbsp;&nbsp;', map {$_ -> {label} . ($_->{label} ? ': ' : '') . &{'draw_form_field_' . ($_ -> {type} ? $_ -> {type} : 'string')}($_, $data)} @{$options -> {items}};
+	return join '&nbsp;&nbsp;', map {$_ -> {label} . ($_->{label} ? ': ' : '') . ($_ -> {off} ? '' : &{'draw_form_field_' . ($_REQUEST {__read_only} ? 'static' : $_ -> {type} ? $_ -> {type} : 'string')}($_, $data))} @{$options -> {items}};
 	
 }
 
@@ -1188,6 +1213,8 @@ sub MSIE_5_draw_form_field_static {
 	my $static_value = $options -> {values} ? 
 		(map {$_ -> {label}} grep {$_ -> {id} == $data -> {$options -> {name}}} @{$options -> {values}})[0] : 
 		($options -> {value} || $data -> {$options -> {name}});
+		
+	$static_value = $number_format -> format_picture ($static_value, $options -> {picture}) if $options -> {picture};	
 		
 	if ($options -> {href}) {
 	

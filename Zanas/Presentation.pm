@@ -121,6 +121,40 @@ sub create_url {
 
 ################################################################################
 
+sub hrefs {
+	my ($order) = @_;
+	
+	return $order ? (
+		href      => create_url (order => $order, desc => 0),
+		href_asc  => create_url (order => $order, desc => 0),
+		href_desc => create_url (order => $order, desc => 1),
+	) : ();
+}
+
+################################################################################
+
+sub headers {
+
+	my @result = ();
+	
+	while (@_) {
+	
+		my $label = shift;
+		$label =~ s/_/ /g;
+
+		my $order;
+		$order = shift if $label ne ' ';
+		
+		push @result, {label => $label, hrefs ($order)};
+	
+	}
+	
+	return \@result;
+
+}
+
+################################################################################
+
 =head1 check_href
 
 Процедура коррекции компонента C<href> заданного хэша, переданного по ссылке, на предмет расстановки параметров C<sid> и C<_salt>. Для C<javascript>-ссылок оставляет аргумент без изменения.
