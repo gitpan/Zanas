@@ -1,3 +1,12 @@
+0.78: 24.12.03 12:30
+
+	- added Content-Length header in download_file sub;
+	- added support for $preconf configuration hash (setting in <perl> section);
+	- added support for __focused_input magic parameter;
+	- sub add_vocabularies added;
+	- sub sql_select_vocabulary added;
+	- $conf -> {top_banner} is now rendered;
+
 0.77: 17.12.03 10:30
 
 	- added db schema autocheck with DBIx::ModelUpdate;

@@ -148,6 +148,15 @@ sub sql_select_col {
 
 ################################################################################
 
+sub sql_select_vocabulary {
+
+	my ($table_name) = @_;	
+	return sql_select_all ("SELECT id, label FROM $table_name WHERE fake = 0 ORDER BY label");
+	
+}
+
+################################################################################
+
 sub sql_select_hash {
 
 	my ($sql_or_table_name, @params) = @_;
@@ -453,6 +462,8 @@ EOH
 sub sql_reconnect {
 
 	return if $db and $db -> ping;
+	
+	$conf = {%$conf, %$preconf};
 
 	our $db  = DBI -> connect ($conf -> {'db_dsn'}, $conf -> {'db_user'}, $conf -> {'db_password'}, {RaiseError => 1});
 	

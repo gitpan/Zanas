@@ -59,7 +59,7 @@ sub require_fresh_internal {
 
 	my ($module_name, $fatal) = @_;	
 
-	if ($conf -> {core_spy_modules}) {
+	if ($conf -> {core_spy_modules} || $preconf -> {core_spy_modules}) {
 		
 		my $file_name = $module_name;
 
@@ -124,6 +124,8 @@ BEGIN {
 	$PACKAGE_ROOT ||= '';
 
 	$PACKAGE_ROOT =~ s{\/Config\.pm}{};
+		
+	$conf = {%$conf, %$preconf};
 
 	if ($conf -> {core_load_modules}) {
 
@@ -234,7 +236,7 @@ BEGIN {
 
 package Zanas;
 
-$VERSION = '0.77';
+$VERSION = '0.78';
 
 =head1 NAME
 

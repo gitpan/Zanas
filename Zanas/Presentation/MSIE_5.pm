@@ -166,6 +166,8 @@ EOH
 	
 	my $meta_refresh = $_REQUEST {__meta_refresh} ? qq{<META HTTP-EQUIV=Refresh CONTENT="$_REQUEST{__meta_refresh}; URL=@{[create_url()]}">} : '';	
 	
+	my $auth_toolbar = draw_auth_toolbar ({lpt => $lpt});
+	
 	return <<EOH;
 		<html>
 			<head>
@@ -302,14 +304,21 @@ EOCSS
 						
 					}
 					
-					var inputs = document.body.getElementsByTagName ('input');										
-					if (inputs != null) {										
-						for (var i = 0; i < inputs.length; i++) {
-							if (inputs [i].type != 'text') continue;
-							if (inputs [i].name == 'q') break;
-							inputs [i].focus ();
-							break;
-						}					
+					var focused_inputs = getElementsByName ('$_REQUEST{__focused_input}');
+					
+					if (focused_inputs != null && focused_inputs.length > 0) {
+						focused_inputs [0].focus ();
+					}
+					else {					
+						var inputs = document.body.getElementsByTagName ('input');
+						if (inputs != null) {
+							for (var i = 0; i < inputs.length; i++) {
+								if (inputs [i].type != 'text') continue;
+								if (inputs [i].name == 'q') break;
+								inputs [i].focus ();
+								break;
+							}
+						}
 					}
 
 					@{[ $_REQUEST {__blur_all} ? <<EOF : '']}
@@ -365,7 +374,6 @@ EOF
 							}
 							
 						}
-
 				
 						if (window.event.keyCode == 40 && scrollable_table_row < scrollable_rows.length - 1) {
 
@@ -438,12 +446,8 @@ EOF
 
 					@{[ map {&{"MSIE_5_handle_hotkey_$$_{type}"} ($_)} @scan2names ]}
 							
-				</script>
-						
-				@{[ 				
-					draw_auth_toolbar ({lpt => $lpt}) 
-				]}
-				
+				</script>						
+				$auth_toolbar			
 				$menu
 				$body
 				<iframe name=invisible src="/i/0.html" width=0 height=0>
@@ -1615,6 +1619,8 @@ sub MSIE_5_draw_auth_toolbar {
 		<td class=bgr1><img height=22 src="/i/0.gif" width=4 border=0></td>				
 EOH
 
+	$top_banner = interpolate ($conf -> {top_banner});
+	
 	return <<EOH;
 
 		<table cellSpacing=0 cellPadding=0 border=0 width=100%>
@@ -1661,7 +1667,7 @@ EOEXIT
 				<td class=bgr1><img height=1 src="/i/0.gif" width=7 border=0></td>
 			</tr>
 		</table>
-		$$conf{top_banner}
+		$top_banner
 		<table cellSpacing=0 cellPadding=0 border=0 width=100%>
 			<tr><td class=bgr7><img height=1 src="/i/0.gif" width=1 height=1 border=0></td></tr>
 			<tr><td class=bgr1><img height=1 src="/i/0.gif" width=1 height=1 border=0></td></tr>

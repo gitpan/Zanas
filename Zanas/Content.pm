@@ -152,11 +152,12 @@ sub download_file {
 	
 	$options -> {type} .= '; charset=' . $options -> {charset} if $options -> {charset};
 
-	$r -> content_type ($options -> {type});
-	$options -> {no_force_download} or $r -> header_out ('Content-Disposition' => "attachment;filename=" . $options -> {file_name}); #if $options -> {file_name};
-	$r -> send_http_header ();
-
 	my $path = $r -> document_root . $options -> {path};
+
+	$r -> content_type ($options -> {type});
+	$options -> {no_force_download} or $r -> header_out ('Content-Disposition' => "attachment;filename=" . $options -> {file_name}); 
+	$r -> header_out ('Content-Length' => -s $path);
+	$r -> send_http_header ();
 
 	open (F, $path) or die ("Can't open file $path: $!");
 
@@ -207,6 +208,16 @@ sub upload_file {
 		path      => $path
 	}
 	
+}
+
+################################################################################
+
+sub add_vocabularies {
+
+	my ($item, @names) = @_;
+	
+	map {$item -> {$_} = sql_select_vocabulary ($_)} @names;
+
 }
 
 1;
