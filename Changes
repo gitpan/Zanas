@@ -1,3 +1,7 @@
+0.9921: 
+
+	new $conf option: core_cache_html. HTML cacheing in pub_handler introduced;
+
 0.9920: 
 
 	- new redirect kind: 'http';

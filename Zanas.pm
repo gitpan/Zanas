@@ -194,6 +194,24 @@ BEGIN {
 			},
 
 		);
+		
+		$conf -> {core_cache_html} and $model_update -> assert (
+
+			tables => {		
+
+				cache_html => {
+				
+					columns => {
+						uri     => {TYPE_NAME  => 'varchar', COLUMN_SIZE  => 255, _PK    => 1},
+						html    => {TYPE_NAME  => 'text'},
+						gzipped => {TYPE_NAME  => 'text'},
+					}
+
+				},
+
+			},
+
+		);		
 
 		$model_update -> assert (
 
@@ -253,7 +271,7 @@ BEGIN {
 
 package Zanas;
 
-$VERSION = '0.9920';
+$VERSION = '0.9921';
 
 =head1 NAME
 

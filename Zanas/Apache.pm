@@ -225,6 +225,10 @@ EOH
 							$_REQUEST {$key} = $value;
 						}					
 						
+					} elsif ($conf -> {core_cache_html}) {
+					
+						sql_do ("DELETE FROM cache_html");
+					
 					}
 					
 				};	
@@ -305,7 +309,9 @@ sub out_html {
 		
 		if (($conf -> {core_gzip} or $preconf -> {core_gzip}) and $r -> header_in ('Accept-Encoding') =~ /gzip/) {
 			$r -> header_out ('Content-Encoding' => 'gzip');
-			$html = Compress::Zlib::memGzip ($html);
+			unless ($_REQUEST {__is_gzipped}) {
+				$html = Compress::Zlib::memGzip ($html);
+			}
 		}		
 
 		$r -> header_out ('Content-Length' => length $html);
@@ -337,9 +343,31 @@ sub pub_handler {
 	our %_COOKIES = Apache::Cookie -> fetch;
 	my $c = $_COOKIES {psid};
 	$_REQUEST {sid} = $c -> value if $c;
-   	
+	
+	eval {
+		require_fresh ("${_PACKAGE}Content::pub_users");
+		our $_USER = get_public_user ();
+	};
+	
 	sql_reconnect ();
 
+	if ($conf -> {core_cache_html} && !$_USER -> {id}) {
+	
+		my $use_gzip = ($conf -> {core_gzip} or $preconf -> {core_gzip}) and $r -> header_in ('Accept-Encoding') =~ /gzip/;
+		
+		my $field = $use_gzip ? 'gzipped' : 'html';
+		
+		my $html = sql_select_scalar ("SELECT $field FROM cache_html WHERE uri = ?", $_REQUEST {__uri_chomped} . '/' . $r -> args);
+		
+		if ($html) {
+			$_REQUEST {__is_gzipped} = $use_gzip;
+			out_html ({}, $html);
+		   	$db -> disconnect;
+			return OK;
+		}
+	
+	}
+   	
 	require_fresh ("${_PACKAGE}Config");
 	require_fresh ("${_PACKAGE}Content::pub_page");
 	
@@ -382,8 +410,15 @@ sub pub_handler {
 			$_PAGE -> {body} = &$renderrer ($content);
 		};
 		print STDERR $@ if $@;
-				
-		out_html ({}, draw_pub_page ());
+
+		my $html    = draw_pub_page ();
+
+		if ($conf -> {core_cache_html}) {
+			my $gzipped = (($conf -> {core_gzip} or $preconf -> {core_gzip})) ? Compress::Zlib::memGzip ($html) : '';		
+			sql_do ('REPLACE INTO cache_html (uri, html, gzipped) VALUES (?, ?, ?)', $_REQUEST {__uri_chomped} . '/' . $r -> args, $html, $gzipped);
+		}
+		
+		out_html ({}, $html);
 		
 	}
 
