@@ -211,7 +211,13 @@ sub sql_do_update {
 	my $sql = join ', ', map {"$_ = ?"} @$field_list;
 	$stay_fake or $sql .= ', fake = 0';
 	$sql = "UPDATE $table_name SET $sql WHERE id = ?";	
+
+print STDERR Dumper (\%_REQUEST);
+
 	my @params = @_REQUEST {(map {"_$_"} @$field_list), 'id'};	
+
+print STDERR Dumper (\@params);
+
 	sql_do ($sql, @params);
 	
 }

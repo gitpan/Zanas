@@ -11,10 +11,16 @@ sub MSIE_5_register_hotkey {
 	my $code = 0;
 	
 	if ($c eq '<') {
-		$code = 37; #188;
+		$code = 37;
 	}
 	elsif ($c eq '>') {
-		$code = 39; #190;
+		$code = 39;
+	}
+	elsif (lc $c eq 'æ') {
+		$code = 186;
+	}
+	elsif (lc $c eq 'ý') {
+		$code = 222;
 	}
 	else {
 		$c =~ y{ÉÖÓÊÅÍÃØÙÇÕÚÔÛÂÀÏÐÎËÄÆÝß×ÑÌÈÒÜÁÞéöóêåíãøùçõúôûâàïðîëäæýÿ÷ñìèòüáþ}{qwertyuiop[]asdfghjkl;'zxcvbnm,.qwertyuiop[]asdfghjkl;'zxcvbnm,.};
@@ -396,7 +402,12 @@ sub MSIE_5_draw_text_cell {
 	
 	$data -> {max_len} ||= $conf -> {max_len};
 	$data -> {max_len} ||= 30;
+	
+	$data -> {attributes} ||= {};
+	$data -> {attributes} -> {class} ||= 'txt4';
 			
+	$data -> {a_class} ||= 'lnk4';
+
 	my $txt = trunc_string ($data -> {label}, $data -> {max_len});
 	
 	$txt ||= '&nbsp;';
@@ -404,12 +415,12 @@ sub MSIE_5_draw_text_cell {
 	if ($data -> {href}) {
 		check_href ($data);
 		my $target = $data -> {target} ? "target='$$data{target}'" : '';
-		$txt = qq { <a class=lnk4 $target href="$$data{href}" onFocus="blur()">$txt</a> };
+		$txt = qq { <a class=$$data{a_class} $target href="$$data{href}" onFocus="blur()">$txt</a> };
 	}
 	
-	my $attributes = $data -> {attributes} ? join ' ', map {"$_='" . $data -> {attributes} -> {$_} . "'"} keys %{$data -> {attributes}} : '';
+	my $attributes = join ' ', map {"$_='" . $data -> {attributes} -> {$_} . "'"} keys %{$data -> {attributes}};
 	
-	return qq {<td class=txt4 $attributes><nobr>$txt</nobr></td>};
+	return qq {<td $attributes><nobr>$txt</nobr></td>};
 
 }
 
@@ -468,6 +479,7 @@ sub MSIE_5_draw_table {
 		foreach my $callback (@tr_callbacks) {
 			$trs .= '<tr>';
 			$trs .= &$callback ($item);
+			$trs .= '</tr>';
 		}
 	}
 	
@@ -571,12 +583,16 @@ sub MSIE_5_draw_toolbar {
 
 	my ($options, @buttons) = @_;
 	
-	return '' if $options -> {off};
+	return '' if $options -> {off};	
 	
 	return <<EOH
 		<table class=bgr5 cellspacing=0 cellpadding=0 width="100%" border=0>
 			<form action=/ name=toolbar_form>
-				<input type=hidden name=sid value=$_REQUEST{sid}>
+			
+				@{[ map {<<EO} @{$options -> {keep_params}} ]}
+					<input type=hidden name=$_ value=$_REQUEST{$_}>
+EO
+					<input type=hidden name=sid value=$_REQUEST{sid}>
 				<tr>
 					<td class=bgr0 colspan=15><img height=1 src="/i/0.gif" width=1 border=0></td>
 				</tr>
@@ -635,7 +651,7 @@ EOH
 sub MSIE_5_draw_toolbar_input_text {
 
 	my ($options) = @_;
-	
+		
 	return <<EOH
 		<td nowrap>$$options{label}: <input type=text name=$$options{name} value="$_REQUEST{$$options{name}}" onFocus="scrollable_table_is_blocked = true; q_is_focused = true" onBlur="scrollable_table_is_blocked = false; q_is_focused = false"><input type=hidden name=search value=1><input type=hidden name=type value="$_REQUEST{type}"></td>
 		<td><img height=15  hspace=4 src="/i/toolbars/razd1.gif" width=2 border=0></td>
@@ -694,8 +710,17 @@ sub MSIE_5_draw_row_button {
 		my $msg = js_escape ($options -> {confirm});
 		$options -> {href} = qq [javascript:if (confirm ($msg)) {window.open('$$options{href}', '_self')}];
 	} 
+	
+	my $title = $options -> {label};
+	
+	if ($conf -> {core_show_icons}) {	
+		$options -> {label} = qq|<img src="/i/buttons/$$options{icon}.gif" alt="$$options{label}" border=0 hspace=0 vspace=0>|
+	}
+	else {
+		$options -> {label} = "\&nbsp;<b>[$$options{label}]</b>\&nbsp;";
+	}
 
-	return qq {<a class=lnk0 title="$$options{label}" href="$$options{href}" onFocus="blur()">\&nbsp;<b>[$$options{label}]</b>\&nbsp;</a>};
+	return qq {<a class=lnk0 title="$title" href="$$options{href}" onFocus="blur()" target="$$options{target}">$$options{label}</a>};
 
 }
 
@@ -705,7 +730,9 @@ sub MSIE_5_draw_row_buttons {
 
 	my ($options, $buttons) = @_;
 
-	return '<td class=bgr4 valign=top nowrap width="1%">' . (join '', map {draw_row_button ($_)} @$buttons) . '</td>';
+	return $options -> {off} ? 
+		'<td class=bgr4 valign=top nowrap width="1%">&nbsp;':
+		'<td class=bgr4 valign=top nowrap width="1%">' . (join '', map {draw_row_button ($_)} @$buttons) . '</td>';
 
 }
 
@@ -742,7 +769,7 @@ sub MSIE_5_draw_form {
 				
 		$trs .= $type eq 'hidden' ? $html : <<EOH;
 			<tr>
-				<td class=header$c1 nowrap align=right width="20%">$$field{label}: </td>
+				<td class=header$c1 nowrap align=right width="20%">$$field{label}@{[$field -> {mandatory} ? '&nbsp;*' : '']}: </td>
 				<td class=bgr$c2>$html</td></tr>
 EOH
 	
@@ -799,10 +826,13 @@ EOH
 
 sub MSIE_5_draw_form_field_string {
 	my ($options, $data) = @_;
+	$options -> {max_len} ||= $conf -> {max_len};
+	$options -> {max_len} ||= 30;
+	$options -> {size} ||= $options -> {max_len};
 	my $s = $$data{$$options{name}};
 	$s =~ s/\"/\&quot\;/gsm; #"
 	my $size = $options -> {size} ? "size=$$options{size} maxlength=$$options{size}" : "size=120";	
-	return qq {<input type="text" name="_$$options{name}" value="$s" $size onKeyPress="if (window.event.keyCode != 27) is_dirty=true">};
+	return qq {<input type="text" maxlength="$$options{max_len}" name="_$$options{name}" value="$s" $size onKeyPress="if (window.event.keyCode != 27) is_dirty=true">};
 }
 
 ################################################################################
@@ -903,6 +933,8 @@ sub MSIE_5_draw_form_field_select {
 	
 	my $html = '';
 	
+	unshift @{$options -> {values}}, {id => 0, label => $options -> {empty}};# if exists $options -> {empty};
+
 	foreach my $value (@{$options -> {values}}) {
 		my $selected = $data -> {$options -> {name}} == $value -> {id} ? 'selected' : '';
 		$html .= qq {<option value="$$value{id}" $selected>$$value{label}</option>};		
@@ -971,6 +1003,8 @@ sub MSIE_5_draw_back_next_toolbar {
 sub MSIE_5_draw_centered_toolbar_button {
 
 	my ($options) = @_;
+	
+	return '' if $options -> {off};
 	
 	check_href ($options);
 	

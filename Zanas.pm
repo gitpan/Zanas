@@ -88,7 +88,7 @@ BEGIN {
 
 package Zanas;
 
-$VERSION = '0.57';
+$VERSION = '0.58';
 
 =head1 NAME
 
@@ -317,9 +317,10 @@ Now, all content callbacks (C<validate_{$action}_${type}_for_${role}>, C<do_{$ac
 
 Zanas::Presentation
 
-=head1 AUTHOR
+=head1 AUTHORS
 
 Dmitry Ovsyanko <do@zanas.ru>
 Pavel Kudryavtzev <pashka@zanas.ru>
+Yaroslav Ivanov <... hekima ...>
 
 1;

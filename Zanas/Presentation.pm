@@ -238,6 +238,10 @@ sub draw_hr {
 
 дополнительные HTML-атрибуты для тега C<td>.
 
+=item a_class
+
+CSS-класс ссылки. По умолчанию равен C<lnk4>. 
+
 =back
 
 =head2 Использование
@@ -250,7 +254,8 @@ sub draw_hr {
 		attributes => {
 			width => '1%',
 			align => 'right',
-		}
+		},
+		a_class => 'red_hot_link'
 	});
 
 =cut
@@ -677,6 +682,7 @@ sub draw_row_buttons {
 			{
 				name  => 'name',
 				label => 'Символическое имя',
+				mandatory => 1,
 			},
 			{
 				name   => 'period',
@@ -715,6 +721,10 @@ sub draw_form {
 =item label
 
 Отображаемое имя
+
+=item size
+
+Значение атрибутов C<size> и C<maxlength>
 
 =back
 
@@ -1006,6 +1016,10 @@ sub draw_form_field_radio {
 		
 		{id => 'значение n', label => 'строка n'},
 	]
+
+=item empty
+
+Если задана, то в начало списка добавляется пустая строка с данной подписью и C<id=0>.
 
 =back
 
