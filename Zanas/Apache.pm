@@ -1,9 +1,5 @@
 no warnings;
 
-use Number::Format;
-use HTTP::Date;
-use URI::Escape;
-
 ################################################################################
 
 sub fill_in_i18n {
@@ -63,11 +59,12 @@ sub get_request {
 
 sub handler {
 
-	our $_PACKAGE = __PACKAGE__ . '::';
+	$_PACKAGE ||= __PACKAGE__ . '::';
 		
 	get_request (@_);
 
 	my $parms = $apr -> parms;
+	undef %_REQUEST;
 	our %_REQUEST = %{$parms};
 	
 	$_REQUEST {type} =~ s/_for_.*//;
@@ -86,7 +83,7 @@ sub handler {
 	
    	sql_reconnect ();
 
-	require_fresh ($_PACKAGE . '::Config');
+	require_fresh ($_PACKAGE . 'Config');
 
    	$conf -> {dbf_dsn} and our $dbf = DBI -> connect ($conf -> {dbf_dsn}, {RaiseError => 1});
    	
@@ -150,10 +147,15 @@ sub handler {
 		F1                       => 'F1: Aide',
 		Select                   => 'Sélection',
    	});   	
-   	
-   	my $path_info = $ENV{PATH_INFO} || $ENV{REQUEST_URI};
    	   	
-	$_REQUEST {type} = '_static_files' if (($path_info =~ /\w\.\w/ && $path_info ne '/index.html') || $r -> filename =~ /\w\.\w/);
+#   	my $path_info = $ENV{REQUEST_URI} || $ENV{PATH_INFO};
+#   	$path_info;
+#print STDERR "\n\$ENV{PATH_INFO}=$ENV{PATH_INFO}\n";
+#print STDERR "\$ENV{REQUEST_URI}=$ENV{REQUEST_URI}\n";
+#print STDERR "\$path_info=$path_info\n";
+#	$_REQUEST {type} = '_static_files' if (($path_info =~ /\w\.[a-z]{3}$/ && $path_info ne '/index.html') || $r -> filename =~ /\w\.\w/);
+
+	$_REQUEST {type} = '_static_files' if $r -> uri =~ /navigation\.js|0\.html|0\.gif|zanas\.css/;
 
 	$conf -> {include_js}  ||= ['js'];
    	
@@ -186,7 +188,7 @@ EOH
 	
 	our $i18n = $conf -> {i18n} -> {$_REQUEST {lang}};
 	
-	require_fresh ($_PACKAGE . '::Calendar');
+	require_fresh ($_PACKAGE . 'Calendar');
 	
 	eval "our \$_CALENDAR = new ${_PACKAGE}Calendar (\\\%_REQUEST)";
 	
@@ -197,8 +199,11 @@ EOH
 		delete $_REQUEST {_salt};
 		delete $_REQUEST {__include_js};
 		delete $_REQUEST {__include_css};
+		
+		my $params = Dumper (\%_REQUEST);
+		$params =~ s{\s}{}gsm;
 
-		redirect ('/?type=logon&redirect_params=' . uri_escape (Dumper (\%_REQUEST)));
+		redirect ('/?type=logon&redirect_params=' . uri_escape ($params));
 		
 	}
 	
@@ -389,11 +394,15 @@ sub out_html {
 
 sub pub_handler {
 
-	our $_PACKAGE = __PACKAGE__ . '::';
+	$_PACKAGE ||= __PACKAGE__ . '::';
 	
 	get_request (@_);
 	
 	my $parms = $apr -> parms;
+	if ($parms -> {debug1} or $r -> uri =~ /navigation\.js|0\.html|0\.gif|zanas\.css/) {
+		handler (@_);
+		return OK;		
+	};
 	our %_REQUEST = %{$parms};		
 	$_REQUEST {__uri} = $r -> uri;
 	

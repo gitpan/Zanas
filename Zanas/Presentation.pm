@@ -1,12 +1,5 @@
 no warnings;
 
-use Data::Dumper;
-use URI::Escape;
-use MIME::Base64;
-
-use Zanas::Presentation::MSIE_5;
-#use Zanas::Presentation::Mozilla_3;
-#use Zanas::Presentation::Unsupported;
 
 ################################################################################
 
@@ -173,6 +166,7 @@ sub draw__info {
 			draw_text_cells ({}, [
 				$i -> {id},
 				{label => $i -> {label}, max_len => 10000000},
+				{label => $i -> {path}, max_len => 10000000},
 			])
 		},
 		

@@ -1,73 +1,59 @@
 no warnings;
 
-use URI::Escape;
-
-use constant OK => 200;
-
-use Zanas::SQL;
-
-################################################################################
-
-sub reset_profiling {
-
-	ref $preconf -> {core_debug_profiling} eq ARRAY or return;
-	
-	foreach my $sub_name (@{$preconf -> {core_debug_profiling}}) {
-	
-	
-print STDERR "reset_profiling: \$sub_name = $sub_name\n";
-
-	
-	}
-	
-}
-
 ################################################################################
 
 sub require_fresh {
 
 	my ($module_name, $fatal) = @_;	
-
-	if ($conf -> {core_spy_modules} || $preconf -> {core_spy_modules}) {
-		
-		my $file_name = $module_name;
-
-		$file_name =~ s{::}{\/}g;
-
-		my $inc_key = $file_name . '.pm';
-
-		$file_name =~ s{^(.+?)\/}{\/};
-		$file_name = $PACKAGE_ROOT . $file_name . '.pm';
-
-		-f $file_name or return "File not found: $file_name\n";
-		
-#		fix_module_for_role ($file_name) if $conf -> {core_fix_modules} and $module_name =~ /Content|Presentation/;
-
-		my ($dev, $ino, $mode, $nlink, $uid, $gid, $rdev, $size, $atime, $last_modified, $ctime, $blksize, $blocks) = stat ($file_name);
-
-		my $last_load = $INC_FRESH {$module_name} + 0;
-
-		my $need_refresh = $last_load < $last_modified;
-
-		$need_refresh or return;
-
-		delete $INC {$inc_key};
-
-		eval "require $module_name";
-
-		reset_profiling ();
-
-	}	
 	
-	else {
-				
-		eval "require $module_name";
+#print STDERR "\nrequire_fresh: \$module_name = $module_name\n";
 
-		reset_profiling ();
+	my $file_name = $module_name;
+	$file_name =~ s{(::)+}{\/}g;
 
+	my $inc_key = $file_name . '.pm';
+
+#print STDERR "require_fresh: \$inc_key = $inc_key\n";
+
+	$file_name =~ s{^(.+?)\/}{\/};
+	$file_name = $PACKAGE_ROOT . $file_name . '.pm';
+
+#print STDERR "require_fresh: \$file_name = $file_name\n";
+	
+	-f $file_name or return "File not found: $file_name\n";
+		
+	my $need_refresh = $conf -> {core_spy_modules} || $preconf -> {core_spy_modules} || !$INC {$inc_key};
+
+#print STDERR "require_fresh: \$need_refresh = $need_refresh (1)\n";
+	
+	if ($need_refresh) {
+		my ($dev, $ino, $mode, $nlink, $uid, $gid, $rdev, $size, $atime, $last_modified, $ctime, $blksize, $blocks) = stat ($file_name);
+		my $last_load = $INC_FRESH {$module_name} + 0;
+		$need_refresh &&= $last_load < $last_modified;
 	}
 
-	$INC_FRESH {$module_name} = time;
+#print STDERR "require_fresh: \$need_refresh = $need_refresh (2)\n";
+		
+	if ($need_refresh) {
+	
+#print STDERR "require_fresh: \$_OLD_PACKAGE = $_OLD_PACKAGE\n";
+
+		if ($_OLD_PACKAGE) {
+			open (S, $file_name);
+			my $src = join '', (<S>);
+			close (S);
+			$src =~ s{$_OLD_PACKAGE}{$_NEW_PACKAGE}g;
+
+#print STDERR "require_fresh: \$src = $src\n";
+
+			eval $src;
+		}
+		else {
+			do $file_name;
+		}
+	
+		$INC_FRESH {$module_name} = time;
+	}
 
         if ($@) {
 		$_REQUEST {error} = $@;
@@ -566,6 +552,8 @@ sub select__info {
 	my @z = grep {/\d/} split /(\d)/, $Zanas::VERSION;
 	
 	my $word = get_version_name ();
+	
+	require Config;
 
 	return [
 	
@@ -573,6 +561,13 @@ sub select__info {
 			id    => 'OS',
 			label => $os_name,
 		},
+
+		{
+			
+			id    => 'WEB server',
+			label => $ENV {SERVER_SOFTWARE},
+		
+		},	
 
 		{
 			id    => 'Perl',
@@ -587,29 +582,14 @@ sub select__info {
 		{
 			id    => 'DB driver',
 			label => 'DBD::' . $SQL_VERSION -> {driver} . ' ' . ${'DBD::' . $SQL_VERSION -> {driver}.'::VERSION'},
-		},
-
-		{			
-			id    => '&nbsp;&nbsp;&nbsp;loaded from',
-			label => '&nbsp;&nbsp;&nbsp;' . $INC {'DBD/' . $SQL_VERSION -> {driver} . '.pm'},
+			path  => $INC {'DBD/' . $SQL_VERSION -> {driver} . '.pm'},
 		},
 
 		{
 			id    => 'DB maintainer',
 			label => 'DBIx::ModelUpdate ' . $DBIx::ModelUpdate::VERSION,
+			path  => $INC {'DBIx/ModelUpdate.pm'},
 		},
-
-		{			
-			id    => '&nbsp;&nbsp;&nbsp;loaded from',
-			label => '&nbsp;&nbsp;&nbsp;' . $INC {'DBIx/ModelUpdate.pm'},
-		},
-
-		{
-			
-			id    => 'WEB server',
-			label => $ENV {SERVER_SOFTWARE},
-		
-		},	
 		
 		{			
 			id    => 'Parameters module',
@@ -618,38 +598,16 @@ sub select__info {
 		
 		{			
 			id    => 'Engine',
-			label => $Zanas::VERSION,
-		},
-
-		{			
-			id    => 'Engine [commercial]',
-			label => "Zanas $z[2].$z[3]$z[4] ($word)",
-		},
-
-		{			
-			id    => 'Engine [a la M$]',
-			label => "Zanas 200" . ($z[1] - 4) . " Amazing Server SP $z[4] Build $z[4]$z[3]$z[2]",
-		},
-
-		{			
-			id    => 'Engine [a la orcl]',
-			label => "Zanas Enterprise " . ($z[1] + 4) . "z (" . ($z[1] + 4) . ".$z[2].$z[3].$z[4].0)",
-		},
-
-		{			
-			id    => 'Engine [automotive]',
-			label => "Zanas ${word}ia GLX Turbo",
+			label => "Zanas $Zanas::VERSION ($word)",
+			path  => $preconf -> {core_path},
 		},
 
 		{			
 			id    => 'Application package',
 			label => ($_PACKAGE =~ /(\w+)/),
+			path  => $PACKAGE_ROOT,
 		},
 				
-		{			
-			id    => '&nbsp;&nbsp;&nbsp;loaded from',
-			label => '&nbsp;&nbsp;&nbsp;' . $PACKAGE_ROOT,
-		},
 		
 #		{			
 #			id    => '$preconf',

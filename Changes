@@ -1,3 +1,7 @@
+0.9965:
+	- robots.txt & favicon.ico added
+	- Zanas::Loader introduced
+
 0.9964:
 
 	- Server & InternalRequest fixed;

@@ -1,95 +1,111 @@
 no warnings;
 
 use Carp;
-
+use Data::Dumper;
+use DBI;
+use HTTP::Date;
+use MIME::Base64;
+use Number::Format;
 use Time::HiRes 'time';
-	
-use Zanas::Presentation;
-use Zanas::Content;
-use Zanas::Apache;
-use Zanas::SQL;
-use Zanas::Request;
-use Zanas::InternalRequest;
+use URI::Escape;
+
+use constant OK => 200;
 
 ################################################################################
 
 BEGIN {	
 
-	$Zanas::VERSION = '0.9964';
+	$Zanas::VERSION = '0.9965';
+	
+	unless ($preconf -> {core_path}) {
+		require Zanas::Apache;
+		require Zanas::Content;
+		require Zanas::InternalRequest;
+		require Zanas::Presentation;
+		require Zanas::Presentation::MSIE_5;
+		require Zanas::Request;
+		require Zanas::Request::Upload;
+		require Zanas::SQL;
+		$preconf -> {core_path} = __FILE__;
+	}
+	
 
 	$| = 1;
 
 	$SIG {__DIE__} = \&Carp::confess;
 
 	get_version_name ();
-
-	print STDERR "\nZanas $Zanas::VERSION [$Zanas::VERSION_NAME]: loading ("  . __PACKAGE__ .  ")...";
 	
-		unless ($preconf -> {no_model_update}) {
-			require DBIx::ModelUpdate;
-		}
+	unless ($PACKAGE_ROOT) {
+		$PACKAGE_ROOT = $INC {__PACKAGE__ . '/Config.pm'} || '';
+		$PACKAGE_ROOT =~ s{\/Config\.pm}{};
+	}
 
-		if ($ENV {GATEWAY_INTERFACE} =~ m{^CGI/} || $conf -> {use_cgi} || $preconf -> {use_cgi}) {
-			eval 'require CGI';
-		} else {
-			eval 'require Apache::Request';
-			if ($@) {
-				eval 'require CGI';
-				eval 'require Zanas::Request';
-			};
-		}
+	my $pkg_banner = $PACKAGE_ROOT . ' => ' . ($_NEW_PACKAGE ? $_NEW_PACKAGE : __PACKAGE__);
 
-		$INC {'Apache/Request.pm'} or eval 'require Zanas::Request';
+	print STDERR "\nZanas $Zanas::VERSION [$Zanas::VERSION_NAME]: loading $pkg_banner...";
+	
+	unless ($preconf -> {no_model_update}) {
+		require DBIx::ModelUpdate;
+	}
 
-		our $STATIC_ROOT = __FILE__;
-		$STATIC_ROOT =~ s{\.pm}{/static/};
-
-		eval 'require Compress::Zlib';
+	if ($ENV {GATEWAY_INTERFACE} =~ m{^CGI/} || $conf -> {use_cgi} || $preconf -> {use_cgi}) {
+		eval 'require CGI';
+	} else {
+		eval 'require Apache::Request';
 		if ($@) {
-			delete $conf -> {core_gzip};
-			delete $preconf -> {core_gzip};
+			eval 'require CGI';
+			eval 'require Zanas::Request';
+		};
+	}
+
+	$INC {'Apache/Request.pm'} or eval 'require Zanas::Request';
+
+	our $STATIC_ROOT = __FILE__;
+	$STATIC_ROOT =~ s{\.pm}{/static/};
+
+	eval 'require Compress::Zlib';
+	if ($@) {
+		delete $conf -> {core_gzip};
+		delete $preconf -> {core_gzip};
+	};
+
+	our %INC_FRESH = ();	
+	while (my ($name, $path) = each %INC) {
+		delete $INC {$name} if $name =~ m{Zanas[\./]}; 
+	}
+
+	$conf = {%$conf, %$preconf};
+	if ($conf -> {core_load_modules}) {
+
+		opendir (DIR, "$PACKAGE_ROOT/Content") || die "can't opendir $PACKAGE_ROOT/Content: $!";
+		my @files = grep {/\.pm$/} map { "Content/$_" } readdir(DIR);
+		closedir DIR;	
+
+		opendir (DIR, "$PACKAGE_ROOT/Presentation") || die "can't opendir $PACKAGE_ROOT/Presentation: $!";
+		push @files, grep {/\.pm$/} map { "Presentation/$_" } readdir(DIR);
+		closedir DIR;	
+
+		foreach my $file (@files) {
+			$file =~ s{\.pm$}{};
+			$file =~ s{\/}{\:\:};
+			require_fresh (__PACKAGE__ . "::$file");
+		}
+
+	}
+
+	if ($conf -> {db_dsn}) {
+
+		eval {
+			Apache -> push_handlers (
+				PerlChildInitHandler => \&sql_reconnect,
+				PerlChildExitHandler => \&sql_disconnect,
+			)
 		};
 
-		our %INC_FRESH = ();	
-		while (my ($name, $path) = each %INC) {
-			delete $INC {$name} if $name =~ m{Zanas[\./]}; 
-		}
+	}
 
-		our $PACKAGE_ROOT = $INC {__PACKAGE__ . '/Config.pm'};
-		$PACKAGE_ROOT ||= '';
-		$PACKAGE_ROOT =~ s{\/Config\.pm}{};
-
-		$conf = {%$conf, %$preconf};
-		if ($conf -> {core_load_modules}) {
-
-			opendir (DIR, "$PACKAGE_ROOT/Content") || die "can't opendir $PACKAGE_ROOT/Content: $!";
-			my @files = grep {/\.pm$/} map { "Content/$_" } readdir(DIR);
-			closedir DIR;	
-
-			opendir (DIR, "$PACKAGE_ROOT/Presentation") || die "can't opendir $PACKAGE_ROOT/Presentation: $!";
-			push @files, grep {/\.pm$/} map { "Presentation/$_" } readdir(DIR);
-			closedir DIR;	
-
-			foreach my $file (@files) {
-				$file =~ s{\.pm$}{};
-				$file =~ s{\/}{\:\:};
-				require_fresh (__PACKAGE__ . "::$file");
-			}
-
-		}
-
-		if ($conf -> {db_dsn}) {
-
-			eval {
-				Apache -> push_handlers (
-					PerlChildInitHandler => \&sql_reconnect,
-					PerlChildExitHandler => \&sql_disconnect,
-				)
-			};
-
-		}
-
-	print STDERR "\rZanas $Zanas::VERSION [$Zanas::VERSION_NAME]: loading ("  . __PACKAGE__ .  ") ok.\n";
+	print STDERR "\rZanas $Zanas::VERSION [$Zanas::VERSION_NAME]: loading $pkg_banner ok.\n";
 
 }
 
