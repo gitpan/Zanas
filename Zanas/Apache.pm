@@ -179,9 +179,9 @@ sub out_html {
 	
 	if ($_REQUEST {xls}) {
 	
-		my $fn_local = '/i/xls/' . time . '.xls';
+		my $fn_local = '/i/xls/' . time . "$$.xls";
 		my $fn = $r -> document_root . $fn_local;
-		open (O, ">$$conf{site_root}/$fn") or die "Can't write to $$conf{site_root}/$fn: $!";
+		open (O, ">$fn") or die "Can't write to $fn: $!";
 		print O $html;
 		close (O);
 		

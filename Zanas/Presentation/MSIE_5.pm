@@ -84,6 +84,7 @@ sub draw_page {
 	my ($page) = @_;
 	
 	$_REQUEST {lpt} ||= $_REQUEST {xls};
+	$_REQUEST {__read_only} = 1 if ($_REQUEST {lpt});
 		
 	delete $_REQUEST {__response_sent};
 	
@@ -157,6 +158,8 @@ EOH
 		
 		$_REQUEST{_xls_checksum} and $body =~ s{</table>}{<tr style="display:none"><td>$_REQUEST{_xls_checksum}</table>};
 	
+		$_REQUEST{xls} and $body =~ s{<td}{<td style="padding:5px"};
+
 		$_REQUEST{_xml}	= "<xml>$_REQUEST{_xml}</xml>" if $_REQUEST{_xml};
 
 		return <<EOH;
@@ -164,6 +167,11 @@ EOH
 				<head>
 					<title>$$conf{page_title}</title>
 					$_REQUEST{_xml}
+					<style>
+						TD {
+							padding: 5px;
+						}
+					</style>
 				</head>
 				<body bgcolor=white leftMargin=0 topMargin=0 marginwidth="0" marginheight="0">
 					$body
@@ -302,7 +310,20 @@ EOF
 					if (window.event.keyCode == 88 && window.event.altKey) document.location.href = '/?_salt=@{[rand]}';					
 					handle_basic_navigation_keys ();
 					@{[ map {&{"handle_hotkey_$$_{type}"} ($_)} @scan2names ]}							
+					
+					
+					
 				</script>						
+				
+				@{[ $_REQUEST{__help_url} ? <<EOHELP : '' ]}
+					<script for="body" event="onhelp">
+						window.open ('$_REQUEST{__help_url}', '_blank', 'toolbar=no,resizable=yes');
+						event.returnValue = false;
+					</script>						
+EOHELP
+				
+				
+				
 				<div id="bodyArea">
 					$auth_toolbar			
 					$menu
@@ -484,6 +505,8 @@ sub draw_input_cell {
 	
 	return '' if $data -> {off};
 	
+	return draw_text_cell ($data) if $_REQUEST {__read_only} || $data -> {read_only};
+	
 	$data -> {max_len} ||= $conf -> {max_len};
 	$data -> {max_len} ||= 30;
 
@@ -573,7 +596,7 @@ sub draw_text_cell {
 	
 	$data -> {href}   ||= $options -> {href} unless $options -> {is_total};
 	$data -> {target} ||= $options -> {target};
-	if ($data -> {href}) {
+	if ($data -> {href} && !$_REQUEST {lpt}) {
 		check_href ($data);
 		$data -> {title} ||= $data -> {label};
 		my $target = $data -> {target} ? "target='$$data{target}'" : '';
@@ -1635,9 +1658,6 @@ EOH
 				<td class=bgr1><nobr>&nbsp;&nbsp;</nobr></td>
 
 				<td class=bgr1><img height=22 src="/0.gif" width=4 border=0></td>
-<!--				
-				<td class=bgr1><img src="/i/top_tb_icons/user.gif" border=0 hspace=3 align=absmiddle></td>
--->				
 				<td class=bgr1><nobr><A class=lnk2>Пользователь: @{[ $_USER && $_USER -> {label} ? $_USER -> {label} : 'не определён']}</a>&nbsp;&nbsp;</nobr></td>
 
 				$calendar
@@ -1646,23 +1666,19 @@ EOH
 				
 				@{[ $options -> {lpt} ? <<EOLPT : '']}
 				<td class=bgr1><img height=22 src="/0.gif" width=4 border=0></td>
-<!--				
-				<td class=bgr1><img src="/i/top_tb_icons/gear.gif" border=0 hspace=3 align=absmiddle></td>
--->				
 				<td class=bgr1><nobr><A class=lnk2 href="@{[ create_url (lpt => 1) ]}" target="_blank">[Печать]</a>&nbsp;&nbsp;</nobr></td>
 
 				<td class=bgr1><img height=22 src="/0.gif" width=4 border=0></td>
-<!--				
-				<td class=bgr1><img src="/i/top_tb_icons/stat.gif" border=0 hspace=3 align=absmiddle></td>
--->				
 				<td class=bgr1><nobr><A class=lnk2 href="@{[ create_url (xls => 1, salt => rand) ]}" target="_blank">[MS Excel]</a>&nbsp;&nbsp;</nobr></td>
 EOLPT
 
+				@{[ $_REQUEST {__help_url} ? <<EOHELP : '' ]}
+				<td class=bgr1><img height=22 src="/0.gif" width=4 border=0></td>
+				<td class=bgr1><nobr><A id="help" class=lnk2 href="$_REQUEST{__help_url}" target="_blank">[F1: Справка]</A>&nbsp;&nbsp;</nobr></td>
+EOHELP
+
 				@{[ $_USER ? <<EOEXIT : '' ]}
 				<td class=bgr1><img height=22 src="/0.gif" width=4 border=0></td>
-<!--				
-				<td class=bgr1><img src="/i/top_tb_icons/exit.gif" border=0 hspace=3 align=absmiddle></td>
--->				
 				<td class=bgr1><nobr><A class=lnk2 href="$$conf{exit_url}">[Выход]</A>&nbsp;&nbsp;</nobr></td>
 EOEXIT
 

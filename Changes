@@ -1,3 +1,11 @@
+0.9903: 
+
+	- new magic parameter: __help_url;
+	- draw_text_cell fix: no hrefs rendered when lpt=1;
+	- added 'position' option in add_totals sub;
+	- added 'read_only' option in draw_input_cell sub;
+	- another XLS fix: $conf -> {site_root} removed, $$ added in temporary filename;
+
 0.9902: 
 
 	- serving XLS responses refactored: $conf -> {site_root} is obsoleted & no more filesystem garbage;

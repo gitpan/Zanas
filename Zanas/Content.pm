@@ -11,7 +11,7 @@ use Zanas::SQL;
 
 sub add_totals {
 
-	my $ar = shift;	
+	my ($ar, $options) = @_;	
 	my $totals = {};
 	
 	foreach my $r (@$ar) {
@@ -28,8 +28,10 @@ sub add_totals {
 	
 	$totals -> {label} = 'Итого';
 	
-	push @$ar, $totals;
-
+	$options -> {position} = 0 + @$ar unless defined $options -> {position};
+	
+	splice (@$ar, $options -> {position}, 0, $totals);
+	
 }
 
 ################################################################################
