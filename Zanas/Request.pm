@@ -244,10 +244,10 @@ sub header_only {
 
 ################################################################################
 
-package Apache::Constants;
+#package Apache::Constants;
 
-sub OK () {
-	return 200;
-} 
+#sub OK () {
+#	return 200;
+#} 
 
 1;

@@ -1,3 +1,9 @@
+0.9929: 
+
+	- trunc_string now does nothing when xls=1;
+	- new field type: date (synonym for datetime with no_time => 1);
+	- new option: no_read_only in draw_form_field_datetime sub;
+
 0.9928: 
 
 	- draw_select_cell sub added (by pashka);

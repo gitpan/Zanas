@@ -5,7 +5,7 @@ use URI::Escape;
 
 use Zanas::Presentation::MSIE_5;
 #use Zanas::Presentation::Mozilla_3;
-use Zanas::Presentation::Unsupported;
+#use Zanas::Presentation::Unsupported;
 
 ################################################################################
 
@@ -18,6 +18,7 @@ sub dump_attributes {
 
 sub trunc_string {
 	my ($s, $len) = @_;
+	return $s if $_REQUEST {xls};
 	return length $s <= $len - 3 ? $s : substr ($s, 0, $len - 3) . '...';
 }
 

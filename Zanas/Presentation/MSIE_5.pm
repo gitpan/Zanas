@@ -1337,6 +1337,16 @@ sub draw_form_field_string {
 
 ################################################################################
 
+sub draw_form_field_date {
+
+	my ($options, $data) = @_;	
+	$options -> {no_time} = 1;	
+	return draw_form_field_datetime ($options, $data);
+
+}
+
+################################################################################
+
 sub draw_form_field_datetime {
 
 	my ($options, $data) = @_;
@@ -1364,7 +1374,7 @@ sub draw_form_field_datetime {
 	
 	$options -> {attributes} -> {id} = 'input_' . $options -> {name};
 	
-	$options -> {attributes} -> {readonly} = 1;
+	$options -> {no_read_only} or $options -> {attributes} -> {readonly} = 1;
 	
 	my $attributes = dump_attributes ($options -> {attributes});
 	
@@ -1375,7 +1385,7 @@ sub draw_form_field_datetime {
 	
 	my $shows_time = $options -> {no_time} ? 'false' : 'true';
 	
-	my $clear_button = $options -> {no_clear_button} ? '' : qq{&nbsp;<button class="txt7" onClick="document.all._$$options{name}.value=''">X</button>};
+	my $clear_button = $options -> {no_clear_button} || $options -> {no_read_only} ? '' : qq{&nbsp;<button class="txt7" onClick="document.all._$$options{name}.value=''">X</button>};
 	
 	return <<EOH
 		<nobr>
