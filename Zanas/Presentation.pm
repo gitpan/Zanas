@@ -1,3 +1,5 @@
+no warnings;
+
 use Data::Dumper;
 use URI::Escape;
 

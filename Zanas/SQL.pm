@@ -1,3 +1,5 @@
+no warnings;
+
 use DBI;
 
 use Data::Dumper;

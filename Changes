@@ -1,8 +1,45 @@
+0.94: 02.03.2004 16:00
+
+	- (by pashka) no more strong dependency on Apache::Request or even mod_perl.
+	  One can use Zanas.pm based apps on any raw CGI hosting. The script is
+
+----------- cut here ------------------------
+	
+#!/usr/bin/perl -w
+
+use lib '/path/to/webapp/library';
+
+use MYAPP;
+
+$MYAPP::preconf = {
+
+	db_dsn => "DBI:mysql:database=mybase",
+	db_user => 'myuser',
+	db_password => 'mypassword',
+	
+	core_load_modules => 0,
+	core_spy_modules => 0,	
+	core_fix_modules => 0,	
+	core_gzip => 1,	
+
+};
+
+MYAPP::handler;	
+
+----------- cut here ------------------------
+
+	  It's 20 times more slow, but it works;
+	- fixed a security hole with 'type=users_for_admin' (by pashka);
+	- multirole fixes (by pashka);
+	- added $_REQUEST {redirect_params} handling (idea by pashka);
+	- new log fields: id_object and ip;
+
+
 0.93: 26.02.04 12:50
 
 	- targets are now in use with activate_link js function;
 	- target option is now passed in draw_text_cells;	
-	- don't show labels for hrgoups items tat are off;	
+	- don't show labels for hrgoups items that are off;	
 	- <tr> are now marked as id="tr_$$field{name}" in draw_form;
 	- added setVisible js function;
 	- added onChange option to draw_form_field_select sub;

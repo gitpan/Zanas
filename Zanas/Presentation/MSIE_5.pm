@@ -1,3 +1,5 @@
+no warnings;
+
 ################################################################################
 
 sub register_hotkey {
@@ -182,12 +184,16 @@ EOH
 EOH
 
 	my $win_dirty_hack = $^O eq 'MSWin32' ? '/i' : '';
+	
+	my $request_package = ref $apr;
+	my $mod_perl = $ENV {MOD_PERL};
+	$mod_perl ||= 'NO mod_perl AT ALL';
 		
 	return <<EOH;
 		<html>
 			<head>
 				<title>$$conf{page_title}</title>
-				<meta name="Generator" content="Zanas/MSIE5 $Zanas::VERSION">
+				<meta name="Generator" content="Zanas.pm ver.$Zanas::VERSION; parameters are fetched with $request_package; gateway_interface is $ENV{GATEWAY_INTERFACE}; $mod_perl is in use">
 				$meta_refresh
 				
 				<LINK href="$win_dirty_hack/zanas.css" type=text/css rel=STYLESHEET>

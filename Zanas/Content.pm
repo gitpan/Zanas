@@ -1,3 +1,5 @@
+no warnings;
+
 use URI::Escape;
 
 use Apache::Constants qw(:common);
@@ -53,34 +55,26 @@ sub get_user {
 			sessions.id = ?
 EOS
 
-	if ($_REQUEST {role}) {
-	
-		my @tables = map { $_ =~ s/.*\.//; $_ } $db -> tables();
-		@tables = map { $_ =~ s/\`//g; $_ } @tables;
-		my $multiple_roles = grep {$_ eq 'map_roles_to_users'} @tables;
-		
-		if ($multiple_roles) {
-		
-			my $id_role = sql_select_array (<<EOS, $user -> {id}, $_REQUEST {role});
-				SELECT 
-					roles.id 
-				FROM 
-					roles, 
-					map_roles_to_users 
-				WHERE 
-					map_roles_to_users.id_user=? 
-				AND 
-					roles.id=map_roles_to_users.id_role 
-				AND 
-					roles.name = ?
+	if ($user && $_REQUEST {role} && ($conf -> {core_multiple_roles} || $preconf -> {core_multiple_roles})) {
+
+		my $id_role = sql_select_scalar (<<EOS, $user -> {id}, $_REQUEST {role});
+			SELECT
+				roles.id
+			FROM
+				roles,
+				map_roles_to_users
+			WHERE
+				map_roles_to_users.id_user = ?
+				AND roles.id=map_roles_to_users.id_role
+				AND roles.name = ?
 EOS
-			if ($id_role) {
-				sql_do ("UPDATE users SET id_role = ? WHERE id = ? ", $id_role, $user->{id});
-				$user -> {role} = $_REQUEST{role};
-			}
-			
-		}
 		
+		$user -> {role} = $_REQUEST {role} if ($id_role);
+		
+		if ($id_role && $id_role != $user -> {id_role}) {
+			sql_do ("UPDATE users SET id_role = ? WHERE id = ? ", $id_role, $user -> {id});
+			$user -> {id_role} = $id_role;
+		}
 	}
 
 	$user -> {label} ||= $user -> {name} if $user;
@@ -126,8 +120,11 @@ sub redirect {
 ################################################################################
 
 sub log_action {
-	my ($id_user, $type, $action, $error) = @_;
-	sql_do ("INSERT INTO log (id_user, type, action, error, params) VALUES (?, ?, ?, ?, ?)", $id_user, $type, $action, $error, Data::Dumper -> Dump ([\%_REQUEST], ['_REQUEST']));
+
+	my ($id_user, $type, $action, $error, $ip, $id) = @_;
+	
+	sql_do ("INSERT INTO log (id_user, type, action, error, params, ip, id_object) VALUES (?, ?, ?, ?, ?, ?, ?)", $id_user, $type, $action, $error, Data::Dumper -> Dump ([\%_REQUEST], ['_REQUEST']), $ip, $id);
+	
 }
 
 ################################################################################
@@ -230,10 +227,7 @@ sub upload_file {
 	
 	open (OUT, ">$real_path") or die "Can't write to $real_path: $!";
 	binmode OUT;
-	
-	my $time = time;
-	my $fn = "/$$conf{site_root}/i/dbf/_$time.dbf";
-	
+		
 	my $buffer = '';
 	my $file_length = 0;
 	while (my $bytesread = read ($fh, $buffer, 1024)) {

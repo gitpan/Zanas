@@ -1,7 +1,10 @@
+no warnings;
+
 use Zanas::Presentation;
 use Zanas::Content;
 use Zanas::Apache;
 use Zanas::SQL;
+use Zanas::Request;
 
 ################################################################################
 
@@ -111,13 +114,20 @@ sub require_fresh_internal {
 
 BEGIN {
 
-   #use Apache::Request;
+#	print STDERR Dumper ($preconf);
 
-	eval 'require Apache::Request';
-	if ($@) {
-		eval 'require CGI';
-	};	
-	
+	if ($ENV {GATEWAY_INTERFACE} =~ m{^CGI/} || $conf -> {use_cgi} || $preconf -> {use_cgi}) {
+ 		eval 'require CGI';
+	} else {
+		eval 'require Apache::Request';
+		if ($@) {
+			eval 'require CGI';
+			eval 'require Zanas::Request';
+		};
+	}
+
+	$INC {'Apache/Request.pm'} or eval 'require Zanas::Request';
+
 	our $STATIC_ROOT = __FILE__;
 	$STATIC_ROOT =~ s{\.pm}{/static/};
 	
@@ -231,12 +241,14 @@ BEGIN {
 				log => {
 
 					columns => {
-						id_user =>  {TYPE_NAME => 'int'},
-						type =>     {TYPE_NAME => 'varchar', COLUMN_SIZE => 255},
-						action =>   {TYPE_NAME => 'varchar', COLUMN_SIZE => 255},
-						error =>    {TYPE_NAME => 'varchar', COLUMN_SIZE => 255},
-						params =>   {TYPE_NAME => 'text'},
-						dt =>       {TYPE_NAME => 'timestamp'},
+						id_user =>   {TYPE_NAME => 'int'},
+						id_object => {TYPE_NAME => 'int'},
+						ip =>        {TYPE_NAME => 'varchar', COLUMN_SIZE => 15},
+						type =>      {TYPE_NAME => 'varchar', COLUMN_SIZE => 255},
+						action =>    {TYPE_NAME => 'varchar', COLUMN_SIZE => 255},
+						error =>     {TYPE_NAME => 'varchar', COLUMN_SIZE => 255},
+						params =>    {TYPE_NAME => 'text'},
+						dt =>        {TYPE_NAME => 'timestamp'},
 					}
 
 				},
@@ -253,7 +265,7 @@ BEGIN {
 
 package Zanas;
 
-$VERSION = '0.93';
+$VERSION = '0.94';
 
 =head1 NAME
 

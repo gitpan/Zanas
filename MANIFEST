@@ -9,6 +9,8 @@ Zanas/Presentation.pm
 Zanas/Presentation/MSIE_5.pm
 Zanas/Presentation/Mozilla_3.pm
 Zanas/Presentation/Unsupported.pm
+Zanas/Request.pm
+Zanas/Request/Upload.pm
 Zanas/SQL.pm
 Zanas/static/0.gif.pm
 Zanas/static/0.html.pm
