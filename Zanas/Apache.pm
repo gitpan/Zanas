@@ -309,12 +309,89 @@ sub out_html {
 		}		
 
 		$r -> header_out ('Content-Length' => length $html);
-		$r -> header_out ('Set-Cookie' => "sid=$_REQUEST{sid};path=/;") if $_REQUEST{sid};
+#		$r -> header_out ('Set-Cookie' => "sid=$_REQUEST{sid};path=/;") if $_REQUEST{sid};
 		
 		$r -> send_http_header;
 		print $html;
 	}	
 
 }
+
+#################################################################################
+
+sub pub_handler {
+
+	our $_PACKAGE = __PACKAGE__ . '::';
+
+	our $r   = $use_cgi ? new Zanas::Request () : $_[0];
+	our $apr = $use_cgi ? $r : Apache::Request -> new ($r);
+
+	my $parms = $apr -> parms;
+	our %_REQUEST = %{$parms};		
+	$_REQUEST {__uri} = $r -> uri;
+	$_REQUEST {__uri} =~ s{\/\w+\.\w+$}{};
+
+	$_REQUEST {__uri_chomped} = $_REQUEST {__uri};
+	$_REQUEST {__uri_chomped} =~ s{/$}{};
+
+	our %_COOKIES = Apache::Cookie -> fetch;
+	my $c = $_COOKIES {psid};
+	$_REQUEST {sid} = $c -> value if $c;
+   	
+	sql_reconnect ();
+
+	require_fresh ("${_PACKAGE}Config");
+	require_fresh ("${_PACKAGE}Content::pub_page");
+	
+	our $_PAGE = select_pub_page;
+	return 0 if $_REQUEST {__response_sent};
+	
+	my $type   = $_PAGE -> {type};
+	my $id     = $_PAGE -> {id};
+	my $action = $_REQUEST {action};
+	
+	if ($action) {
+
+		require_fresh ("${_PACKAGE}Content::${type}");
+		
+		my $error_code = uri_escape (call_for_role ("validate_${action}_${type}"));
+		
+		if ($error_code) {
+			redirect ("?error=$error_code", {kind => 'http'});
+		}
+		else {
+			call_for_role ("do_${action}_${type}");
+			$_REQUEST {__response_sent} or redirect ({action => ''}, {kind => 'http'});
+		}
+		
+	}
+	else {	
+
+		require_fresh ("${_PACKAGE}Presentation::pub_page");
+
+		require_fresh ("${_PACKAGE}Content::$type");
+		require_fresh ("${_PACKAGE}Presentation::$type");
+		
+		my ($selector, $renderrer) =  $id ? 
+			("get_item_of_$type", "draw_item_of_$type") :
+			("select_$type", "draw_$type"); 
+		
+		
+		eval {
+			my $content = &$selector ();
+			$_PAGE -> {body} = &$renderrer ($content);
+		};
+		print STDERR $@ if $@;
+				
+		out_html ({}, draw_pub_page ());
+		
+	}
+
+   	$db -> disconnect;
+	
+	return OK;
+
+}
+
 
 1;

@@ -1648,15 +1648,15 @@ sub draw_form_field_select {
 
 	my ($options, $data) = @_;
 	
-	my $html = '';
+	my $html = exists $options -> {empty} ? qq {<option value="0" $selected>$$options{empty}</option>\n} : '';
 	
 	$options -> {max_len} ||= $conf -> {max_len};
 	
-	unshift @{$options -> {values}}, {id => 0, label => $options -> {empty}} if exists $options -> {empty};
-
 	foreach my $value (@{$options -> {values}}) {
 		my $selected = (($value -> {id} eq $data -> {$options -> {name}}) or ($value -> {id} eq $options -> {value})) ? 'selected' : '';
 		my $label = trunc_string ($value -> {label}, $options -> {max_len});						
+		my $id = $value -> {id};
+		$value -> {id} =~ s{\"}{\&quot;}g;
 		$html .= qq {<option value="$$value{id}" $selected>$label</option>\n};
 	}
 	

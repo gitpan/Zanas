@@ -1,3 +1,10 @@
+0.9920: 
+
+	- new redirect kind: 'http';
+	- fixed a bug in draw_form_field_select (empty item duplicates);
+	- fixed a bug in draw_form_field_select (" -> &quot; in IDs);
+	- added support for public sites: pub_handler introduced;
+
 0.9919: 
 
 	- fixed a bug introduced in 0.9918 (current path resolution);

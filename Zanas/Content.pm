@@ -179,6 +179,15 @@ sub redirect {
 	
 	if ($options -> {kind} eq 'internal') {
 		$r -> internal_redirect ($url);
+		$_REQUEST {__response_sent} = 1;
+		return;
+	}
+
+	if ($options -> {kind} eq 'http') {		
+		$r -> status ($options -> {status} || 302);
+		$r -> header_out ('Location' => 'http://' . $ENV{HTTP_HOST} . $url);
+		$r -> send_http_header;
+		$_REQUEST {__response_sent} = 1;
 		return;
 	}
 
