@@ -2,8 +2,7 @@ no warnings;
 
 use URI::Escape;
 
-use Apache::Constants qw(:common);
-#use Apache::Request;
+use constant OK => 200;
 
 use Zanas::SQL;
 
@@ -231,8 +230,6 @@ sub delete_file {
 
 sub select__static_files {
 
-#	$r -> filename =~ /\w+\.\w+/;
-	
 	$ENV{PATH_INFO} =~ /\w+\.\w+/ or $r -> filename =~ /\w+\.\w+/;
 	
 	my $filename = $&;
@@ -246,8 +243,8 @@ sub select__static_files {
 	my $path = $STATIC_ROOT . $filename . '.gz.pm';
 	(-f $path and $r -> header_in ('Accept-Encoding') =~ /gzip/) or $path = $STATIC_ROOT . $filename . '.pm';
 	
-	$r -> header_out ('Content-Type' => $content_type);	
-	$r -> header_out ('Content-Encoding' => 'gzip') if $path =~ /\.gz/;
+	$r -> content_type ($content_type);
+	$r -> content_encoding ('gzip') if $path =~ /\.gz/;
 	$r -> header_out ('Content-Length' => -s $path);
 	$r -> header_out ('Cache-Control' => 'max-age=' . 24 * 60 * 60);
 	

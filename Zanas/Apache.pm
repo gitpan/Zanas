@@ -2,6 +2,7 @@ no warnings;
 
 use Number::Format;
 use HTTP::Date;
+use URI::Escape;
 
 ################################################################################
 
@@ -31,7 +32,6 @@ sub handler {
 	my  $use_cgi = $ENV {SCRIPT_NAME} =~ m{index\.pl} || $ENV {GATEWAY_INTERFACE} =~ m{^CGI/} || $conf -> {use_cgi} || $preconf -> {use_cgi} || !$INC{'Apache/Request.pm'};
 	
 	our $r   = $use_cgi ? new Zanas::Request () : $_[0];
-
 	our $apr = $use_cgi ? $r : Apache::Request -> new ($r);
 		
 	my $parms = $apr -> parms;
@@ -219,9 +219,9 @@ EOH
 						}					
 						
 					} elsif ($conf -> {core_cache_html}) {
-					
 						sql_do ("DELETE FROM cache_html");
-					
+						my $cache_path = $r -> document_root . '/cache/*';
+						eval {`rm -rf $cache_path`};
 					}
 					
 				};	
@@ -298,10 +298,12 @@ sub out_html {
 		}
 
 		$_REQUEST {__content_type} ||= 'text/html; charset=' . $i18n -> {_charset};
+
 		$r -> content_type ($_REQUEST {__content_type});
-		
+		$r -> header_out ('X-Powered-By' => 'Zanas/' . $Zanas::VERSION);
+
 		if (($conf -> {core_gzip} or $preconf -> {core_gzip}) && ($r -> header_in ('Accept-Encoding') =~ /gzip/)) {
-			$r -> header_out ('Content-Encoding' => 'gzip');
+			$r -> content_encoding ('gzip');
 			unless ($_REQUEST {__is_gzipped}) {
 				$html = Compress::Zlib::memGzip ($html);
 			}
@@ -338,6 +340,8 @@ sub pub_handler {
 	my $c = $_COOKIES {psid};
 	$_REQUEST {sid} = $c -> value if $c;
 	
+	$_REQUEST {__content_type} ||= 'text/html; charset=' . ($conf -> {_charset} || 'windows-1251');
+
 	sql_reconnect ();
 
 	eval {
@@ -345,33 +349,66 @@ sub pub_handler {
 		our $_USER = get_public_user ();
 	};
 	
+	my $cache_key = $_REQUEST {__uri_chomped} . '/' . $r -> args;
+	my $cache_fn  = $r -> document_root . '/cache/' . uri_escape ($cache_key, "/.") . '.html';
+	
 	if ($conf -> {core_cache_html} && !$_USER -> {id}) {
 		
-		my $time = sql_select_scalar ("SELECT UNIX_TIMESTAMP(ts) FROM cache_html WHERE uri = ?", $_REQUEST {__uri_chomped} . '/' . $r -> args);
+		my $time = sql_select_scalar ("SELECT UNIX_TIMESTAMP(ts) FROM cache_html WHERE uri = ?", $cache_key);
+		
 		my $ims = $r -> header_in ("If-Modified-Since");
-		if ($ims && str2time ($ims) >= $time) {
+		$ims =~ s{\;.*}{};
+		
+		if ($ims && $time && (str2time ($ims) >= $time)) {
 			$r -> status (304);
 			$r -> send_http_header;
 			$_REQUEST {__response_sent} = 1;
 			return OK;
 		}		
 		
+		$r -> content_type ($_REQUEST {__content_type});
 		$r -> header_out ('Last-Modified' => time2str ($time));
 		$r -> header_out ('Cache-Control' => 'max-age=0');
+		$r -> header_out ('X-Powered-By' => 'Zanas/' . $Zanas::VERSION);
 
 		if ($r -> header_only && $time) {
+			$r -> send_http_header ();
+			$_REQUEST {__response_sent} = 1;
 			return OK;
 		}
 
 		my $use_gzip = ($conf -> {core_gzip} or $preconf -> {core_gzip}) && ($r -> header_in ('Accept-Encoding') =~ /gzip/);
-		my $field = $use_gzip ? 'gzipped' : 'html';		
-		my $html = sql_select_scalar ("SELECT $field FROM cache_html WHERE uri = ?", $_REQUEST {__uri_chomped} . '/' . $r -> args);
+
+#		my $field = $use_gzip ? 'gzipped' : 'html';		
+#		my $html = sql_select_scalar ("SELECT $field FROM cache_html WHERE uri = ?", $cache_key);
+
+		my $cache_fn_to_read = $cache_fn;
+		if ($use_gzip) {
+			$cache_fn_to_read .= '.gz';
+			$r -> content_encoding ('gzip');
+		}
 		
-		if ($html) {
-			$_REQUEST {__is_gzipped} = $use_gzip;
-			out_html ({}, $html);
+		if (-f $cache_fn_to_read) {
+			$r -> content_type ($_REQUEST {__content_type});
+			$r -> header_out ('Content-Length' => -s $cache_fn_to_read);
+			$r -> header_out ('Last-Modified'  => time2str ($time));
+			$r -> header_out ('Cache-Control'  => 'max-age=0');
+			$r -> header_out ('X-Powered-By'   => 'Zanas/' . $Zanas::VERSION);
+			$r -> send_http_header ();
+
+			open (F, $cache_fn_to_read) or die ("Can't open $cache_fn_to_read: $!\n");
+			$r -> send_fd (F);
+			close (F);
+			
+			$_REQUEST {__response_sent} = 1;			
 			return OK;
 		}
+		
+#		if ($html) {
+#			$_REQUEST {__is_gzipped} = $use_gzip;
+#			out_html ({}, $html);
+#			return OK;
+#		}
 	
 	}
    	
@@ -418,11 +455,25 @@ sub pub_handler {
 		};
 		print STDERR $@ if $@;
 
-		my $html    = draw_pub_page ();
+		my $html = draw_pub_page ();
 
 		if ($conf -> {core_cache_html}) {
+			
 			my $gzipped = (($conf -> {core_gzip} or $preconf -> {core_gzip})) ? Compress::Zlib::memGzip ($html) : '';		
-			sql_do ('REPLACE INTO cache_html (uri, html, gzipped) VALUES (?, ?, ?)', $_REQUEST {__uri_chomped} . '/' . $r -> args, $html, $gzipped);
+#			sql_do ('REPLACE INTO cache_html (uri, html, gzipped) VALUES (?, ?, ?)', $cache_key, $html, $gzipped);
+			sql_do ('REPLACE INTO cache_html (uri) VALUES (?)', $cache_key);
+			
+			open (F, ">$cache_fn") or die ("Can't write to $cache_fn: $!\n");
+			print F $html;
+			close (F);
+			
+			if ($gzipped) {
+				open (F, ">$cache_fn.gz") or die ("Can't write to $cache_fn.gz: $!\n");
+				binmode (F);
+				print F $gzipped;
+				close (F);
+			}
+						
 		}
 		
 		$r -> header_out ('Last-Modified' => time2str (time));

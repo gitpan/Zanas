@@ -228,7 +228,7 @@ EOH
 	my $auth_toolbar = draw_auth_toolbar ({lpt => $lpt});
 
 	my $keepalive = $_REQUEST{sid} ? <<EOH : '';
-		<iframe name=keepalive src="/?keepalive=$_REQUEST{sid}" width=0 height=0>
+		<iframe name=keepalive src="$_REQUEST{__uri}?keepalive=$_REQUEST{sid}" width=0 height=0>
 		</iframe>
 EOH
 
@@ -342,13 +342,10 @@ EOF
 EOF
 				</script>
 
-				<script for="body" event="onkeydown">												
+				<script for="body" event="onkeydown">
 					if (window.event.keyCode == 88 && window.event.altKey) document.location.href = '$_REQUEST{__uri}?_salt=@{[rand]}';
 					handle_basic_navigation_keys ();
-					@{[ map {&{"handle_hotkey_$$_{type}"} ($_)} @scan2names ]}							
-					
-					
-					
+					@{[ map {&{"handle_hotkey_$$_{type}"} ($_)} @scan2names ]}
 				</script>						
 				
 				@{[ $_REQUEST{__help_url} ? <<EOHELP : '' ]}
@@ -1364,10 +1361,12 @@ sub draw_form_field_datetime {
 	my $shows_time = $options -> {no_time} ? 'false' : 'true';
 	
 	return <<EOH
+		<nobr>
 		<input $attributes onFocus="scrollable_table_is_blocked = true; q_is_focused = true" onBlur="scrollable_table_is_blocked = false; q_is_focused = false" autocomplete="off" type="text" name="_$$options{name}" value="$s" $size onKeyPress="if (window.event.keyCode != 27) is_dirty=true">
 		<button id="calendar_trigger_$$options{name}" class="txt7">...</button>
 		&nbsp;
 		<button class="txt7" onClick="document.all._$$options{name}.value=''">X</button>
+		</nobr>
 		
 		<script type="text/javascript">
 			Calendar.setup(

@@ -3003,7 +3003,7 @@ EOF
 	close (F);
 	
 	my @subs_in_zanas = subs_in 'Zanas';
-	my %imported_subs = map {$_ => 1} (map {subs_in $_} qw(Apache::Constants Data::Dumper URI::Escape));
+	my %imported_subs = map {$_ => 1} (map {subs_in $_} qw(Data::Dumper URI::Escape HTTP::Date));
 	my %documented_subs = map {$_ -> {name} => 1} @subs;
 	my @undocumented_subs = grep {!exists $imported_subs {$_} && !exists $documented_subs {$_}} @subs_in_zanas;
 

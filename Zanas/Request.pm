@@ -40,14 +40,10 @@ sub internal_redirect {
 
 	my $url = $_[0];
 	
-#print STDERR "URL: $url ";
-	
 	unless ($url =~ /^http:\/\//) {
 		$url =~ s{^/}{};
 		$url = "http://$ENV{HTTP_HOST}/$url" ;
 	}
-
-#print STDERR " --> $url\n";
 
 	print $q -> redirect (-uri => $url);
 	
@@ -72,6 +68,21 @@ sub content_type {
 		$self -> {Out_headers} -> {-type} = $_ [0];
 	} else {
 		return $self -> {Out_headers} -> {-type};
+	}
+	
+}
+
+################################################################################
+
+sub content_encoding {
+
+	my $self = shift;
+	my $q = $self -> {Q};
+
+	if ($_ [0]) {
+		$self -> {Out_headers} -> {-content_encoding} = $_ [0];
+	} else {
+		return $self -> {Out_headers} -> {-content_encoding};
 	}
 	
 }
@@ -221,6 +232,7 @@ sub uri {
 ################################################################################
 
 sub header_only {
+	my $self = shift;
 	return $self -> {Q} -> request_method () eq 'HEAD';
 }
 

@@ -1,3 +1,13 @@
+0.9923: 
+
+	- module compilation errors are in STDERR again (lost in 0.9922);
+	- fixed [X] button for datetime control: <nobr>;
+	- fixed default Content-Type header for pub_handler;
+	- added X-Powered-By header;
+	- fixed a bug: keepalive requests now work for non-root install;
+	- HTML cacheing for public sites is completely redone (files instead of LONGTEXT), many bugs fixed;
+	- some code cleanup;
+
 0.9922: 
 
 	- cache_html column types are changed to longtext;

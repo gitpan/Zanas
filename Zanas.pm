@@ -99,7 +99,7 @@ sub require_fresh {
 
 	$INC_FRESH {$module_name} = time;
 
-        if ($@ and $fatal) {
+        if ($@) {
 		$_REQUEST {error} = $@;
 		print STDERR "require_fresh: error load module $module_name: $@\n";
         }	
@@ -203,8 +203,8 @@ BEGIN {
 				
 					columns => {
 						uri     => {TYPE_NAME  => 'varchar', COLUMN_SIZE  => 255, _PK    => 1},
-						html    => {TYPE_NAME  => 'longtext'},
-						gzipped => {TYPE_NAME  => 'longtext'},
+#						html    => {TYPE_NAME  => 'longtext'},
+#						gzipped => {TYPE_NAME  => 'longtext'},
 						ts      => {TYPE_NAME  => 'timestamp'},
 					}
 
@@ -272,7 +272,7 @@ BEGIN {
 
 package Zanas;
 
-$VERSION = '0.9922';
+$VERSION = '0.9923';
 
 =head1 NAME
 
