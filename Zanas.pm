@@ -1,4 +1,3 @@
-use Zanas::Preprocessor;
 use Zanas::Presentation;
 use Zanas::Content;
 use Zanas::Apache;
@@ -89,7 +88,7 @@ BEGIN {
 
 package Zanas;
 
-$VERSION = '0.56';
+$VERSION = '0.57';
 
 =head1 NAME
 

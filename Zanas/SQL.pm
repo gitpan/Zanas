@@ -183,6 +183,15 @@ sub sql_select_path {
 		unshift @path, $r;		
 		$parent = $r -> {parent};	
 	}
+	
+	if ($options -> {root}) {
+		unshift @path, {
+			id => 0, 
+			parent => 0, 
+			name => $options -> {root}, 
+			id_param => $options -> {id_param}
+		};
+	}
 
 	return \@path;
 

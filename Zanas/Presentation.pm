@@ -13,6 +13,13 @@ Presentation.pm - подпрограммы отрисовки элементов ГИП.
 
 ################################################################################
 
+sub trunc_string {
+	my ($s, $len) = @_;
+	return length $s <= $len - 3 ? $s : substr ($s, 0, $len - 3) . '...';
+}
+
+################################################################################
+
 =head1 install_drawer
 
 Загрузка графического драйвера. Желательно вызывать при старте материнского экземпляра Apache.
@@ -215,6 +222,10 @@ sub draw_hr {
 
 текст, отображаемый в клетке
 
+=item max_len
+
+ограничение длины строки. По умолчанию $conf -> {max_len}. По умолчанию 30.
+
 =item href
 
 (если не C<undef>) гиперссылка с текста	
@@ -223,14 +234,23 @@ sub draw_hr {
 
 целевое окно/фрейм для ссылки
 
+=item attributes
+
+дополнительные HTML-атрибуты для тега C<td>.
+
 =back
 
 =head2 Использование
 
 	draw_text_cell ({ 
-		label  => '$1 000 000',
-		href   => '/?type=bank&action=pillage',
-		target => 'invisible',
+		label   => '$1 000 000',
+		href    => '/?type=bank&action=pillage',
+		target  => 'invisible',
+		max_len => 255,
+		attributes => {
+			width => '1%',
+			align => 'right',
+		}
 	});
 
 =cut
@@ -297,24 +317,38 @@ sub draw_one_cell_table {
 
 Следующий параметр -- C<callback>-функция, вызываемая для каждой записи. Запись видна из C<callback>'а как переменная C<$i>.
 
-Последний параметр -- ссылка на список записей (recordset).
+Следующий параметр -- ссылка на список записей (recordset).
+
+Последний, необязательный параметр -- опции.
+
+=head2 Опции
+
+=over
+
+=item off
+
+если истина, то будет возвращена пустая строка.
 
 =head2 Использование
 
 	draw_table (
 	
-		['Номер', 'Имя', ''],
+		['Номер', {label => 'Имя', off => 0}, ''],
 		
 		sub {		
-			draw_text_cell ({label => $i -> {id}) . 
-			draw_text_cell ({label => $i -> {name}) . 		
+			draw_text_cell ({label => $i -> {id}}) . 
+			draw_text_cell ({label => $i -> {name}, off => 0}) . 
 			draw_row_buttons ({}, [{
 				icon => 'delete', 
 				label => 'Удалить', 
 				href => "/?type=mytype&action=delete&id=$$i{id}", 
 				confirm => "Удалить $$i{name}?"
 			}])				
-		}
+		},
+		
+		$data,
+		
+		{off => @$data == 0}
 		
 	);
 
@@ -377,11 +411,18 @@ sub draw_path {
 
 заголовок окна.
 
+=item off
+
+если истина, то будет возвращена пустая строка.
+
 =back
 
 =head2 Использование
 
-	draw_window_title ({label => 'Моё окно'})
+	draw_window_title ({
+		label => 'Моё окно',
+		off   => $no_title,
+	})
 
 =cut
 
@@ -974,6 +1015,21 @@ sub draw_form_field_radio {
 
 sub draw_form_field_select {
 	drawer_call ('draw_form_field_select', @_);
+}
+
+################################################################################
+
+=head1 draw_esc_toolbar
+
+Нижняя панель с кнопкой "Отмена". Рисуется автоматически при вызове 
+C<draw_form> при наличии опций C<esc> и C<no_ok>.
+
+=cut
+
+################################################################################
+
+sub draw_esc_toolbar {
+	drawer_call ('draw_esc_toolbar', @_);
 }
 
 ################################################################################

@@ -320,6 +320,8 @@ sub Mozilla_3_draw_window_title {
 
 	my ($options) = @_;
 	
+	return '' if $options -> {off};
+
 	return <<EOH
 		<table cellspacing=0 cellpadding=3 width="100%"><tr><td bgcolor=8e8e8e>&nbsp;&nbsp;&nbsp;<font color=ffffff face='Arial cyr' size=3><b>$$options{label}</b></font></table>
 EOH

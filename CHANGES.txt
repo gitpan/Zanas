@@ -1,3 +1,11 @@
+0.57: 23.10.03 14:52
+	- added 'off' parameter in draw_window_title and draw_table subs
+	- added 'draw_text_cell' parameter in draw_text_cell sub
+	- added 'attributes' parameter in draw_text_cell sub
+	- added support for multiple per-row callbacks in draw_table sub
+	- js fixes for fast find/table scrolling
+	- js fixes for multitable scrolling
+
 0.56: 21.10.03 15:56
 	- fixed check_href: period parameter
 

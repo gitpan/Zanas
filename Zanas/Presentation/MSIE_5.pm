@@ -160,13 +160,32 @@ EOH
 					var scrollable_table_row_cell_old_style = '';
 					var is_dirty = false;					
 					var scrollable_table_is_blocked = false;
+					var q_is_focused = false;
+					
+					var scrollable_rows = new Array();
+										
 				</script>
 				<SCRIPT language="javascript" src="/i/rte/fckeditor.js"></SCRIPT>
 			</head>
 			<body bgcolor=white leftMargin=0 topMargin=0 marginwidth="0" marginheight="0" name="body" id="body">
 
 				<script for="body" event="onload">
-				
+							
+					var tables = document.body.getElementsByTagName ('table');
+
+					if (tables != null) {										
+						for (var i = 0; i < tables.length; i++) {
+						
+							if (tables [i].id != 'scrollable_table') continue;
+							
+							var rows = tables [i].tBodies (0).rows;
+							
+							for (var j = 0; j < rows.length; j++) {
+								scrollable_rows = scrollable_rows.concat (rows [j]);
+							}
+						}					
+					}
+									
 					scrollable_table = getElementById ('scrollable_table');
 							
 					if (scrollable_table) {				
@@ -176,9 +195,9 @@ EOH
 						scrollable_table_row = 0;
 						scrollable_table_row_cell = 0;
 
-						if (scrollable_table.rows.length > 0) {
-							scrollable_table_row_cell_old_style = scrollable_table.rows [scrollable_table_row].cells [scrollable_table_row_cell].className;
-							scrollable_table.rows [scrollable_table_row].cells [scrollable_table_row_cell].className = 'txt6';
+						if (scrollable_rows.length > 0) {
+							scrollable_table_row_cell_old_style = scrollable_rows [scrollable_table_row].cells [scrollable_table_row_cell].className;
+							scrollable_rows [scrollable_table_row].cells [scrollable_table_row_cell].className = 'txt6';
 						}
 						else {
 							scrollable_table = null;
@@ -187,9 +206,11 @@ EOH
 					}
 					
 					var inputs = document.body.getElementsByTagName ('input');
-					if (inputs != null) {
+										
+					if (inputs != null) {										
 						for (var i = 0; i < inputs.length; i++) {
 							if (inputs [i].type != 'text') continue;
+							if (inputs [i].name == 'q') break;
 							inputs [i].focus ();
 							break;
 						}					
@@ -198,7 +219,7 @@ EOH
 				</script>
 
 				<script for="body" event="onkeydown">
-								
+												
 					if (window.event.keyCode == 88 && window.event.altKey) {
 							
 						document.location.href = '/?_salt=@{[rand]}';
@@ -206,52 +227,72 @@ EOH
 					}
 
 					if (scrollable_table && !scrollable_table_is_blocked) {
-				
-						if (window.event.keyCode == 40 && scrollable_table_row < scrollable_table.rows.length - 1) {
 
-							scrollable_table.rows [scrollable_table_row].cells [scrollable_table_row_cell].className = scrollable_table_row_cell_old_style;
+						if (
+							(window.event.keyCode >= 65 && window.event.keyCode <= 90)
+							|| (window.event.keyCode >= 96 && window.event.keyCode <= 105)
+							|| window.event.keyCode == 107 || window.event.keyCode == 109
+							|| window.event.keyCode == 219 || window.event.keyCode == 221
+							|| window.event.keyCode == 186 || window.event.keyCode == 222
+							|| window.event.keyCode == 188 || window.event.keyCode == 190 || window.event.keyCode == 191
+						) {
+							if (!window.event.altKey && !window.event.ctrlKey && document.toolbar_form && document.toolbar_form.q && !q_is_focused) {
+								document.toolbar_form.q.value = '';
+								document.toolbar_form.q.focus ();
+								return;
+							}
+						}
+
+				
+						if (window.event.keyCode == 40 && scrollable_table_row < scrollable_rows.length - 1) {
+
+							var effective_scrollable_cell = Math.min (scrollable_table_row_cell, scrollable_rows [scrollable_table_row].cells.length - 1);
+							scrollable_rows [scrollable_table_row].cells [effective_scrollable_cell].className = scrollable_table_row_cell_old_style;
 							scrollable_table_row ++;
-							scrollable_table_row_cell_old_style = scrollable_table.rows [scrollable_table_row].cells [scrollable_table_row_cell].className;
-							scrollable_table.rows [scrollable_table_row].cells [scrollable_table_row_cell].className = 'txt6';
-							scrollable_table.rows [scrollable_table_row].cells [scrollable_table_row_cell].scrollIntoView (false);
+							effective_scrollable_cell = Math.min (scrollable_table_row_cell, scrollable_rows [scrollable_table_row].cells.length - 1);
+							scrollable_table_row_cell_old_style = scrollable_rows [scrollable_table_row].cells [effective_scrollable_cell].className;
+							scrollable_rows [scrollable_table_row].cells [effective_scrollable_cell].className = 'txt6';
+							scrollable_rows [scrollable_table_row].cells [effective_scrollable_cell].scrollIntoView (false);
 							event.returnValue = false;						
 
 						}
 
 						if (window.event.keyCode == 38 && scrollable_table_row > 0) {
 
-							scrollable_table.rows [scrollable_table_row].cells [scrollable_table_row_cell].className = scrollable_table_row_cell_old_style;
+							var effective_scrollable_cell = Math.min (scrollable_table_row_cell, scrollable_rows [scrollable_table_row].cells.length - 1);
+							scrollable_rows [scrollable_table_row].cells [effective_scrollable_cell].className = scrollable_table_row_cell_old_style;
 							scrollable_table_row --;
-							scrollable_table_row_cell_old_style = scrollable_table.rows [scrollable_table_row].cells [scrollable_table_row_cell].className;
-							scrollable_table.rows [scrollable_table_row].cells [scrollable_table_row_cell].className = 'txt6';					
-							scrollable_table.rows [scrollable_table_row].cells [scrollable_table_row_cell].scrollIntoView ();
+							effective_scrollable_cell = Math.min (scrollable_table_row_cell, scrollable_rows [scrollable_table_row].cells.length - 1);
+							scrollable_table_row_cell_old_style = scrollable_rows [scrollable_table_row].cells [effective_scrollable_cell].className;
+							scrollable_rows [scrollable_table_row].cells [effective_scrollable_cell].className = 'txt6';
+							scrollable_rows [scrollable_table_row].cells [effective_scrollable_cell].scrollIntoView ();
 							event.returnValue = false;
 
 						}
 
 						if (window.event.keyCode == 37 && scrollable_table_row_cell > 0) {
 
-							scrollable_table.rows [scrollable_table_row].cells [scrollable_table_row_cell].className = scrollable_table_row_cell_old_style;
+							scrollable_rows [scrollable_table_row].cells [scrollable_table_row_cell].className = scrollable_table_row_cell_old_style;
 							scrollable_table_row_cell --;
-							scrollable_table_row_cell_old_style = scrollable_table.rows [scrollable_table_row].cells [scrollable_table_row_cell].className;
-							scrollable_table.rows [scrollable_table_row].cells [scrollable_table_row_cell].className = 'txt6';
+							scrollable_table_row_cell_old_style = scrollable_rows [scrollable_table_row].cells [scrollable_table_row_cell].className;
+							scrollable_rows [scrollable_table_row].cells [scrollable_table_row_cell].className = 'txt6';
 							event.returnValue = false;
 
 						}
 
-						if (window.event.keyCode == 39 && scrollable_table_row_cell < scrollable_table.rows [scrollable_table_row].cells.length - 1) {
+						if (window.event.keyCode == 39 && scrollable_table_row_cell < scrollable_rows [scrollable_table_row].cells.length - 1) {
 
-							scrollable_table.rows [scrollable_table_row].cells [scrollable_table_row_cell].className = scrollable_table_row_cell_old_style;
+							scrollable_rows [scrollable_table_row].cells [scrollable_table_row_cell].className = scrollable_table_row_cell_old_style;
 							scrollable_table_row_cell ++;
-							scrollable_table_row_cell_old_style = scrollable_table.rows [scrollable_table_row].cells [scrollable_table_row_cell].className;
-							scrollable_table.rows [scrollable_table_row].cells [scrollable_table_row_cell].className = 'txt6';
+							scrollable_table_row_cell_old_style = scrollable_rows [scrollable_table_row].cells [scrollable_table_row_cell].className;
+							scrollable_rows [scrollable_table_row].cells [scrollable_table_row_cell].className = 'txt6';
 							event.returnValue = false;
 
 						}
 
 						if (window.event.keyCode == 13) {
 							
-							var children = scrollable_table.rows [scrollable_table_row].cells [scrollable_table_row_cell].getElementsByTagName ('a');
+							var children = scrollable_rows [scrollable_table_row].cells [scrollable_table_row_cell].getElementsByTagName ('a');
 							if (children != null) document.location.href = children [0].href + '&_salt=@{[rand]}';
 							
 						}
@@ -351,9 +392,14 @@ sub MSIE_5_draw_text_cell {
 
 	my ($data) = @_;
 	
-	return '' if $data -> {off};
-
-	my $txt = $data -> {label};
+	return '' if $data -> {off};	
+	
+	$data -> {max_len} ||= $conf -> {max_len};
+	$data -> {max_len} ||= 30;
+			
+	my $txt = trunc_string ($data -> {label}, $data -> {max_len});
+	
+	$txt ||= '&nbsp;';
 	
 	if ($data -> {href}) {
 		check_href ($data);
@@ -361,7 +407,9 @@ sub MSIE_5_draw_text_cell {
 		$txt = qq { <a class=lnk4 $target href="$$data{href}" onFocus="blur()">$txt</a> };
 	}
 	
-	return qq {<td class=txt4><nobr>$txt</nobr></td>};
+	my $attributes = $data -> {attributes} ? join ' ', map {"$_='" . $data -> {attributes} -> {$_} . "'"} keys %{$data -> {attributes}} : '';
+	
+	return qq {<td class=txt4 $attributes><nobr>$txt</nobr></td>};
 
 }
 
@@ -400,21 +448,27 @@ sub MSIE_5_draw_table {
 
 	my ($headers, $ths) = ([], '');
 
-	unless (ref $_[0] eq CODE) {
+	unless (ref $_[0] eq CODE or (ref $_[0] eq ARRAY and ref $_[0] -> [0] eq CODE)) {
 		$headers = shift;
 	}
+	
+	my ($tr_callback, $list, $options) = @_;
+	
+	return '' if $options -> {off};
 	
 	if (@$headers) {
 		$ths = '<tr>' . (join '', map { ref $_ eq HASH ? ($$_{off} ? '' : "<th class=bgr4>$$_{label}\&nbsp;") : "<th class=bgr4>$_\&nbsp;" } @$headers);
 	}
-
-	my ($tr_callback, $list) = @_;
 	
 	my $trs = '';
 	
+	my @tr_callbacks = ref $tr_callback eq ARRAY ? @$tr_callback : ($tr_callback);
+	
 	foreach our $i (@$list) {
-		$trs .= '<tr>';
-		$trs .= &$tr_callback ($item);
+		foreach my $callback (@tr_callbacks) {
+			$trs .= '<tr>';
+			$trs .= &$callback ($item);
+		}
 	}
 	
 	return <<EOH
@@ -440,11 +494,17 @@ sub MSIE_5_draw_path {
 
 	my ($options, $list) = @_;
 	
+	($list and ref $list eq ARRAY and @$list) or return '';
+
 	$options -> {id_param} ||= 'id';
+	$options -> {max_len} ||= $conf -> {max_len};
+	$options -> {max_len} ||= 30;
 	
 	$path = '';
 	
-	foreach my $item (@$list) {
+	foreach my $item (@$list) {		
+	
+		my $name = trunc_string ($item -> {name}, $options -> {max_len});
 	
 		$path and $path .= '&nbsp;/&nbsp;';
 		
@@ -452,7 +512,7 @@ sub MSIE_5_draw_path {
 		$id_param ||= $options -> {id_param};
 		
 		$path .= <<EOH;
-			<a class=lnk1 href="/?type=$$item{type}&$id_param=$$item{id}&sid=$_REQUEST{sid}">$$item{name}</a>
+			<a class=lnk1 href="/?type=$$item{type}&$id_param=$$item{id}&sid=$_REQUEST{sid}">$name</a>
 EOH
 	
 	}
@@ -497,6 +557,8 @@ sub MSIE_5_draw_window_title {
 
 	my ($options) = @_;
 	
+	return '' if $options -> {off};
+	
 	return <<EOH
 		<table cellspacing=0 cellpadding=0 width="100%"><tr><td class=header15><img src="/i/0.gif" width=1 height=20 align=absmiddle>&nbsp;&nbsp;&nbsp;$$options{label}</table>
 EOH
@@ -513,7 +575,7 @@ sub MSIE_5_draw_toolbar {
 	
 	return <<EOH
 		<table class=bgr5 cellspacing=0 cellpadding=0 width="100%" border=0>
-			<form action=/>
+			<form action=/ name=toolbar_form>
 				<input type=hidden name=sid value=$_REQUEST{sid}>
 				<tr>
 					<td class=bgr0 colspan=15><img height=1 src="/i/0.gif" width=1 border=0></td>
@@ -575,7 +637,7 @@ sub MSIE_5_draw_toolbar_input_text {
 	my ($options) = @_;
 	
 	return <<EOH
-		<td nowrap>$$options{label}: <input type=text name=$$options{name} value="$_REQUEST{$$options{name}}" onFocus="scrollable_table_is_blocked = true" onBlur="scrollable_table_is_blocked = false"><input type=hidden name=search value=1><input type=hidden name=type value="$_REQUEST{type}"></td>
+		<td nowrap>$$options{label}: <input type=text name=$$options{name} value="$_REQUEST{$$options{name}}" onFocus="scrollable_table_is_blocked = true; q_is_focused = true" onBlur="scrollable_table_is_blocked = false; q_is_focused = false"><input type=hidden name=search value=1><input type=hidden name=type value="$_REQUEST{type}"></td>
 		<td><img height=15  hspace=4 src="/i/toolbars/razd1.gif" width=2 border=0></td>
 EOH
 
@@ -691,6 +753,7 @@ EOH
 	my $bottom_toolbar = 
 		$options -> {bottom_toolbar} ? $options -> {bottom_toolbar} :		
 		$options -> {back} ? draw_back_next_toolbar ($options) :
+		$options -> {no_ok} ? draw_esc_toolbar ($options) :
 		draw_ok_esc_toolbar ($options);
 
 	return <<EOH
@@ -855,6 +918,21 @@ EOH
 
 ################################################################################
 
+sub MSIE_5_draw_esc_toolbar {
+
+	my ($options) = @_;
+		
+	my $esc = $options -> {esc};
+	$esc ||= "/?type=$_REQUEST{type}";
+	
+	draw_centered_toolbar ($options, [
+		{icon => 'cancel', label => 'вернуться', href => "$esc&sid=$_REQUEST{sid}", id => 'esc'},
+	])
+	
+}
+
+################################################################################
+
 sub MSIE_5_draw_ok_esc_toolbar {
 
 	my ($options) = @_;
@@ -988,7 +1066,7 @@ EOH
 <!--				
 				<td class=bgr1><img src="/i/top_tb_icons/user.gif" border=0 hspace=3 align=absmiddle></td>
 -->				
-				<td class=bgr1><nobr><A class=lnk2>Пользователь: @{[ $_USER ? $_USER -> {label} : 'Пользователь неопределён']}</a>&nbsp;&nbsp;</nobr></td>
+				<td class=bgr1><nobr><A class=lnk2>Пользователь: @{[ $_USER && $_USER -> {label} ? $_USER -> {label} : 'не определён']}</a>&nbsp;&nbsp;</nobr></td>
 
 				$calendar
 
