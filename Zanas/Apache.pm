@@ -119,6 +119,8 @@ sub out_html {
 
 	my ($options, $html) = @_;
 	
+	$html or return;
+	
 	if ($_REQUEST {dbf}) {
 		redirect ("/$html");
 	}

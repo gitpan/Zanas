@@ -100,4 +100,81 @@ sub log_action {
 	sql_do ("INSERT INTO log (id_user, type, action, error, params) VALUES (?, ?, ?, ?, ?)", $id_user, $type, $action, $error, Data::Dumper -> Dump ([\%_REQUEST], ['_REQUEST']));
 }
 
+################################################################################
+
+sub delete_file {
+
+	unlink $r -> document_root . $_[0];
+
+}
+
+################################################################################
+
+sub download_file {
+
+	my ($options) = @_;
+	
+	$options -> {type} ||= 'application/octet-stream';
+	
+	$r -> status (200);
+
+	$options -> {file_name} =~ s{.*\\}{};
+
+	$r -> content_type ($options -> {type});
+	$r -> header_out ('Content-Disposition' => "attachment;filename=" . $options -> {file_name}); #if $options -> {file_name};
+	$r -> send_http_header ();
+
+	my $path = $r -> document_root . $options -> {path};
+
+	open (F, $path) or die ("Can't open file $path: $!");
+
+	$r -> send_fd (F);
+	close F;
+
+	$_REQUEST {__response_sent} = 1;
+	
+}
+
+################################################################################
+
+sub upload_file {
+	
+	my ($options) = @_;
+	
+	my $upload = $apr -> upload ('_' . $options -> {name});
+	
+	return undef unless $upload -> size;
+	
+	my $fh = $upload -> fh;
+	
+	my $path = "/i/$$options{dir}/" . time . '-' . $$;
+	
+	my $real_path = $r -> document_root . $path;
+	
+	open (OUT, ">$real_path") or die "Can't write to $real_path: $!";
+	binmode OUT;
+	
+	my $time = time;
+	my $fn = "/$$conf{site_root}/i/dbf/_$time.dbf";
+	
+	my $buffer = '';
+	my $file_length = 0;
+	while (my $bytesread = read ($fh, $buffer, 1024)) {
+		$file_length += $bytesread;
+		print OUT $buffer;
+	}
+	close (OUT);
+	
+	my $filename = $upload -> filename;
+	$filename =~ s{.*\\}{};
+	
+	return {
+		file_name => $filename,
+		size      => $upload -> size,
+		type      => $upload -> type,
+		path      => $path
+	}
+	
+}
+
 1;

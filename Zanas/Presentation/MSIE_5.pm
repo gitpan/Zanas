@@ -83,6 +83,8 @@ sub MSIE_5_draw_page {
 	
 	$_REQUEST {lpt} ||= $_REQUEST {xls};
 	
+	delete $_REQUEST {__response_sent};
+	
 	my $body = '';
 
 	my ($selector, $renderrer);
@@ -104,8 +106,16 @@ sub MSIE_5_draw_page {
 			$renderrer = 'draw_' . $page -> {type};
 		}
 		
+		my $content;
+		
 		eval {
-			$body = call_for_role ($renderrer, call_for_role ($selector));
+			$content = call_for_role ($selector);
+		};
+		
+		return '' if $_REQUEST {__response_sent};
+
+		eval {
+			$body = call_for_role ($renderrer, $content);
 		};
 		
 		$_REQUEST {error} = $@ if $@;
@@ -151,6 +161,8 @@ EOH
 	$_USER -> {role} eq 'admin' and $_REQUEST{id} or my $lpt = $body =~ s{<table[^\>]*lpt\=\"?1\"?[^\>]*\>}{\<table cellspacing\=1 cellpadding\=5 width\=100\%\>}gsm; #"
 	
 	my $menu = draw_menu ($page -> {menu}, $page -> {highlighted_type});
+	
+	$_REQUEST {__scrollable_table_row} ||= 0;
 	
 	return <<EOH;
 		<html>
@@ -199,7 +211,7 @@ EOH
 				
 						scrollable_table = scrollable_table.tBodies (0);
 					
-						scrollable_table_row = 0;
+						scrollable_table_row = $_REQUEST{__scrollable_table_row};
 						scrollable_table_row_cell = 0;
 
 						if (scrollable_rows.length > 0) {
@@ -212,8 +224,7 @@ EOH
 						
 					}
 					
-					var inputs = document.body.getElementsByTagName ('input');
-										
+					var inputs = document.body.getElementsByTagName ('input');										
 					if (inputs != null) {										
 						for (var i = 0; i < inputs.length; i++) {
 							if (inputs [i].type != 'text') continue;
@@ -222,6 +233,16 @@ EOH
 							break;
 						}					
 					}
+
+					@{[ $_REQUEST {__blur_all} ? <<EOF : '']}
+					
+					if (inputs != null) {										
+						for (var i = 0; i < inputs.length; i++) {
+							inputs [i].blur ();
+						}					
+					}
+
+EOF
 
 				</script>
 
@@ -302,7 +323,7 @@ EOH
 
 							var children = scrollable_rows [scrollable_table_row].cells [scrollable_table_row_cell].getElementsByTagName ('input');
 							if (children != null && children.length > 0) children [0].checked = !children [0].checked;
-							return false;
+//							return false;
 							
 						}
 						
@@ -422,14 +443,14 @@ sub MSIE_5_draw_checkbox_cell {
 
 	my ($data) = @_;
 	
-	return '' if $data -> {off};	
-
 	my $checked = $data -> {checked} ? 'checked' : '';
 
 	$data -> {attributes} ||= {};
 	$data -> {attributes} -> {class} ||= 'txt4';
 
 	my $attributes = join ' ', map {"$_='" . $data -> {attributes} -> {$_} . "'"} keys %{$data -> {attributes}};
+
+	return qq {<td $attributes>&nbsp;} if $data -> {off};	
 
 	return qq {<td $attributes><input type=checkbox name=$$data{name} $checked value=1></td>};
 
@@ -518,10 +539,12 @@ sub MSIE_5_draw_table {
 	
 	my @tr_callbacks = ref $tr_callback eq ARRAY ? @$tr_callback : ($tr_callback);
 	
+	my $n = 0;
 	foreach our $i (@$list) {
+		$i -> {__n} = $n++;
 		foreach my $callback (@tr_callbacks) {
 			$trs .= '<tr>';
-			$trs .= &$callback ($item);
+			$trs .= &$callback ();
 			$trs .= '</tr>';
 		}
 	}
@@ -603,6 +626,7 @@ EOH
 	}
 
 	return draw_hr (height => 10) . <<EOH
+		
 		<table cellspacing=0 cellpadding=0 width="100%" border=0>
 			<tr>
 				<td class=bgr5>
@@ -613,7 +637,7 @@ EOH
 						<tr>
 							<td><img height=14 hspace=4 src="/i/toolbars/4pt.gif" width=2 border=0></td>
 							<td class=header6 $nowrap>&nbsp;$path&nbsp;</td>
-							<td width="100%">
+							<td>
 								<table cellspacing=0 cellpadding=0 width="100%" border=0>
 									<tr>
 										<td _background="/i/toolbars/4pt.gif" height=15><img height=15  hspace=0 src="/i/0.gif" width=1 border=0></td>
@@ -658,9 +682,14 @@ sub MSIE_5_draw_toolbar {
 	
 	return '' if $options -> {off};	
 	
+	$_REQUEST {__toolbars_number} ||= 0;
+	
+	my $form_name = $_REQUEST {__toolbars_number} ? 'toolbar_form_' . $_REQUEST {__toolbars_number} : 'toolbar_form';
+	$_REQUEST {__toolbars_number} ++;
+	
 	return <<EOH
 		<table class=bgr5 cellspacing=0 cellpadding=0 width="100%" border=0>
-			<form action=/ name=toolbar_form>
+			<form action=/ name=$form_name>
 			
 				@{[ map {<<EO} @{$options -> {keep_params}} ]}
 					<input type=hidden name=$_ value=$_REQUEST{$_}>
@@ -733,7 +762,7 @@ sub MSIE_5_draw_toolbar_input_text {
 	my $hiddens = '';
 	
 	foreach my $key (keys %_REQUEST) {
-		next if $key eq $options -> {name} or $key =~ /^_/;
+		next if $key eq $options -> {name} or $key =~ /^_/ or $key eq 'start';
 		$hiddens .= qq {<input type=hidden name=$key value="$_REQUEST{$key}">};
 	}
 		
@@ -749,19 +778,21 @@ EOH
 sub MSIE_5_draw_toolbar_pager {
 
 	my ($options) = @_;
+	
+	$options -> {portion} ||= $conf -> {portion};
 
 	my $start = $_REQUEST {start} + 0;
 
 	my $label = '';	
 
-	if ($start > $conf -> {portion}) {
+	if ($start > $options -> {portion}) {
 		$url = create_url (start => 0);
 		$label .= qq {&nbsp;<a href="$url" class=lnk0 onFocus="blur()"><b>&lt;&lt;</b></a>&nbsp;};
 	}
 
 	if ($start > 0) {
 		MSIE_5_register_hotkey ({label => '&<'}, 'href', '_pager_prev');
-		$url = create_url (start => $start - $conf -> {portion});
+		$url = create_url (start => $start - $options -> {portion});
 		$label .= qq {&nbsp;<a href="$url" class=lnk0 id="_pager_prev" onFocus="blur()"><b><u>&lt;</u></b></a>&nbsp;};
 	}
 	
@@ -769,7 +800,7 @@ sub MSIE_5_draw_toolbar_pager {
 	
 	if ($start + $$options{cnt} < $$options{total}) {
 		MSIE_5_register_hotkey ({label => '&>'}, 'href', '_pager_next');
-		$url = create_url (start => $start + $conf -> {portion});
+		$url = create_url (start => $start + $options -> {portion});
 		$label .= qq {&nbsp;<a href="$url" class=lnk0 id="_pager_next" onFocus="blur()"><b><u>&gt;</u></b></a>&nbsp;};
 	}
 	
@@ -786,7 +817,7 @@ sub MSIE_5_draw_row_button {
 
 	my ($options) = @_;
 	
-	return '' if $options -> {off};
+	return '<td class=bgr0 valign=top nowrap width="1%">&nbsp;' if $options -> {off};
 	
 	check_href ($options);
 	
@@ -802,10 +833,10 @@ sub MSIE_5_draw_row_button {
 		$options -> {label} = qq|<img src="/i/buttons/$$options{icon}.gif" alt="$$options{label}" border=0 hspace=0 vspace=0>|
 	}
 	else {
-		$options -> {label} = "\&nbsp;<b>[$$options{label}]</b>\&nbsp;";
+		$options -> {label} = "\&nbsp;[$$options{label}]\&nbsp;";
 	}
 
-	return qq {<a class=lnk0 title="$title" href="$$options{href}" onFocus="blur()" target="$$options{target}">$$options{label}</a>};
+	return qq {<td class=bgr4 valign=top nowrap width="1%"><a class=lnk0 title="$title" href="$$options{href}" onFocus="blur()" target="$$options{target}">$$options{label}</a>};
 
 }
 
@@ -817,7 +848,7 @@ sub MSIE_5_draw_row_buttons {
 
 	return $options -> {off} ? 
 		'<td class=bgr4 valign=top nowrap width="1%">&nbsp;':
-		'<td class=bgr4 valign=top nowrap width="1%">' . (join '', map {draw_row_button ($_)} @$buttons) . '</td>';
+		(join '', map {draw_row_button ($_)} @$buttons) . '</td>';
 
 }
 
@@ -868,7 +899,7 @@ EOH
 	
 	}
 	
-	my $path = $data -> {path} ? draw_path ({}, $data -> {path}) : '';
+	my $path = $data -> {path} ? draw_path ($options, $data -> {path}) : '';
 	
 	my $bottom_toolbar = 
 		$options -> {bottom_toolbar} ? $options -> {bottom_toolbar} :		
@@ -936,7 +967,15 @@ sub MSIE_5_draw_form_field_string {
 	$s =~ s/\"/\&quot\;/gsm; #";
 	
 	my $size = $options -> {size} ? "size=$$options{size} maxlength=$$options{size}" : "size=120";	
-	return qq {<input type="text" maxlength="$$options{max_len}" name="_$$options{name}" value="$s" $size onKeyPress="if (window.event.keyCode != 27) is_dirty=true">};
+	return qq {<input onFocus="scrollable_table_is_blocked = true; q_is_focused = true" onBlur="scrollable_table_is_blocked = false; q_is_focused = false" autocomplete="off" type="text" maxlength="$$options{max_len}" name="_$$options{name}" value="$s" $size onKeyPress="if (window.event.keyCode != 27) is_dirty=true">};
+}
+
+################################################################################
+
+sub MSIE_5_draw_form_field_file {
+	my ($options, $data) = @_;	
+	$options -> {size} ||= 60;
+	return qq {<input onFocus="scrollable_table_is_blocked = true; q_is_focused = true" onBlur="scrollable_table_is_blocked = false; q_is_focused = false" type="file" name="_$$options{name}" size=$$options{size} onKeyPress="if (window.event.keyCode != 27) is_dirty=true">};
 }
 
 ################################################################################
@@ -972,7 +1011,7 @@ sub MSIE_5_draw_form_field_text {
 	my $value = $options -> {value};
 	$value ||= '';
 
-	return qq {<textarea rows=$rows cols=$cols name="_$$options{name}" value="$value" onKeyPress="if (window.event.keyCode != 27) is_dirty=true">$s</textarea>};
+	return qq {<textarea onFocus="scrollable_table_is_blocked = true; q_is_focused = true" onBlur="scrollable_table_is_blocked = false; q_is_focused = false" rows=$rows cols=$cols name="_$$options{name}" value="$value" onKeyPress="if (window.event.keyCode != 27) is_dirty=true">$s</textarea>};
 }
 
 ################################################################################
@@ -985,8 +1024,21 @@ sub MSIE_5_draw_form_field_password {
 ################################################################################
 
 sub MSIE_5_draw_form_field_static {
+
 	my ($options, $data) = @_;
-	return $$options{value} || $$data{$$options{name}};
+	
+	my $hidden_name = $$options{hidden_name};
+	$hidden_name ||= $$options{name};
+
+	my $hidden_value = $$options{hidden_value};
+	$hidden_value ||= $$data{$$options{name}};
+	$hidden_value ||= $$options{value};
+	$hidden_value =~ s/\"/\&quot\;/gsm;
+	
+	my $static_value = $$options{value} || $$data{$$options{name}};
+
+	return $$options{add_hidden} ? qq {$static_value <input type=hidden name="$hidden_name" value="$hidden_value">} : $static_value;
+	
 }
 
 ################################################################################
@@ -999,7 +1051,7 @@ sub MSIE_5_draw_form_field_radio {
 	
 	foreach my $value (@{$options -> {values}}) {
 		my $checked = $data -> {$options -> {name}} == $value -> {id} ? 'checked' : '';
-		$html .= qq {<input type="radio" name="_$$options{name}" value="$$value{id}" $checked onClick="is_dirty=true">&nbsp;$$value{label} <br>};
+		$html .= qq {<input onFocus="scrollable_table_is_blocked = true; q_is_focused = true" onBlur="scrollable_table_is_blocked = false; q_is_focused = false" type="radio" name="_$$options{name}" value="$$value{id}" $checked onClick="is_dirty=true">&nbsp;$$value{label} <br>};
 	}
 		
 	return $html;

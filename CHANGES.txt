@@ -1,3 +1,13 @@
+0.66: 18.11.03 13:40
+	- added portion option in draw_toolbar_pager
+	- added support for $_REQUEST {__blur_all} parameter
+	- added support for $_REQUEST {__scrollable_table_row} parameter
+	- more js fixes
+	- added file (up|down)load API: delete_file, download_file, upload_file, sql_download_file, sql_upload_file subs and $_REQUEST {__response_sent} parameter
+	- added hidden inputs to draw_form_field_static (by hekima)
+	- multiline path fixes (by pashka)
+	- separate tds for each button in draw_row_buttons sub
+
 0.65: 17.11.03 12:44
 	- "Generator" meta tag with version number added in draw_page sub
 	- empty action values are now allowed in draw_form

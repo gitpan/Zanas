@@ -247,8 +247,137 @@ sub sql_do_insert {
 ################################################################################
 
 sub sql_do_delete {
-	my ($table_name) = @_;
+
+	my ($table_name, $options) = @_;
+	
+	if (ref $options -> {file_path_columns} eq ARRAY) {
+		
+		map {sql_delete_file ({table => $table_name, path_column => $_})} @{$options -> {file_path_columns}}
+		
+	}
+		
 	sql_do ("DELETE FROM $table_name WHERE id = ?", $_REQUEST{id});
+	
+}
+
+################################################################################
+
+sub sql_delete_file {
+
+	my ($options) = @_;	
+	
+	my $path = sql_select_array ("SELECT $$options{path_column} FROM $$options{table} WHERE id = ?", $_REQUEST {id});
+	
+	unlink $path;
+
+}
+
+################################################################################
+
+=head1 sql_download_file
+
+Fetches file info from a given table for the current id and sends file downloading response to the client
+
+=head2 options
+
+=over
+
+=item table
+
+SQL table name
+
+=item path_column
+
+name of the column containing the full path to the file
+
+=item file_name_column
+
+name of the column containing the [original, truncated] file name
+
+=item type_column
+
+name of the column containing the file MIME type
+
+=back
+
+=cut
+
+################################################################################
+
+sub sql_download_file {
+
+	my ($options) = @_;
+	
+	my $r = sql_select_hash ("SELECT * FROM $$options{table} WHERE id = ?", $_REQUEST {id});
+	$options -> {path} = $r -> {$options -> {path_column}};
+	$options -> {type} = $r -> {$options -> {type_column}};
+	$options -> {file_name} = $r -> {$options -> {file_name_column}};
+	
+	download_file ($options);
+	
+}
+
+################################################################################
+
+=head1 sql_upload_file
+
+Uploads the file with given CGI name in a given directory under DocumentRoot and stores the related info into the given table for the current id
+
+=head2 options
+
+=over
+
+=item table
+
+SQL table name
+
+=item dir
+
+directory name (relative to DocumentRoot, must be writeable by httpd, file will be named time.pid)
+
+=item path_column
+
+name of the column containing the full path to the file
+
+=item file_name_column
+
+name of the column containing the [original, truncated] file name
+
+=item type_column
+
+name of the column containing the file MIME type
+
+=item size_column
+
+name of the column containing the file size (in bytes)
+
+=back
+
+=cut
+
+################################################################################
+
+sub sql_upload_file {
+	
+	my ($options) = @_;
+	my $uploaded = upload_file ($options) or return;
+	
+	my (@fields, @params) = ();
+	
+	foreach my $field (qw(file_name size type path)) {	
+		my $column_name = $options -> {$field . '_column'} or next;
+		push @fields, "$column_name = ?";
+		push @params, $uploaded -> {$field};
+	}
+	
+	@fields or return;
+	
+	my $tail = join ', ', @fields;
+		
+	sql_do ("UPDATE $$options{table} SET $tail WHERE id = ?", @params, $_REQUEST {id});
+	
+	return $uploaded;
+	
 }
 
 1;

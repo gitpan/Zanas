@@ -807,6 +807,39 @@ sub draw_form_field_string {
 	drawer_call ('draw_form_field_string', @_);
 }
 
+
+################################################################################
+
+=head1 draw_form_field_file
+
+Отрисовка поля формы типа 'file'. Вызывается автоматически из-под C<draw_form>.
+
+=head2 Опции
+
+=over
+
+=item name
+
+Имя CGI-параметра и одновременно ключа в хэшрефе C<$data>.
+
+=item label
+
+Отображаемое имя
+
+=item size
+
+Значение атрибута C<size>
+
+=back
+
+=cut
+
+################################################################################
+
+sub draw_form_field_file {
+	drawer_call ('draw_form_field_file', @_);
+}
+
 ################################################################################
 
 =head1 draw_form_field_button
