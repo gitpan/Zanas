@@ -21,6 +21,7 @@ sub new {
 #	$self -> {Filename} = '/' if $self -> {Filename} =~ /index\.pl/;
 
 	$self -> {Filename} = $ENV{PATH_INFO};
+	$self -> {Filename} = '/' if $self -> {Filename} =~ /index\./;
 	
 	$self -> {Document_root} = $ENV{DOCUMENT_ROOT};
 	$self -> {Out_headers} = {-type => 'text/html', -status=> 200};
@@ -214,7 +215,7 @@ sub upload {
 
 package Apache::Constants;
 
-sub OK {
+sub OK () {
 	return 200;
 } 
 

@@ -449,6 +449,11 @@ print STDERR "sql_upload_file: purge finished\n";
 		push @params, $uploaded -> {$field};
 	}
 	
+	foreach my $field (keys (%{$options -> {add_columns}})) {
+		push @fields, "$field = ?";
+		push @params, $options -> {add_columns} -> {$field};
+	}
+	
 	@fields or return;
 	
 	my $tail = join ', ', @fields;

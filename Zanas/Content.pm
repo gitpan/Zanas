@@ -268,7 +268,8 @@ sub upload_file {
 		file_name => $filename,
 		size      => $upload -> size,
 		type      => $upload -> type,
-		path      => $path
+		path      => $path,
+		real_path => $real_path,
 	}
 	
 }

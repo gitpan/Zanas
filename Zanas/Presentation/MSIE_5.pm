@@ -477,7 +477,8 @@ sub draw_text_cell {
 	$data -> {max_len} ||= 30;
 	
 	$data -> {attributes} ||= {};
-	$data -> {attributes} -> {class} ||= 'txt4';
+	$data -> {attributes} -> {class} ||= $options -> {is_total} ? 'header5' : 'txt4';
+	$data -> {attributes} -> {align} ||= 'right' if $options -> {is_total};
 			
 	$data -> {a_class} ||= 'lnk4';
 	
@@ -497,7 +498,7 @@ sub draw_text_cell {
 	
 	$txt ||= '&nbsp;';
 	
-	$data -> {href}   ||= $options -> {href};
+	$data -> {href}   ||= $options -> {href} unless $options -> {is_total};
 	$data -> {target} ||= $options -> {target};
 	if ($data -> {href}) {
 		check_href ($data);
@@ -617,11 +618,13 @@ EOH
 	my $n = 0;
 	foreach our $i (@$list) {
 		$i -> {__n} = $n++;
+		$trs .= '<thead>' if $n == @$list && !$i -> {id};
 		foreach my $callback (@tr_callbacks) {
 			$trs .= '<tr>';
 			$trs .= &$callback ();
 			$trs .= '</tr>';
 		}
+		$trs .= '</thead>' if $n == @$list && !$i -> {id};
 	}
 	
 	$options -> {type}   ||= $_REQUEST{type};
@@ -774,7 +777,7 @@ sub draw_toolbar {
 	
 	return <<EOH
 		<table class=bgr5 cellspacing=0 cellpadding=0 width="100%" border=0>
-			<form action=/ name=$form_name>
+			<form action=/ name=$form_name target="$$options{target}">
 			
 				@{[ map {<<EO} @{$options -> {keep_params}} ]}
 					<input type=hidden name=$_ value=$_REQUEST{$_}>
@@ -1644,7 +1647,5 @@ oFCKeditor_$$options{name}.Create() ;
 		</SCRIPT>
 EOS
 }
-
-
 
 1;

@@ -111,8 +111,20 @@ sub order {
 	
 	$result ||= $default;
 	
-	$result .= ' DESC' if $_REQUEST {desc};
+	if ($_REQUEST {desc}) {
 	
+		$result .= ',';
+		$result =~ s/\s+/ /g;	
+		$result =~ s/ \,/\,/g;	
+		$result =~ s/([^(ASC|DESC)])\,/$1 ASC\,/g;
+		$result =~ s/ DESC\,/ BCSC\,/g;
+		$result =~ s/ ASC\,/ DESC\,/g;
+		$result =~ s/ BCSC\,/ ASC\,/g;
+
+		chop $result;	
+		
+	}
+			
 	return $result;
 
 }

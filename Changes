@@ -1,3 +1,15 @@
+0.96: 09.03.2004 17:00
+
+	- target option added in draw_toolbar sub;
+	- Zanas::Install is forked out;	
+	- order sub fixed for correct DESC handling;
+	- draw_table fixed for not scrolling through totals;
+	- added is_total option to draw_text_cell sub;
+	- added real_path option to upload_file output;
+	- added add_columns option in sql_upload_file sub (by pashka);
+	- Zanas::Request fixed for the case where directory listing is denied;
+	- Apache::Constants::OK fixed for prototype matching.
+
 0.95: 03.03.2004 12:30
 
 	- add_totals sub added;
