@@ -145,7 +145,7 @@ sub check_href {
 		$options -> {href} =~ s{^\/\?}{$_REQUEST{__uri}\?};
 	}
 
-	if ($_FLAG_ADD_LAST_QUERY_STRING && $conf -> {core_auto_esc}) {
+	if ($_FLAG_ADD_LAST_QUERY_STRING && $conf -> {core_auto_esc} && $options -> {href} !~ /^(\#|java|\/i\/)/) {
 	
 		my $query_string = $ENV {QUERY_STRING};
 		$query_string =~ s{\&?__scrollable_table_row=\d*}{}g;

@@ -15,7 +15,7 @@ use Zanas::InternalRequest;
 
 BEGIN {	
 
-	$Zanas::VERSION = '0.9961';
+	$Zanas::VERSION = '0.9964';
 
 	$| = 1;
 
@@ -24,6 +24,10 @@ BEGIN {
 	get_version_name ();
 
 	print STDERR "\nZanas $Zanas::VERSION [$Zanas::VERSION_NAME]: loading ("  . __PACKAGE__ .  ")...";
+	
+		unless ($preconf -> {no_model_update}) {
+			require DBIx::ModelUpdate;
+		}
 
 		if ($ENV {GATEWAY_INTERFACE} =~ m{^CGI/} || $conf -> {use_cgi} || $preconf -> {use_cgi}) {
 			eval 'require CGI';

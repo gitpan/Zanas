@@ -3,7 +3,7 @@ no warnings;
 use DBI;
 
 use Data::Dumper;
-use DBIx::ModelUpdate;
+#use DBIx::ModelUpdate;
 
 ################################################################################
 

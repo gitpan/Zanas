@@ -1,3 +1,9 @@
+0.9964:
+
+	- Server & InternalRequest fixed;
+	- added $preconf -> {no_model_update} option for pathological mod_cgi circumstances :-( ;    
+	- check_href fixed for no __last_query_string appending in javascript urls;
+
 0.9960:
 
 	- js fix: focus_on_first_input don't try to focus on hidden input;

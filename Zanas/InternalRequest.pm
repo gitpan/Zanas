@@ -170,7 +170,9 @@ sub remote_ip {
 
 sub document_root {
 	my $self = shift;
-	return $self -> {Document_root};	
+	my $path = $ENV{temp};
+	$path =~ y{\\}{/}; 
+	return "$path/docroot";
 }
 
 ################################################################################

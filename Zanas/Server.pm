@@ -11,7 +11,6 @@ use Config::ApacheFormat;
 
 use File::Temp qw/:POSIX/;
 
-
 ################################################################################
 
 sub start {
@@ -98,6 +97,22 @@ EOS
 	print STDERR "HTTP daemon is listening on ", $daemon -> url, "...\n";
 	
 	$ENV {'SERVER_SOFTWARE'} = $daemon -> product_tokens;
+	
+print STDERR "\$^O == '$^O\n'";
+
+	if ($^O eq 'MSWin32') {
+	
+		my $pidfile = "$temp\\zanas.pid";
+
+print STDERR "writing $pidfile\n";
+
+		open (PIDFILE, ">$pidfile");
+		print PIDFILE $$;		
+		close (PIDFILE);
+		
+print STDERR "$pidfile wrote\n";
+		
+	}
 
 	while (my $connection = $daemon -> accept) {
 
@@ -120,14 +135,15 @@ sub handle_connection {
 		my $uri = $request -> uri -> as_string;
 		
 
-#print STDERR $request -> method . " $uri";
+print STDERR $request -> method . " $uri";
 
 		if ($uri =~ m{^/i/}) {
 
 			my $path = $document_root . $uri;
 			$path =~ s{\?.*}{};
 
-#print STDERR " [$path]\n";
+	$| = 1;
+print STDERR " [$path]\n";
 
 			$connection -> send_basic_header;
 			print $connection "Cache-Control: max-age=" . 24 * 60 * 60;
@@ -178,7 +194,7 @@ sub handle_connection {
 
 	undef ($connection);
 	
-#print STDERR "\n";
+print STDERR "\n";
 
 }
 

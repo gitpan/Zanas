@@ -376,15 +376,22 @@ sub sql_select_loop {
 
 	my ($sql, $coderef, @params) = @_;
 	
-	my $st = sql_prepare ($sql);
-	$st -> execute (@params);
+#	my $st = sql_prepare ($sql);
+#	$st -> execute (@params);
+
+	my $items = sql_select_all ($sql, @params);
 	
 	our $i;
-	while ($i = $st -> fetchrow_hashref) {
+	
+#	while ($i = $st -> fetchrow_hashref) {
+#		&$coderef ();
+#	}
+
+	foreach $i (@$items) {
 		&$coderef ();
 	}
 	
-	$st -> finish ();
+#	$st -> finish ();
 
 }
 
