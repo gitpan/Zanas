@@ -260,7 +260,7 @@ EOH
 							scrollable_table_row_cell_old_style = scrollable_rows [scrollable_table_row].cells [effective_scrollable_cell].className;
 							scrollable_rows [scrollable_table_row].cells [effective_scrollable_cell].className = 'txt6';
 							scrollable_rows [scrollable_table_row].cells [effective_scrollable_cell].scrollIntoView (false);
-							event.returnValue = false;						
+							return false;
 
 						}
 
@@ -273,7 +273,7 @@ EOH
 							scrollable_table_row_cell_old_style = scrollable_rows [scrollable_table_row].cells [effective_scrollable_cell].className;
 							scrollable_rows [scrollable_table_row].cells [effective_scrollable_cell].className = 'txt6';
 							scrollable_rows [scrollable_table_row].cells [effective_scrollable_cell].scrollIntoView ();
-							event.returnValue = false;
+							return false;
 
 						}
 
@@ -283,7 +283,7 @@ EOH
 							scrollable_table_row_cell --;
 							scrollable_table_row_cell_old_style = scrollable_rows [scrollable_table_row].cells [scrollable_table_row_cell].className;
 							scrollable_rows [scrollable_table_row].cells [scrollable_table_row_cell].className = 'txt6';
-							event.returnValue = false;
+							return false;
 
 						}
 
@@ -293,7 +293,7 @@ EOH
 							scrollable_table_row_cell ++;
 							scrollable_table_row_cell_old_style = scrollable_rows [scrollable_table_row].cells [scrollable_table_row_cell].className;
 							scrollable_rows [scrollable_table_row].cells [scrollable_table_row_cell].className = 'txt6';
-							event.returnValue = false;
+							return false;
 
 						}
 
@@ -301,6 +301,7 @@ EOH
 
 							var children = scrollable_rows [scrollable_table_row].cells [scrollable_table_row_cell].getElementsByTagName ('input');
 							if (children != null && children.length > 0) children [0].checked = !children [0].checked;
+							return false;
 							
 						}
 						
@@ -308,12 +309,13 @@ EOH
 							
 							var children = scrollable_rows [scrollable_table_row].cells [scrollable_table_row_cell].getElementsByTagName ('a');
 							if (children != null && children.length > 0) document.location.href = children [0].href + '&_salt=@{[rand]}';
+							return false;
 							
 						}
 
 					}
 
-					@{[ map {&{"MSIE_5_handle_hotkey_$$_{type}"} ($_)} @scan2names ]}				
+					@{[ map {&{"MSIE_5_handle_hotkey_$$_{type}"} ($_)} @scan2names ]}
 							
 				</script>
 						
@@ -536,7 +538,7 @@ sub MSIE_5_draw_table {
 
 	return <<EOH
 		
-		@{[ $options -> {js_ok_escape} ? MSIE_5_js_ok_escape () : '' ]}
+		@{[ $options -> {js_ok_escape} ? MSIE_5_js_ok_escape ({name => $options -> {name}}) : '' ]}
 		
 		<table cellspacing=0 cellpadding=0 width="100%"><tr><td class=bgr8>
 		
@@ -580,6 +582,8 @@ sub MSIE_5_draw_path {
 	
 	$path = '';
 	
+	my $nowrap = $options -> {multiline} ? '' : 'nowrap';
+	
 	foreach my $item (@$list) {		
 	
 		my $name = trunc_string ($item -> {name}, $options -> {max_len});
@@ -607,7 +611,7 @@ EOH
 						</tr>
 						<tr>
 							<td><img height=14 hspace=4 src="/i/toolbars/4pt.gif" width=2 border=0></td>
-							<td class=header6 nowrap>&nbsp;$path&nbsp;</td>
+							<td class=header6 $nowrap>&nbsp;$path&nbsp;</td>
 							<td width="100%">
 								<table cellspacing=0 cellpadding=0 width="100%" border=0>
 									<tr>
@@ -875,7 +879,7 @@ EOH
 	return <<EOH
 $path<table cellspacing=1 cellpadding=5 width="100%">
 
-			@{[ MSIE_5_js_ok_escape () ]}
+			@{[ MSIE_5_js_ok_escape ($options) ]}
 			
 			<form name=$name action=/ method=post enctype=multipart/form-data target=invisible>
 				<input type=hidden name=type value=$type> 
@@ -892,6 +896,13 @@ EOH
 ################################################################################
 
 sub MSIE_5_js_ok_escape {
+	
+	my ($options) = @_;
+	
+	$options -> {name} ||= 'form';
+	$options -> {confirm_ok} ||= '—охранить данные?';
+	
+	$options -> {confirm_ok} = js_escape ($options -> {confirm_ok});
 
 	return <<EOH
 	
@@ -901,8 +912,8 @@ sub MSIE_5_js_ok_escape {
 				window.location.href = document.getElementById ('esc').href + '&_salt=@{[rand]}';
 			}
 		
-			if (window.event.keyCode == 10 && window.confirm ('—охранить данные?')) {
-				document.form.submit ();
+			if (window.event.keyCode == 10 && window.confirm ($$options{confirm_ok})) {
+				document.$$options{name}.submit ();
 			}
 													
 		</script>
@@ -1057,11 +1068,12 @@ sub MSIE_5_draw_esc_toolbar {
 
 	my ($options) = @_;
 		
-	my $esc = $options -> {esc};
-	$esc ||= "/?type=$_REQUEST{type}";
-	
+	$options -> {href} = $options -> {esc};
+	$options -> {href} ||= "/?type=$_REQUEST{type}";
+	check_href ($options);
+
 	draw_centered_toolbar ($options, [
-		{icon => 'cancel', label => 'вернутьс€', href => "$esc&sid=$_REQUEST{sid}", id => 'esc'},
+		{icon => 'cancel', label => 'вернутьс€', href => "$options->{href}", id => 'esc'},
 	])
 	
 }
@@ -1070,18 +1082,29 @@ sub MSIE_5_draw_esc_toolbar {
 
 sub MSIE_5_draw_ok_esc_toolbar {
 
-	my ($options) = @_;
-		
-	my $esc = $options -> {esc};
-	$esc ||= "/?type=$_REQUEST{type}";
+	my ($options) = @_;		
+	
+	$options -> {href} = $options -> {esc};
+	$options -> {href} ||= "/?type=$_REQUEST{type}";
+	check_href ($options);
 
 	my $name = $options -> {name};
 	$name ||= 'form';
-	
+
 	draw_centered_toolbar ($options, [
-		{icon => 'ok',     label => 'применить', href => '#', onclick => "document.$name.submit()"},
-		{icon => 'cancel', label => 'вернутьс€', href => "$esc&sid=$_REQUEST{sid}", id => 'esc'},
-	])
+		{
+			icon => 'ok',     
+			label => 'применить', 
+			href => '#', 
+			onclick => "document.$name.submit()"
+		},
+		{
+			icon => 'cancel', 
+			label => 'вернутьс€', 
+			href => $options -> {href}, 
+			id => 'esc'
+		},
+	 ])
 	
 }
 
@@ -1276,7 +1299,7 @@ sub MSIE_5_draw_form_field_htmleditor {
 		<SCRIPT language="javascript">
 <!--
 var oFCKeditor_$$options{name} ;
-oFCKeditor_$$options{name} = new FCKeditor('_$$options{name}') ;
+oFCKeditor_$$options{name} = new FCKeditor('_$$options{name}', '$$options{width}', '$$options{height}') ;
 oFCKeditor_$$options{name}.Value = '$s';
 oFCKeditor_$$options{name}.Create() ;
 //-->
