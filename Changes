@@ -1,3 +1,7 @@
+0.9909: 
+
+	- fixed a bug in draw_row_button (no sid inheritance when confirm is defined);
+
 0.9908: 
 
 	- check_title sub is added, draw_table_header, draw_row_button and draw_text_cell are fixed to use it;

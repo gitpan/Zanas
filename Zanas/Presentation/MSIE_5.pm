@@ -1064,6 +1064,8 @@ sub draw_row_button {
 	
 	return '<td class=bgr0 valign=top nowrap width="1%">&nbsp;' if $options -> {off};	
 	
+	check_href  ($options);
+
 	if ($options -> {confirm}) {
 		my $salt = rand;
 		my $msg = js_escape ($options -> {confirm});
@@ -1077,7 +1079,6 @@ sub draw_row_button {
 		$options -> {label} = "\&nbsp;[$$options{label}]\&nbsp;";
 	}
 
-	check_href  ($options);
 	check_title ($options);
 
 	return qq {<td $$options{title} class=bgr4 valign=top nowrap width="1%"><a class=lnk0 href="$$options{href}" onFocus="blur()" target="$$options{target}">$$options{label}</a>};

@@ -121,7 +121,7 @@ sub check_title {
 
 sub check_href {
 
-	my ($options) = @_;
+	my ($options) = @_;	
 	
 	if (ref $options -> {href} eq HASH) {
 		$options -> {href} = create_url (%{$options -> {href}});
@@ -134,7 +134,7 @@ sub check_href {
 	
 	if ($_REQUEST{period} and $options -> {href} !~ /^(\#|java)/ and $options -> {href} !~ /\&period=/) {
 		$options -> {href} .= "\&period=$_REQUEST{period}";
-	}	
+	}			
 
 }
 
