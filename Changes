@@ -1,3 +1,9 @@
+0.81: 20.01.04 14:00
+
+	- Zanas::Install module added;
+	- gzip encoding for basic js and css;
+	- sub sql_select_subtree added;
+
 0.80: 26.12.03 14:30
 
 	- basic js and css is now served from Zanas.pm itself;
@@ -6,7 +12,7 @@
 
 0.79: 25.12.03 12:30
 	
-	- added gzipping option ($conf -> {core_sweep_spaces});
+	- added html sweeping option ($conf -> {core_sweep_spaces});
 	- _W_A_R_N_I_N_G_ !!! Basic navigation javaScript is now served as static content. Copy or symlink static/navigation.js to your app /docroot/i/ dir;
 	- added gzipping option ($conf -> {core_gzip}). Requires Compress::Zlib.
 	- added Content-Range header in download_file sub;
@@ -30,7 +36,6 @@
 0.76: 16.12.03 10:30
 
 	- various js fixes in table scrolling/focus handling;
-
 
 0.75: 15.12.03 14:00
 

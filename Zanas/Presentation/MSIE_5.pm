@@ -184,6 +184,8 @@ EOJS
 
 					<script src="/navigation.js">
 					</script>
+					<script src="/menu.js">
+					</script>
 				@{[ map {<<EOCSS} @{$_REQUEST{__include_js}} ]}
 					<script type="text/javascript" src="/i/${_}.js">
 					</script>
@@ -300,12 +302,12 @@ sub MSIE_5_draw_form_field_button {
 
 sub MSIE_5_draw_menu {
 
-	my ($types, $cursor) = @_;
+	my ($types, $cursor) = @_;	
 	
 	@$types or return '';
 	
 	$_REQUEST {__no_navigation} and return '';
-
+	
 	my ($tr1, $tr2, $tr3) = ('', '', '');
 
 	foreach my $type (@$types)	{

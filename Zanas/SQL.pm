@@ -242,6 +242,30 @@ sub sql_select_path {
 
 ################################################################################
 
+sub sql_select_subtree {
+
+	my ($table_name, $id, $options) = @_;
+	
+	my @ids = ($id);
+	
+	while (TRUE) {
+	
+		my $ids = join ',', @ids;
+	
+		my @new_ids = sql_select_col ("SELECT id FROM $table_name WHERE parent IN ($ids) AND id NOT IN ($ids)");
+		
+		last unless @new_ids;
+	
+		push @ids, @new_ids;
+	
+	}
+	
+	return @ids;
+
+}
+
+################################################################################
+
 sub sql_last_insert_id {
 	return 0 + sql_select_array ("SELECT LAST_INSERT_ID()");
 }

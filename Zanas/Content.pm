@@ -146,15 +146,16 @@ sub select__static_files {
 	
 	my $filename = $&;
 
-	my $path = $STATIC_ROOT . $filename . '.pm';
-	
 	my $content_type = 
 		$r -> filename =~ /\.js/ ? 'application/x-javascript' :
 		$r -> filename =~ /\.css/ ? 'text/css' :
 		'application/octet-stream';
+
+	my $path = $STATIC_ROOT . $filename . '.gz.pm';
+	-f $path or $path = $STATIC_ROOT . $filename . '.pm';
 	
 	$r -> header_out ('Content-Type' => $content_type);	
-#	$r -> header_out ('Content-Encoding' => 'gzip') if $r -> filename =~ /\.gz/;
+	$r -> header_out ('Content-Encoding' => 'gzip') if $path =~ /\.gz/;
 	$r -> header_out ('Content-Length' => -s $path);
 	$r -> header_out ('Cache-Control' => 'max-age=' . 24 * 60 * 60);
 	
