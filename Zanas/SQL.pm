@@ -409,4 +409,42 @@ sub sql_upload_file {
 	
 }
 
+################################################################################
+
+sub sql_adjust_schema ($) {
+
+	my ($tables) = @_;
+	
+	ref $tables eq HASH and $tables = [$tables];
+	
+	foreach my $table (@$tables) {
+	
+		my @test = sql_select_col ("SHOW TABLES LIKE '$$table{name}'");
+		
+		@test or sql_do (<<EOH);
+			CREATE TABLE $$table{name} (
+				id int unsigned primary key
+				, fake bigint unsigned not null
+			)
+EOH
+		
+		my $existing_columns = {};
+		my $st = $db -> prepare ("SHOW COLUMNS FROM ?");
+		$st -> execute ($table -> {name});
+	
+		while (my $col = $st -> fetchrow_hashref) {		
+			next if $col -> {Field} =~ /^id|fake$/;
+			$existing_columns -> {$col -> {Field}} = $col;
+		}
+		
+		foreach my $column (@{$table -> {columns}}) {		
+			next if $column -> {name} =~ /^id|fake$/;
+			next if exists $existing_columns -> {$column -> {name}};
+			sql_do ("ALTER TABLE $$table{name} ADD $$column{name} $$column{type}");
+		}
+	
+	}	
+
+}
+
 1;

@@ -892,6 +892,8 @@ EOH
 sub MSIE_5_draw_toolbar_input_text {
 
 	my ($options) = @_;
+	
+	return '' if $options -> {off};
 
 	my $value = $options -> {value};
 	$value ||= $_REQUEST{$$options{name}};
@@ -1080,7 +1082,7 @@ sub MSIE_5_draw_form {
 	my $path = $data -> {path} ? draw_path ($options, $data -> {path}) : '';
 	
 	my $bottom_toolbar = 
-		$options -> {bottom_toolbar} ? $options -> {bottom_toolbar} :		
+		exists $options -> {bottom_toolbar} ? $options -> {bottom_toolbar} :		
 		$_REQUEST {__no_navigation} ? draw_close_toolbar ($options) :
 		$options -> {back} ? draw_back_next_toolbar ($options) :
 		$options -> {no_ok} ? draw_esc_toolbar ($options) :
@@ -1345,17 +1347,20 @@ sub MSIE_5_draw_ok_esc_toolbar {
 
 	my $name = $options -> {name};
 	$name ||= 'form';
+	
+	$options -> {label_ok} ||= 'применить';
+	$options -> {label_cancel} ||= 'вернуться';
 
 	draw_centered_toolbar ($options, [
 		{
 			icon => 'ok',     
-			label => 'применить', 
+			label => $options -> {label_ok}, 
 			href => '#', 
 			onclick => "document.$name.submit()"
 		},
 		{
 			icon => 'cancel', 
-			label => 'вернуться', 
+			label => $options -> {label_cancel}, 
 			href => $options -> {href}, 
 			id => 'esc'
 		},
@@ -1533,6 +1538,7 @@ EOEXIT
 				<td class=bgr1><img height=1 src="/i/0.gif" width=7 border=0></td>
 			</tr>
 		</table>
+		$$conf{top_banner}
 		<table cellSpacing=0 cellPadding=0 border=0 width=100%>
 			<tr><td class=bgr7><img height=1 src="/i/0.gif" width=1 height=1 border=0></td></tr>
 			<tr><td class=bgr1><img height=1 src="/i/0.gif" width=1 height=1 border=0></td></tr>

@@ -1,3 +1,8 @@
+0.73: 02.12.03 15:00
+
+	- added off option to draw_toolbar_input_text sub;
+	- added top_banner configuration option;
+
 0.72: 28.11.03 16:00
 
 	- added type-ahead facility to all <select> controls (recipe taken from http://www.oreillynet.com/javascript/2003/09/03/examples/jsdhtmlcb_bonus2_example.html);
