@@ -1,3 +1,13 @@
+0.9948:
+
+	- use Carp;
+	- MSIE5 fix (path to 0.html for Win32);
+	- *::Cookie loading fix;
+	- set_cookie API function added;
+	- js fix: escaping '\' in draw_form_field_htmleditor sub;
+	- handler fixed for Windows&CGI case: copying 0.gif e.t.c. to /i is no longer needed; (Zanas::Request bug ?)
+	- removed dependency of Apache::Request in Makefile.PL;
+
 0.9947:
 
 	- core_auto_esc related fix (cleaning up the request string);

@@ -43,6 +43,7 @@ sub handler {
 	$_REQUEST {__uri} = $r -> uri;
 	$_REQUEST {__uri} =~ s{/cgi-bin/.*}{/};
 	$_REQUEST {__uri} =~ s{\/\w+\.\w+$}{};
+	$_REQUEST {__uri} =~ s{\?.*}{};
 	
 	$number_format or our $number_format = Number::Format -> new (%{$conf -> {number_format}});
 	
@@ -338,11 +339,19 @@ sub pub_handler {
 	our $r   = $use_cgi ? new Zanas::Request () : $_[0];
 	our $apr = $use_cgi ? $r : Apache::Request -> new ($r);
 	
-	$use_cgi or eval "require Apache::Cookie";
+	if ($use_cgi) {
+		require CGI;
+		require CGI::Cookie;
+	}
+	else {
+		require Apache::Cookie;
+	}
 
 	my $parms = $apr -> parms;
 	our %_REQUEST = %{$parms};		
 	$_REQUEST {__uri} = $r -> uri;
+	
+	$_REQUEST {__uri} =~ s{^http://[^/]+}{};
 	$_REQUEST {__uri} =~ s{\/\w+\.\w+$}{};
 
 	$_REQUEST {__uri_chomped} = $_REQUEST {__uri};

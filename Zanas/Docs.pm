@@ -20,6 +20,14 @@ our $charset = {
 
 @options = (
 
+
+	{
+		name     => 'force_label',
+		label_en => "If true, the label is shown even when core_show_icons is on.",
+		label_ru => "Если истина, то надпись показывается даже при core_show_icons.",
+	},
+
+
 	{
 		name     => 'no_time',
 		label_en => "If true, only the date input is awaited, but no time.",
@@ -1623,6 +1631,24 @@ EO
 					#######################################
 
 	{
+		name     => 'set_cookie',
+#		options  => [],
+		label_en => 'Sets the Cookie response header.',
+		label_ru => 'Устанавливает заголовок cookie.',
+		syn      => <<EO,
+			set_cookie (
+				-name    =>  'psid',
+				-value   =>  \$sid,
+				-expires =>  '+3M',
+				-path    =>  '/',
+			);      
+EO
+		see_also => [qw(draw_centered_toolbar)]
+	},
+			
+					#######################################
+
+	{
 		name     => 'draw_form',
 		options  => [qw(action/update type/$_REQUEST{type} id/$_REQUEST{id} name/form esc target/invisible bottom_toolbar/draw_ok_esc_toolbar() no_ok keep_params)],
 		syn      => <<EO,
@@ -2208,7 +2234,7 @@ EO
 
 	{
 		name     => 'draw_row_button',
-		options  => [qw(label icon href target/invisible confirm off)],
+		options  => [qw(label icon href target/invisible confirm off force_label)],
 		syn      => <<EO,	
 	draw_row_button ({
 		label   => "[Delete]",

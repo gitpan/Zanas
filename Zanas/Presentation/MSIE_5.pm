@@ -235,7 +235,8 @@ EOH
 		</iframe>
 EOH
 
-	my $root = $^O eq 'MSWin32' ? '/i/' : $_REQUEST{__uri};
+#	my $root = $^O eq 'MSWin32' ? '/i/' : $_REQUEST{__uri};
+	my $root = $_REQUEST{__uri};
 	
 	my $request_package = ref $apr;
 	my $mod_perl = $ENV {MOD_PERL};
@@ -400,7 +401,7 @@ EOHELP
 					$menu
 					$body
 				</div>
-				<iframe name=invisible src="$_REQUEST{__uri}0.html" width=0 height=0>
+				<iframe name=invisible src="${root}0.html" width=0 height=0>
 				</iframe>
 				$keepalive
 			</body>
@@ -1215,7 +1216,9 @@ sub draw_row_button {
 	} 
 		
 	if ($conf -> {core_show_icons}) {	
-		$options -> {label} = qq|<img src="/i/buttons/$$options{icon}.gif" alt="$$options{label}" border=0 hspace=0 vspace=0>|
+		my $label = $options -> {label};
+		$options -> {label} = qq|<img src="/i/buttons/$$options{icon}.gif" alt="$$options{label}" border=0 hspace=0 vspace=0 align=absmiddle>|;
+		$options -> {label} .= "&nbsp;$label" if $options -> {force_label};
 	}
 	else {
 		$options -> {label} = "\&nbsp;[$$options{label}]\&nbsp;";
@@ -2176,6 +2179,7 @@ sub draw_form_field_htmleditor {
 	
 	my $s = $$data{$$options{name}};
 		
+	$s =~ s{\\}{\\\\}gsm;
 	$s =~ s{\"}{\\\"}gsm;
 	$s =~ s{\'}{\\\'}gsm;
 	$s =~ s{[\n\r]+}{\\n}gsm;

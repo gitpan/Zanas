@@ -1,5 +1,6 @@
 no warnings;
 
+use Carp;
 use Zanas::Presentation;
 use Zanas::Content;
 use Zanas::Apache;
@@ -118,6 +119,7 @@ BEGIN {
 #print STDERR "\$Apache::Server::ReStarting = $Apache::Server::ReStarting\n";
 
 $| = 1;
+$SIG {__DIE__} = \&Carp::confess;
 
 print STDERR "\nZanas.pm: loading ("  . __PACKAGE__ .  ")...";
 
@@ -301,7 +303,7 @@ print STDERR "\rZanas.pm: loading ("  . __PACKAGE__ .  ") ok.\n";
 
 package Zanas;
 
-$VERSION = '0.9947';
+$VERSION = '0.9948';
 
 =head1 NAME
 

@@ -392,4 +392,21 @@ sub add_vocabularies {
 
 }
 
+################################################################################
+
+sub set_cookie {
+
+	if (ref $r eq 'Apache') {
+		require Apache::Cookie;
+		my $cookie = Apache::Cookie -> new ($r, @_);
+		$cookie -> bake;
+	}
+	else {
+		require CGI::Cookie;
+		my $cookie = CGI::Cookie -> new (@_);
+		$r -> header_out ('cookie', $cookie);
+	}
+
+}
+
 1;
