@@ -117,7 +117,9 @@ BEGIN {
 #print STDERR "\$Apache::Server::Starting = $Apache::Server::Starting\n";
 #print STDERR "\$Apache::Server::ReStarting = $Apache::Server::ReStarting\n";
 
-print STDERR "Zanas.pm loading ("  . __PACKAGE__ .  "): starting\n";
+$| = 1;
+
+print STDERR "\nZanas.pm: loading ("  . __PACKAGE__ .  ")...";
 
 	if ($ENV {GATEWAY_INTERFACE} =~ m{^CGI/} || $conf -> {use_cgi} || $preconf -> {use_cgi}) {
  		eval 'require CGI';
@@ -291,7 +293,7 @@ print STDERR "Zanas.pm loading ("  . __PACKAGE__ .  "): starting\n";
 		
 	}
 		
-print STDERR "Zanas.pm loading ("  . __PACKAGE__ .  "): completed\n";
+print STDERR "\rZanas.pm: loading ("  . __PACKAGE__ .  ") ok.\n";
 		
 }
 
@@ -299,7 +301,7 @@ print STDERR "Zanas.pm loading ("  . __PACKAGE__ .  "): completed\n";
 
 package Zanas;
 
-$VERSION = '0.9939';
+$VERSION = '0.9940';
 
 =head1 NAME
 

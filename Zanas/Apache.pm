@@ -283,7 +283,7 @@ EOH
 					out_html ({}, draw_page ($page));
 				}
 				else {				
-					$_REQUEST {__response_sent} or redirect ({action => '', redirect_params => ''}, {kind => 'js'});								
+					$_REQUEST {__response_sent} or redirect ({action => '', redirect_params => ''}, {kind => 'js', label => $_REQUEST {__redirect_alert}});
 				}
 				
 			}

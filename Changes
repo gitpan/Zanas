@@ -1,3 +1,9 @@
+0.9940:
+
+	- startup logging beautyfied;
+	- magic parameter $_REQUEST {__redirect_alert} added;
+	- main menu rendering changed for {no_page} items;
+
 0.9939: 
 
 	- fixed logging (was broken with adding support for Oracle);

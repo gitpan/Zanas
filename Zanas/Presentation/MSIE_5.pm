@@ -344,9 +344,13 @@ EOF
 					}
 					
 					var focused_inputs = getElementsByName ('$_REQUEST{__focused_input}');
-					
+										
 					if (focused_inputs != null && focused_inputs.length > 0) {
-						focused_inputs [0].focus ();
+						var focused_input = focused_inputs [0];
+						focused_input.focus ();
+						if (focused_input.type == 'radio') {
+							focused_input.select ();
+						}
 					}
 					else {					
 						var inputs = document.body.getElementsByTagName ('input');
@@ -408,7 +412,8 @@ sub draw_form_field_button {
 	$s ||= $$options{value};
 	$s =~ s/\"/\&quot\;/gsm; #"
 	my $onclick = $$options{onclick} || '';
-	return qq {<input type="button" name="_$$options{name}" value="$s" onClick="$onclick">};
+	$tabindex ++;
+	return qq {<input type="button" name="_$$options{name}" value="$s" onClick="$onclick" tabindex=$tabindex>};
 }
 
 ################################################################################
@@ -455,13 +460,13 @@ EOH
 		my $onhover = '';
 		if (ref $type -> {items} eq ARRAY) {
 			$divs .= draw_vert_menu ($type -> {name}, $type -> {items});
-			$onhover = qq {onmouseover="open_popup_menu ('$$type{name}')"};
+			$onhover = qq {onmouseover="open_popup_menu ('$$type{name}')"} unless $type -> {no_page};
 		}
 		
 #		my $href = $type -> {no_page} ? '#' : ("$_REQUEST{__uri}?type=$$type{name}&sid=$_REQUEST{sid}@{[$_REQUEST{period} ? '&period=' . $_REQUEST {period} : '']}@{[$type->{role} ? '&role=' . $type->{role} : '']}";
 
 		if ($type -> {no_page}) {
-			$type -> {href} = '#';
+			$type -> {href} = "javaScript:open_popup_menu('$$type{name}')";
 		} 
 		else {
 			$type -> {href} ||= "/?type=$$type{name}";
@@ -1051,9 +1056,18 @@ sub draw_toolbar_button {
 		my $msg = js_escape ($options -> {confirm});
 		$options -> {href} = qq [javascript:if (confirm ($msg)) {window.open('$$options{href}', '$$options{target}')}];
 	} 
+
+	my ($bra, $ket) = ();
+	if ($conf -> {core_show_icons} && $options -> {icon}) {	
+		$bra = qq|<img src="/i/buttons/$$options{icon}.gif" alt="$$options{label}" border=0 hspace=0 vspace=1 align=absmiddle>&nbsp;|
+	}
+	else {
+		$bra = '<b>[';
+		$ket = ']</b>';
+	}
 	
 	return <<EOH
-		<td nowrap>&nbsp;<a class=lnk0 href="$$options{href}" id="$options" target="$$options{target}"><b>[$$options{label}]</b></a></td>
+		<td nowrap>&nbsp;<a class=lnk0 href="$$options{href}" id="$options" target="$$options{target}">${bra}$$options{label}${ket}</b></a></td>
 		<td><img height=15 hspace=4 src="/i/toolbars/razd1.gif" width=2 border=0></td>
 EOH
 
@@ -1265,6 +1279,8 @@ sub draw_form {
 		
 	my $max_cols = 1;
 	
+	our $tabindex = 1;
+	
 	foreach my $field (@$fields) {
 		next unless ref $field eq ARRAY;
 		$max_cols = @$field if $max_cols < @$field;
@@ -1368,7 +1384,10 @@ sub draw_form_field_string {
 	my $attributes = dump_attributes ($options -> {attributes});
 	
 	my $size = $options -> {size} ? "size=$$options{size} maxlength=$$options{size}" : "size=120";	
-	return qq {<input $attributes onFocus="scrollable_table_is_blocked = true; q_is_focused = true" onBlur="scrollable_table_is_blocked = false; q_is_focused = false" autocomplete="off" type="text" maxlength="$$options{max_len}" name="_$$options{name}" value="$s" $size onKeyPress="if (window.event.keyCode != 27) is_dirty=true">};
+	
+	$tabindex++;
+	
+	return qq {<input $attributes onFocus="scrollable_table_is_blocked = true; q_is_focused = true" onBlur="scrollable_table_is_blocked = false; q_is_focused = false" autocomplete="off" type="text" maxlength="$$options{max_len}" name="_$$options{name}" value="$s" $size onKeyPress="if (window.event.keyCode != 27) is_dirty=true" tabindex=$tabindex>};
 	
 }
 
@@ -1429,9 +1448,11 @@ sub draw_form_field_datetime {
 	
 	my $clear_button = $options -> {no_clear_button} || $options -> {no_read_only} ? '' : qq{&nbsp;<button class="txt7" onClick="document.all._$$options{name}.value=''">X</button>};
 	
+	$tabindex++;
+	
 	return <<EOH
 		<nobr>
-		<input $attributes onFocus="scrollable_table_is_blocked = true; q_is_focused = true" onBlur="scrollable_table_is_blocked = false; q_is_focused = false" autocomplete="off" type="text" name="_$$options{name}" value="$s" $size onKeyPress="if (window.event.keyCode != 27) is_dirty=true">
+		<input $attributes onFocus="scrollable_table_is_blocked = true; q_is_focused = true" onBlur="scrollable_table_is_blocked = false; q_is_focused = false" autocomplete="off" type="text" name="_$$options{name}" value="$s" $size onKeyPress="if (window.event.keyCode != 27) is_dirty=true" tabindex=$tabindex>
 		<button id="calendar_trigger_$$options{name}" class="txt7">...</button>
 		$clear_button
 		</nobr>
@@ -1457,7 +1478,8 @@ EOH
 sub draw_form_field_file {
 	my ($options, $data) = @_;	
 	$options -> {size} ||= 60;
-	return qq {<input onFocus="scrollable_table_is_blocked = true; q_is_focused = true" onBlur="scrollable_table_is_blocked = false; q_is_focused = false" type="file" name="_$$options{name}" size=$$options{size} onKeyPress="if (window.event.keyCode != 27) is_dirty=true" onChange="is_dirty=true; $$options{onChange}">};
+	$tabindex ++;
+	return qq {<input onFocus="scrollable_table_is_blocked = true; q_is_focused = true" onBlur="scrollable_table_is_blocked = false; q_is_focused = false" type="file" name="_$$options{name}" size=$$options{size} onKeyPress="if (window.event.keyCode != 27) is_dirty=true" onChange="is_dirty=true; $$options{onChange}" tabindex=$tabindex>};
 }
 
 ################################################################################
@@ -1494,8 +1516,10 @@ sub draw_form_field_text {
 
 	my $value = $options -> {value};
 	$value ||= '';
+	
+	$tabindex++;
 
-	return qq {<textarea onFocus="scrollable_table_is_blocked = true; q_is_focused = true" onBlur="scrollable_table_is_blocked = false; q_is_focused = false" rows=$rows cols=$cols name="_$$options{name}" value="$value" onKeyPress="if (window.event.keyCode != 27) is_dirty=true">$s</textarea>};
+	return qq {<textarea onFocus="scrollable_table_is_blocked = true; q_is_focused = true" onBlur="scrollable_table_is_blocked = false; q_is_focused = false" rows=$rows cols=$cols name="_$$options{name}" value="$value" onKeyPress="if (window.event.keyCode != 27) is_dirty=true" tabindex=$tabindex>$s</textarea>};
 }
 
 ################################################################################
@@ -1503,7 +1527,8 @@ sub draw_form_field_text {
 sub draw_form_field_password {
 	my ($options, $data) = @_;
 	$options -> {size} ||= $conf -> {size} || 120;	
-	return qq {<input type="password" name="_$$options{name}" size="$$options{size}" onKeyPress="if (window.event.keyCode != 27) is_dirty=true">};
+	$tabindex++;
+	return qq {<input type="password" name="_$$options{name}" size="$$options{size}" onKeyPress="if (window.event.keyCode != 27) is_dirty=true" tabindex=$tabindex>};
 }
 
 ################################################################################
@@ -1565,10 +1590,11 @@ sub draw_form_field_radio {
 	my ($options, $data) = @_;
 	
 	my $html = '';
-	
+		
 	foreach my $value (@{$options -> {values}}) {
+		$tabindex++;
 		my $checked = $data -> {$options -> {name}} == $value -> {id} ? 'checked' : '';
-		$html .= qq {<input onFocus="scrollable_table_is_blocked = true; q_is_focused = true" onBlur="scrollable_table_is_blocked = false; q_is_focused = false" type="radio" name="_$$options{name}" value="$$value{id}" $checked onClick="is_dirty=true">&nbsp;$$value{label} <br>};
+		$html .= qq {<input onFocus="scrollable_table_is_blocked = true; q_is_focused = true" onBlur="scrollable_table_is_blocked = false; q_is_focused = false" type="radio" name="_$$options{name}" value="$$value{id}" $checked onClick="is_dirty=true" tabindex=$tabindex>&nbsp;$$value{label} <br>};
 	}
 		
 	return $html;
@@ -1587,7 +1613,9 @@ sub draw_form_field_checkbox {
 	
 	my $checked = $s ? 'checked' : '';
 	
-	return qq {<input type="checkbox" name="_$$options{name}" value="1" $checked onChange="is_dirty=true">};
+	$tabindex++;
+	
+	return qq {<input type="checkbox" name="_$$options{name}" value="1" $checked onChange="is_dirty=true" tabindex=$tabindex>};
 	
 }
 
@@ -1618,8 +1646,9 @@ sub draw_form_field_checkboxes {
 									
 					my $subchecked = 0 + (grep {$_ eq $subvalue -> {id}} @$v) ? 'checked' : '';
 					
+					$tabindex++;
 					
-					$subhtml .= qq {&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<input type="checkbox" name="_$$options{name}_$$subvalue{id}" value="1" $subchecked onChange="is_dirty=true">&nbsp;$$subvalue{label} <br>};					
+					$subhtml .= qq {&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<input type="checkbox" name="_$$options{name}_$$subvalue{id}" value="1" $subchecked onChange="is_dirty=true" tabindex=$tabindex>&nbsp;$$subvalue{label} <br>};
 				
 				}
 
@@ -1634,8 +1663,10 @@ EOH
 				$subattr = qq{onClick="setVisible('$id', checked)"};
 			
 			}
+		
+			$tabindex++;
 
-			$html .= qq {<input $subattr type="checkbox" name="_$$options{name}_$$value{id}" value="1" $checked onChange="is_dirty=true">&nbsp;$$value{label} <br> $subhtml};
+			$html .= qq {<input $subattr type="checkbox" name="_$$options{name}_$$value{id}" value="1" $checked onChange="is_dirty=true" tabindex=$tabindex>&nbsp;$$value{label} <br> $subhtml};
 			
 		}		
 	
@@ -1644,7 +1675,8 @@ EOH
 	
 		foreach my $value (@{$options -> {values}}) {
 			my $checked = $v eq $value -> {id} ? 'checked' : '';
-			$html .= qq {<input type="checkbox" name="_$$options{name}" value="$$value{id}" $checked onChange="is_dirty=true">&nbsp;$$value{label} <br>};
+			$tabindex++;
+			$html .= qq {<input type="checkbox" name="_$$options{name}" value="$$value{id}" $checked onChange="is_dirty=true" tabindex=$tabindex>&nbsp;$$value{label} <br>};
 		}
 		
 	}

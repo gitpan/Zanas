@@ -9,6 +9,8 @@ sub sql_prepare {
 
 	my ($sql) = @_;
 	
+print STDERR "sql_prepare (pid=$$): $sql\n";
+	
 	unless (exists $sts {$sql}) {
 		
 		eval {$sts {$sql} = $db  -> prepare ($sql, {
