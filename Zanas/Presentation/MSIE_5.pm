@@ -169,6 +169,12 @@ EOH
 	my $meta_refresh = $_REQUEST {__meta_refresh} ? qq{<META HTTP-EQUIV=Refresh CONTENT="$_REQUEST{__meta_refresh}; URL=@{[create_url()]}">} : '';	
 	
 	my $auth_toolbar = draw_auth_toolbar ({lpt => $lpt});
+
+	my $keepalive = $_REQUEST{sid} ? <<EOH : '';
+		<iframe name=keepalive src="/?keepalive=$_REQUEST{sid}" width=0 height=0>
+		</iframe>
+EOH
+	
 	
 	return <<EOH;
 		<html>
@@ -183,8 +189,6 @@ EOH
 EOJS
 
 					<script src="/navigation.js">
-					</script>
-					<script src="/menu.js">
 					</script>
 				@{[ map {<<EOCSS} @{$_REQUEST{__include_js}} ]}
 					<script type="text/javascript" src="/i/${_}.js">
@@ -277,10 +281,9 @@ EOF
 				$auth_toolbar			
 				$menu
 				$body
-				<iframe name=invisible src="/i/0.html" width=0 height=0>
+				<iframe name=invisible src="/0.html" width=0 height=0>
 				</iframe>
-				<iframe name=keepalive src="/?keepalive=$_REQUEST{sid}" width=0 height=0>
-				</iframe>
+				$keepalive
 			</body>
 		</html>
 EOH
@@ -316,7 +319,7 @@ sub MSIE_5_draw_menu {
 	
 		$tr1 .= <<EOH;
 			<td class=bgr8 rowspan=2><img src="/i/toolbars/n_left.gif" border=0></td>
-			<td bgcolor=#ffffff><img height=1 src="/i/0.gif" width=1 border=0></td>				
+			<td bgcolor=#ffffff><img height=1 src="/0.gif" width=1 border=0></td>				
 			<td class=bgr8 rowspan=2><img src="/i/toolbars/n_right.gif" border=0></td>
 EOH
 	
@@ -335,13 +338,13 @@ EOH
 #			<td class=$tclass nowrap>&nbsp;&nbsp;<a class=$aclass id="main_menu_$$type{name}" href="/?type=$$type{name}&sid=$_REQUEST{sid}@{[$_REQUEST{period} ? '&period=' . $_REQUEST {period} : '']}">$$type{label}</a>&nbsp;&nbsp;</td>
 
 		$tr2 .= <<EOH;
-			<td class=bgr1><img height=20 src="/i/0.gif" width=1 border=0></td>
+			<td class=bgr1><img height=20 src="/0.gif" width=1 border=0></td>
 			<td class=$tclass nowrap>&nbsp;&nbsp;<a class=$aclass id="main_menu_$$type{name}" href="/?type=$$type{name}&sid=$_REQUEST{sid}@{[$_REQUEST{period} ? '&period=' . $_REQUEST {period} : '']}@{[$type->{role} ? '&role=' . $type->{role} : '']}">$$type{label}</a>&nbsp;&nbsp;</td>
 EOH
 
 		$tr3 .= <<EOH;
-			<td class=bgr1><img height=1 src="/i/0.gif" width=1 border=0></td>
-			<td class=bgr1 nowrap><img height=1 src="/i/0.gif" width=1 border=0></td>
+			<td class=bgr1><img height=1 src="/0.gif" width=1 border=0></td>
+			<td class=bgr1 nowrap><img height=1 src="/0.gif" width=1 border=0></td>
 EOH
 
 	}
@@ -349,15 +352,15 @@ EOH
 	return <<EOH;
 		<table width="100%" class=bgr8 cellspacing=0 cellpadding=0 border=0>
 			<tr>
-				<td class=bgr8 width=7><img height=1 src="/i/0.gif" width=7 border=0></td>
+				<td class=bgr8 width=7><img height=1 src="/0.gif" width=7 border=0></td>
 				$tr2
-				<td class=bgr1><img height=20 src="/i/0.gif" width=1 border=0></td>
-				<td class=bgr8 width=100%><img height=1 src="/i/0.gif" width=1 border=0></td>
+				<td class=bgr1><img height=20 src="/0.gif" width=1 border=0></td>
+				<td class=bgr8 width=100%><img height=1 src="/0.gif" width=1 border=0></td>
 			<tr>
-				<td class=bgr8><img height=1 src="/i/0.gif" width=1 border=0></td>
+				<td class=bgr8><img height=1 src="/0.gif" width=1 border=0></td>
 				$tr3
-				<td class=bgr1><img height=1 src="/i/0.gif" width=1 border=0></td>
-				<td class=bgr8 width=100%><img height=1 src="/i/0.gif" width=1 border=0></td>
+				<td class=bgr1><img height=1 src="/0.gif" width=1 border=0></td>
+				<td class=bgr8 width=100%><img height=1 src="/0.gif" width=1 border=0></td>
 				
 		</table>	
 EOH
@@ -374,7 +377,7 @@ sub MSIE_5_draw_hr {
 	
 	return <<EOH;
 		<table border=0 cellspacing=0 cellpadding=0 width="100%">
-			<tr><td class=$options{class}><img src="/i/0.gif" width=1 height=$options{height}></td></tr>
+			<tr><td class=$options{class}><img src="/0.gif" width=1 height=$options{height}></td></tr>
 		</table>
 EOH
 	
@@ -649,7 +652,7 @@ EOH
 				<td class=bgr5>
 					<table cellspacing=0 cellpadding=0 width="100%" border=0>
 						<tr>
-							<td class=bgr6 colspan=4><img height=1 src="/i/0.gif" width=1 border=0></td>
+							<td class=bgr6 colspan=4><img height=1 src="/0.gif" width=1 border=0></td>
 						</tr>
 						<tr>
 <!--						
@@ -659,17 +662,17 @@ EOH
 							<td>
 								<table cellspacing=0 cellpadding=0 width="100%" border=0>
 									<tr>
-										<td _background="/i/toolbars/4pt.gif" height=15><img height=15  hspace=0 src="/i/0.gif" width=1 border=0></td>
+										<td _background="/i/toolbars/4pt.gif" height=15><img height=15  hspace=0 src="/0.gif" width=1 border=0></td>
 									</tr>
 								</table>
 							</td>
-							<td align=right><img height=15  src="/i/0.gif" width=4 border=0></td>
+							<td align=right><img height=15  src="/0.gif" width=4 border=0></td>
 						</tr>
 						<tr>
-							<td class=bgr8 colspan=4><img height=1 src="/i/0.gif" width=1 border=0></td>
+							<td class=bgr8 colspan=4><img height=1 src="/0.gif" width=1 border=0></td>
 						</tr>
 						<tr>
-							<td class=bgr6 colspan=4><img height=1 src="/i/0.gif" width=1 border=0></td>
+							<td class=bgr6 colspan=4><img height=1 src="/0.gif" width=1 border=0></td>
 						</tr>
 					</table>
 				</td>
@@ -688,7 +691,7 @@ sub MSIE_5_draw_window_title {
 	return '' if $options -> {off};
 	
 	return <<EOH
-		<table cellspacing=0 cellpadding=0 width="100%"><tr><td class='header15'><img src="/i/0.gif" width=1 height=20 align=absmiddle>&nbsp;&nbsp;&nbsp;$$options{label}</table>
+		<table cellspacing=0 cellpadding=0 width="100%"><tr><td class='header15'><img src="/0.gif" width=1 height=20 align=absmiddle>&nbsp;&nbsp;&nbsp;$$options{label}</table>
 EOH
 
 }
@@ -715,16 +718,16 @@ sub MSIE_5_draw_toolbar {
 EO
 					<input type=hidden name=sid value=$_REQUEST{sid}>
 				<tr>
-					<td class=bgr0 colspan=15><img height=1 src="/i/0.gif" width=1 border=0></td>
+					<td class=bgr0 colspan=15><img height=1 src="/0.gif" width=1 border=0></td>
 				</tr>
 				<tr>
-					<td class=bgr6 colspan=15><img height=1 src="/i/0.gif" width=1 border=0></td>
+					<td class=bgr6 colspan=15><img height=1 src="/0.gif" width=1 border=0></td>
 				</tr>
 				<tr>
 					<td width=20>
 						<table cellspacing=0 cellpadding=0 width=20 border=0>
 							<tr>
-								<td _background="/i/toolbars/6ptbg.gif"><img height=17 hspace=0 src="/i/0.gif" width=1 border=0></td>
+								<td _background="/i/toolbars/6ptbg.gif"><img height=17 hspace=0 src="/0.gif" width=1 border=0></td>
 							</tr>
 						</table>
 					</td>
@@ -732,17 +735,17 @@ EO
 					<td width="100%">
 						<table cellspacing=0 cellpadding=0 width="100%" border=0>
 							<tr>
-								<td _background="/i/toolbars/6ptbg.gif"><img height=17 hspace=0 src="/i/0.gif" width=1 border=0></td>
+								<td _background="/i/toolbars/6ptbg.gif"><img height=17 hspace=0 src="/0.gif" width=1 border=0></td>
 							</tr>
 						</table>
 					</td>
-					<td align=right><img height=23 src="/i/0.gif" width=4 border=0></td>
+					<td align=right><img height=23 src="/0.gif" width=4 border=0></td>
 				</tr>
 				<tr>
-					<td class=bgr8 colspan=15><img height=1 src="/i/0.gif" width=1 border=0></td>
+					<td class=bgr8 colspan=15><img height=1 src="/0.gif" width=1 border=0></td>
 				</tr>
 				<tr>
-					<td class=bgr6 colspan=15><img height=1 src="/i/0.gif" width=1 border=0></td>
+					<td class=bgr6 colspan=15><img height=1 src="/0.gif" width=1 border=0></td>
 				</tr>
 			</form>
 		</table>
@@ -1391,15 +1394,15 @@ sub MSIE_5_draw_centered_toolbar {
 				<td class=bgr5>
 					<table cellspacing=0 cellpadding=0 width="100%" border=0>
 						<tr>
-							<td class=bgr0 colspan=$colspan><img height=1 src="/i/0.gif" width=1 border=0></td>
+							<td class=bgr0 colspan=$colspan><img height=1 src="/0.gif" width=1 border=0></td>
 						</tr>
 						<tr>
-							<td class=bgr6 colspan=$colspan><img height=1 src="/i/0.gif" width=1 border=0></td></tr>
+							<td class=bgr6 colspan=$colspan><img height=1 src="/0.gif" width=1 border=0></td></tr>
 								<tr>
 									<td width="45%">
 										<table cellspacing=0 cellpadding=0 width="100%" border=0>
 											<tr>
-												<td _background="/i/toolbars/6ptbg.gif"><img height=17 hspace=0 src="/i/0.gif" width=1 border=0></td>
+												<td _background="/i/toolbars/6ptbg.gif"><img height=17 hspace=0 src="/0.gif" width=1 border=0></td>
 											</tr>
 										</table>
 									</td>
@@ -1408,17 +1411,17 @@ sub MSIE_5_draw_centered_toolbar {
 									<td width="45%">
 										<table cellspacing=0 cellpadding=0 width="100%" border=0>
 											<tr>
-												<td _background="/i/toolbars/6ptbg.gif"><img height=17 hspace=0 src="/i/0.gif" width=1 border=0></td>
+												<td _background="/i/toolbars/6ptbg.gif"><img height=17 hspace=0 src="/0.gif" width=1 border=0></td>
 											</tr>
 										</table>
 									</td>
-									<td align=right><img height=23 src="/i/0.gif" width=4 border=0></td>
+									<td align=right><img height=23 src="/0.gif" width=4 border=0></td>
 								</tr>
 								<tr>
-									<td class=bgr8 colspan=$colspan><img height=1 src="/i/0.gif" width=1 border=0></td>
+									<td class=bgr8 colspan=$colspan><img height=1 src="/0.gif" width=1 border=0></td>
 								</tr>
 								<tr>
-									<td class=bgr6 colspan=$colspan><img height=1 src="/i/0.gif" width=1 border=0></td>
+									<td class=bgr6 colspan=$colspan><img height=1 src="/0.gif" width=1 border=0></td>
 								</tr>
 							</table>
 						</tr>
@@ -1441,9 +1444,9 @@ sub MSIE_5_draw_auth_toolbar {
 	my ($options) = @_;		
 	
 	my $calendar = <<EOH;
-		<td class=bgr1><img height=22 src="/i/0.gif" width=4 border=0></td>
+		<td class=bgr1><img height=22 src="/0.gif" width=4 border=0></td>
 		<td class=bgr1><A class=lnk2>@{[ $_CALENDAR -> draw () ]}</A></td>
-		<td class=bgr1><img height=22 src="/i/0.gif" width=4 border=0></td>				
+		<td class=bgr1><img height=22 src="/0.gif" width=4 border=0></td>				
 EOH
 
 	$top_banner = interpolate ($conf -> {top_banner});
@@ -1451,14 +1454,14 @@ EOH
 	return <<EOH;
 
 		<table cellSpacing=0 cellPadding=0 border=0 width=100%>
-			<tr><td class=bgr1><img height=1 src="/i/0.gif" width=1 height=1 border=0></td></tr>
-			<tr><td class=bgr6><img height=1 src="/i/0.gif" width=1 height=1 border=0></td></tr>
+			<tr><td class=bgr1><img height=1 src="/0.gif" width=1 height=1 border=0></td></tr>
+			<tr><td class=bgr6><img height=1 src="/0.gif" width=1 height=1 border=0></td></tr>
 		</table>
 		<table cellSpacing=0 cellPadding=0 border=0 width=100%>
 			<tr>
 				<td class=bgr1><nobr>&nbsp;&nbsp;</nobr></td>
 
-				<td class=bgr1><img height=22 src="/i/0.gif" width=4 border=0></td>
+				<td class=bgr1><img height=22 src="/0.gif" width=4 border=0></td>
 <!--				
 				<td class=bgr1><img src="/i/top_tb_icons/user.gif" border=0 hspace=3 align=absmiddle></td>
 -->				
@@ -1469,13 +1472,13 @@ EOH
 				<td class=bgr1 nowrap width="100%"></td>							
 				
 				@{[ $options -> {lpt} ? <<EOLPT : '']}
-				<td class=bgr1><img height=22 src="/i/0.gif" width=4 border=0></td>
+				<td class=bgr1><img height=22 src="/0.gif" width=4 border=0></td>
 <!--				
 				<td class=bgr1><img src="/i/top_tb_icons/gear.gif" border=0 hspace=3 align=absmiddle></td>
 -->				
 				<td class=bgr1><nobr><A class=lnk2 href="@{[ create_url (lpt => 1) ]}" target="_blank">[Печать]</a>&nbsp;&nbsp;</nobr></td>
 
-				<td class=bgr1><img height=22 src="/i/0.gif" width=4 border=0></td>
+				<td class=bgr1><img height=22 src="/0.gif" width=4 border=0></td>
 <!--				
 				<td class=bgr1><img src="/i/top_tb_icons/stat.gif" border=0 hspace=3 align=absmiddle></td>
 -->				
@@ -1483,21 +1486,21 @@ EOH
 EOLPT
 
 				@{[ $_USER ? <<EOEXIT : '' ]}
-				<td class=bgr1><img height=22 src="/i/0.gif" width=4 border=0></td>
+				<td class=bgr1><img height=22 src="/0.gif" width=4 border=0></td>
 <!--				
 				<td class=bgr1><img src="/i/top_tb_icons/exit.gif" border=0 hspace=3 align=absmiddle></td>
 -->				
 				<td class=bgr1><nobr><A class=lnk2 href="/">[Выход]</A>&nbsp;&nbsp;</nobr></td>
 EOEXIT
 
-				<td class=bgr1><img height=22 src="/i/0.gif" width=4 border=0></td>
-				<td class=bgr1><img height=1 src="/i/0.gif" width=7 border=0></td>
+				<td class=bgr1><img height=22 src="/0.gif" width=4 border=0></td>
+				<td class=bgr1><img height=1 src="/0.gif" width=7 border=0></td>
 			</tr>
 		</table>
 		$top_banner
 		<table cellSpacing=0 cellPadding=0 border=0 width=100%>
-			<tr><td class=bgr7><img height=1 src="/i/0.gif" width=1 height=1 border=0></td></tr>
-			<tr><td class=bgr1><img height=1 src="/i/0.gif" width=1 height=1 border=0></td></tr>
+			<tr><td class=bgr7><img height=1 src="/0.gif" width=1 height=1 border=0></td></tr>
+			<tr><td class=bgr1><img height=1 src="/0.gif" width=1 height=1 border=0></td></tr>
 		</table>
 
 EOH

@@ -160,7 +160,7 @@ sub out_html {
 		$_REQUEST {__content_type} ||= 'text/html; charset=windows-1251';
 		$r -> content_type ($_REQUEST {__content_type});
 		
-		if ($conf -> {core_gzip} or $preconf -> {core_gzip}) {
+		if (($conf -> {core_gzip} or $preconf -> {core_gzip}) and $r -> header_in ('Accept-Encoding') =~ /gzip/) {
 			$r -> header_out ('Content-Encoding' => 'gzip');
 			$html = Compress::Zlib::memGzip ($html);
 		}		

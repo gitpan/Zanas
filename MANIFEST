@@ -10,7 +10,8 @@ Zanas/Presentation/MSIE_5.pm
 Zanas/Presentation/Mozilla_3.pm
 Zanas/Presentation/Unsupported.pm
 Zanas/SQL.pm
-Zanas/static/menu.js.pm
+Zanas/static/0.gif.pm
+Zanas/static/0.html.pm
 Zanas/static/navigation.js.gz.pm
 Zanas/static/navigation.js.pm
 Zanas/static/sample.tar.gz.pm

@@ -246,7 +246,7 @@ BEGIN {
 
 package Zanas;
 
-$VERSION = '0.81';
+$VERSION = '0.85';
 
 =head1 NAME
 

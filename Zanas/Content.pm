@@ -149,10 +149,11 @@ sub select__static_files {
 	my $content_type = 
 		$r -> filename =~ /\.js/ ? 'application/x-javascript' :
 		$r -> filename =~ /\.css/ ? 'text/css' :
+		$r -> filename =~ /\.htm/ ? 'text/html' :
 		'application/octet-stream';
 
 	my $path = $STATIC_ROOT . $filename . '.gz.pm';
-	-f $path or $path = $STATIC_ROOT . $filename . '.pm';
+	(-f $path and $r -> header_in ('Accept-Encoding') =~ /gzip/) or $path = $STATIC_ROOT . $filename . '.pm';
 	
 	$r -> header_out ('Content-Type' => $content_type);	
 	$r -> header_out ('Content-Encoding' => 'gzip') if $path =~ /\.gz/;
