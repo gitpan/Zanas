@@ -109,6 +109,7 @@ sub js_escape {
 	my ($s) = @_;	
 	$s =~ s/\"/\'/gsm;
 	$s =~ s{[\n\r]+}{ }gsm;
+	$s =~ s{\\}{\\\\}g; #'
 	$s =~ s{\'}{\\\'}g; #'
 	return "'$s'";	
 }
@@ -1308,6 +1309,7 @@ sub draw_form {
 		my $query_string = MIME::Base64::decode ($esc_query_string);
 		my $salt = time (); #rand ();
 		$query_string =~ s{salt\=[\d\.]+}{salt=$salt}g;
+		$query_string =~ s{sid\=[\d\.]+}{sid=$_REQUEST{sid}}g;
 		$options -> {esc} = $_REQUEST {__uri} . '?' . $query_string;
 	}	
 

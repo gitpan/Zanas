@@ -200,10 +200,7 @@ EOH
 		delete $_REQUEST {__include_js};
 		delete $_REQUEST {__include_css};
 		
-		my $params = Dumper (\%_REQUEST);
-		$params =~ s{\s}{}gsm;
-
-		redirect ('/?type=logon&redirect_params=' . uri_escape ($params));
+		redirect ('/?type=logon&redirect_params=' . b64u_freeze (\%_REQUEST));
 		
 	}
 	
@@ -258,14 +255,14 @@ EOH
 				delete $_REQUEST {__response_sent};
 
 				eval {	
+				
 					delete_fakes () if $action eq 'create';
+					
 					call_for_role ("do_${action}_$$page{type}");
 					
 					if (($action eq 'execute') and ($$page{type} eq 'logon') and $_REQUEST {redirect_params}) {
 					
-						my $VAR1;
-
-						eval $_REQUEST {redirect_params};
+						my $VAR1 = b64u_thaw ($_REQUEST {redirect_params});
 						
 						while (my ($key, $value) = each %$VAR1) {
 							$_REQUEST {$key} = $value;

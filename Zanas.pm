@@ -15,7 +15,11 @@ use constant OK => 200;
 
 BEGIN {	
 
-	$Zanas::VERSION = '0.9965';
+	$Zanas::VERSION = '0.9966';
+	
+	eval {
+		require Storable;
+	};
 	
 	unless ($preconf -> {core_path}) {
 		require Zanas::Apache;

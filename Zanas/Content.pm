@@ -2,6 +2,53 @@ no warnings;
 
 ################################################################################
 
+sub b64u_freeze {
+
+	b64u_encode (
+		$Storable::VERSION ? 
+			Storable::freeze ($_[0]) : 
+			Dumper ($_[0]
+		)
+	);
+	
+}
+
+################################################################################
+
+sub b64u_thaw {
+
+	my $serialized = b64u_decode ($_[0]);
+	
+	if ($Storable::VERSION) {
+		return Storable::thaw ($serialized);
+	}
+	else {
+		my $VAR1;
+		eval $serialized;
+		return $VAR1;
+	}
+	
+}
+
+################################################################################
+
+sub b64u_encode {
+	my $s = MIME::Base64::encode ($_[0]);
+	$s =~ y{+/=}{-_.};
+	$s =~ s{[\n\r]}{}gsm;
+	return $s;
+}
+
+################################################################################
+
+sub b64u_decode {
+	my $s = $_ [0];
+	$s =~ y{-_.}{+/=};
+	return MIME::Base64::decode ($s);
+}
+
+################################################################################
+
 sub require_fresh {
 
 	my ($module_name, $fatal) = @_;	

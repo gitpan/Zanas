@@ -1,4 +1,12 @@
+0.9966:
+
+	- js_escape fixed for \ quoting;
+	- b64u_encode/b64u_decode & b64u_freeze/b64u_thaw introduced;
+	- no more eval'ing $_REQUEST {redirect_params} when Storable.pm is present;
+	- draw_form fixed for the case where $core -> {auto_esc} is on and __last_query_string's session is dead;	
+
 0.9965:
+
 	- robots.txt & favicon.ico added
 	- Zanas::Loader introduced
 

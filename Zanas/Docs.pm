@@ -508,6 +508,53 @@ our $charset = {
 
 @subs = (
 
+					#######################################
+
+	{
+		name     => 'b64u_encode',
+		syn      => <<EO,
+	my \$s = b64u_encode ( chr (2) );
+EO
+		label_en => 'URL-safe wrapper around MIME::Base64::encode',
+		label_ru => 'URL-безопасный вариант MIME::Base64::encode.',
+		see_also => [qw(b64u_decode)],
+	},
+
+					#######################################
+
+	{
+		name     => 'b64u_decode',
+		syn      => <<EO,
+	my \$s = b64u_decode ('dHlwZT12b2NzJ');
+EO
+		label_en => 'Inverse transformation for b64u_encode',
+		label_ru => 'Обратное преобразование к b64u_encode.',
+		see_also => [qw(b64u_encode)],
+	},
+
+					#######################################
+
+	{
+		name     => 'b64u_freeze',
+		syn      => <<EO,
+	my \$frozen = b64u_freeze (\\\%_REQUEST);
+EO
+		label_en => 'URL-safe wrapper around Storable (if present) or Data::Dumper (otherwise)',
+		label_ru => 'URL-безопасный сериализатор структур данных на базе Storable (если он установлен) или Data::Dumper (если нет такого).',
+		see_also => [qw(b64u_encode b64u_thaw)],
+	},
+
+					#######################################
+
+	{
+		name     => 'b64u_thaw',
+		syn      => <<EO,
+	\%_REQUEST = \%{ b64u_thaw (\$frozen) };
+EO
+		label_en => 'Inverse transformation for b64u_freeze',
+		label_ru => 'Обратное преобразование к b64u_freeze',
+		see_also => [qw(b64u_freeze b64u_decode)],
+	},
 
 					#######################################
 

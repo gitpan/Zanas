@@ -37,7 +37,7 @@ EOL
 		$dos
 EOC
 	
-	print STDERR $cmd;
+#	print STDERR $cmd;
 
 	eval $cmd;
 
