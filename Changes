@@ -1,3 +1,7 @@
+0.9932: 
+
+	- size option in draw_form_field_password;
+
 0.9930: 
 
 	- small fix in draw_toolbar_pages: nevative paga numbers (thanks RomALo);

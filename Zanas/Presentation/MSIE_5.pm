@@ -617,7 +617,8 @@ sub draw_text_cell {
 		
 #	return '' if $data -> {off};
 	
-	$data -> {max_len} ||= $data -> {size} || $conf -> {max_len} || 30;
+#	$data -> {max_len} ||= $data -> {size} || $conf -> {max_len} || 30;
+	$data -> {max_len} ||= $data -> {size} || $conf -> {size}  || $conf -> {max_len} || 30;
 	
 	$data -> {attributes} ||= {};
 	$data -> {attributes} -> {class} ||= $options -> {is_total} ? 'header5' : 'txt4';
@@ -1457,7 +1458,8 @@ sub draw_form_field_text {
 
 sub draw_form_field_password {
 	my ($options, $data) = @_;
-	return qq {<input type="password" name="_$$options{name}" size=120 onKeyPress="if (window.event.keyCode != 27) is_dirty=true">};
+	$options -> {size} ||= $conf -> {size} || 120;	
+	return qq {<input type="password" name="_$$options{name}" size="$$options{size}" onKeyPress="if (window.event.keyCode != 27) is_dirty=true">};
 }
 
 ################################################################################
