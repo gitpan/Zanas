@@ -482,17 +482,22 @@ sub MSIE_5_draw_text_cell {
 		$txt = trunc_string ($data -> {label}, $data -> {max_len});
 	}
 	
+	unless ($data -> {no_nobr}) {
+		$txt = '<nobr>' . $txt . '</nobr>';
+	}
+	
 	$txt ||= '&nbsp;';
 	
 	if ($data -> {href}) {
 		check_href ($data);
+		$data -> {title} ||= $data -> {label};
 		my $target = $data -> {target} ? "target='$$data{target}'" : '';
-		$txt = qq { <a title="$$data{label}" class=$$data{a_class} $target href="$$data{href}" onFocus="blur()">$txt</a> };
+		$txt = qq { <a title="$$data{title}" class=$$data{a_class} $target href="$$data{href}" onFocus="blur()">$txt</a> };
 	}
 	
 	my $attributes = dump_attributes ($data -> {attributes});
 	
-	return qq {<td $attributes><nobr>$txt</nobr></td>};
+	return qq {<td $attributes>$txt</td>};
 
 }
 

@@ -105,7 +105,7 @@ EOH
 			
 				eval {	
 					delete_fakes () if $action eq 'create';
-					call_for_role ("do_${action}_$$page{type}"); 					
+					call_for_role ("do_${action}_$$page{type}");
 				};	
 				
 				if ($@) {

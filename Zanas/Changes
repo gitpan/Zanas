@@ -1,3 +1,8 @@
+0.91: 13.02.04 10:30
+
+	- added a 'no_nobr' option in draw_text_cell;
+	- added a 'title' option in draw_text_cell;
+
 0.90: 12.02.04 10:30
 
 	- added a configuration option: $conf -> {exit_url};
