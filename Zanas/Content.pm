@@ -35,13 +35,6 @@ sub add_totals {
 
 ################################################################################
 
-sub keep_alive {
-	my $sid = shift;
-	sql_do ("UPDATE sessions SET ts = NULL WHERE id = ? ", $sid);
-}
-
-################################################################################
-
 sub call_for_role {
 	my $sub_name = shift;
 	my $role = $_USER ? $_USER -> {role} : '';	
@@ -69,24 +62,45 @@ sub get_user {
 	if ($ENV{HTTP_COOKIE} =~ /sid=(\d+)/ && !defined $_REQUEST {sid}) {
 #		$_REQUEST {sid} ||= $1;
 	}
+	
+	sql_do_refresh_sessions ();
 
-	sql_do ("DELETE FROM sessions WHERE ts < now() - INTERVAL ? MINUTE", $conf -> {session_timeout});
-	sql_do ("UPDATE sessions SET ts = NULL WHERE id = ? ", $_REQUEST {sid});
+#	sql_do ("DELETE FROM sessions WHERE ts < now() - INTERVAL ? MINUTE", $conf -> {session_timeout});
+#	sql_do ("UPDATE sessions SET ts = NULL WHERE id = ? ", $_REQUEST {sid});
+
+#	my $user = sql_select_hash (<<EOS, $_REQUEST {sid});
+#		SELECT
+#			users.*
+#			, roles.name AS role
+#			, sessions.id_role AS session_role
+#			, session_roles.name AS session_role_name
+#		FROM
+#			sessions
+#			INNER JOIN users ON sessions.id_user = users.id
+#			INNER JOIN roles ON users.id_role = roles.id
+#			LEFT JOIN roles as session_roles ON sessions.id_role = session_roles.id
+#		WHERE
+#			sessions.id = ?
+#EOS
 
 	my $user = sql_select_hash (<<EOS, $_REQUEST {sid});
 		SELECT
 			users.*
 			, roles.name AS role
 			, sessions.id_role AS session_role
-			, session_roles.name AS session_role_name
 		FROM
 			sessions
-			INNER JOIN users ON sessions.id_user = users.id
-			INNER JOIN roles ON users.id_role = roles.id
-			LEFT JOIN roles as session_roles ON sessions.id_role = session_roles.id
+			, users
+			, roles
 		WHERE
-			sessions.id = ?
+			sessions.id_user = users.id
+			AND users.id_role = roles.id
+			AND sessions.id = ?
 EOS
+
+	if ($user && $user -> {id}) {
+		$user -> {session_role_name} = sql_select_scalar ("SELECT name FROM sessions, roles WHERE sessions.id_role = roles.id AND sessions.id = ?", $_REQUEST {sid});
+	}
 
 	if ($user && $user -> {session_role}) {
 		$user -> {id_role} = $user -> {session_role};
@@ -116,8 +130,9 @@ EOS
 			if ($id_session) {
 				$_REQUEST {sid} = $id_session;
 			} else {
-				$_REQUEST {sid} = sql_select_array ("select floor(rand() * 9223372036854775807)");
+				$_REQUEST {sid} = int (rand() * 9223372036854775807);
 				sql_do ("INSERT INTO sessions (id, id_user, id_role) VALUES (?, ?, ?)", $_REQUEST {sid}, $user -> {id}, $id_role);
+				sql_do_refresh_sessions ();
 			}
 
 			delete $_REQUEST {role};
@@ -127,8 +142,8 @@ EOS
 	}
 
 	$user -> {label} ||= $user -> {name} if $user;
-	
-	return $user;
+		
+	return $user -> {id} ? $user : undef;
 
 }
 
@@ -211,16 +226,20 @@ sub log_action {
 
 	my ($id_user, $type, $action, $error, $id) = @_;
 	
-	my $id_user = $_USER -> {id};
-	my $type    = $_OLD_REQUEST {type};
-	my $action  = $_OLD_REQUEST {action};
-	my $error   = $_REQUEST {error};
-	my $id      = $_OLD_REQUEST {id} || $_REQUEST {id};
+	my $id_log = sql_do_insert ('log', {
+		id_user => $_USER -> {id}, 
+		type => $_OLD_REQUEST {type}, 
+		action => $_OLD_REQUEST {action}, 
+		ip => $ENV {REMOTE_ADDR}, 
+		error => $_REQUEST {error}, 
+		id_object => $id, 
+		ip_fw => $ENV {HTTP_X_FORWARDED_FOR},
+		fake => 0,
+	});
 	
-	my $ip      = $ENV {REMOTE_ADDR};
-	my $ip_fw   = $ENV {HTTP_X_FORWARDED_FOR};
-	
-	sql_do ("INSERT INTO log (id_user, type, action, error, params, ip, id_object, ip_fw) VALUES (?, ?, ?, ?, ?, ?, ?, ?)", $id_user, $type, $action, $error, Data::Dumper -> Dump ([\%_OLD_REQUEST], ['_REQUEST']), $ip, $id, $ip_fw);
+	$_REQUEST {params} = Data::Dumper -> Dump ([\%_OLD_REQUEST], ['_REQUEST']);	
+	sql_do_update ('log', [], {id => $id_log, lobs => ['params']});
+	delete $_REQUEST {params};
 	
 }
 

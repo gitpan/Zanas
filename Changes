@@ -1,3 +1,10 @@
+0.9937: 
+
+	- public_handler fixed: now loading Apache::Cookies;
+	- delete $_REQUEST {id} in sql_do_delete;
+	- added support for Oracle;
+	- sql_reconnect & sql_disconnect are moved to PerlChildInitHandler & PerlChildExitHandler;
+
 0.9936: 
 
 	- logging changed (keep original %_REQUEST state);

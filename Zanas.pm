@@ -112,6 +112,13 @@ sub require_fresh {
 
 BEGIN {
 
+#	return if $Apache::Server::Starting && !$Apache::Server::ReStarting;
+
+#print STDERR "\$Apache::Server::Starting = $Apache::Server::Starting\n";
+#print STDERR "\$Apache::Server::ReStarting = $Apache::Server::ReStarting\n";
+
+print STDERR "Zanas.pm loading ("  . __PACKAGE__ .  "): starting\n";
+
 	if ($ENV {GATEWAY_INTERFACE} =~ m{^CGI/} || $conf -> {use_cgi} || $preconf -> {use_cgi}) {
  		eval 'require CGI';
 	} else {
@@ -170,8 +177,22 @@ BEGIN {
 		}
 	
 	}
-	
+
+#print STDERR Dumper ($conf);
+
 	if ($conf -> {db_dsn}) {
+		eval {
+			Apache -> push_handlers (
+				PerlChildInitHandler => \&sql_reconnect,
+				PerlChildExitHandler => \&sql_disconnect,
+			)			
+		};
+
+#print STDERR "push_handlers: ''\n";
+
+	}
+	
+	if ($conf -> {db_dsn} && $conf -> {db_dsn} =~ /\:mysql\:/) {
 		
 		sql_reconnect ();
 		
@@ -262,9 +283,15 @@ BEGIN {
 
 			},
 
-		)
+		);
 		
-	}	
+		$db -> disconnect;
+		
+		undef $db;
+		
+	}
+		
+print STDERR "Zanas.pm loading ("  . __PACKAGE__ .  "): completed\n";
 		
 }
 

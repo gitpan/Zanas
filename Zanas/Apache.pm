@@ -236,6 +236,8 @@ EOH
 		
 		if ($action) {
 		
+			$db -> {AutoCommit} = 0;
+	
 			our %_OLD_REQUEST = %_REQUEST;
 		
 			my $sub_name = "validate_${action}_$$page{type}";		
@@ -286,7 +288,12 @@ EOH
 				
 			}
 			
+			$db -> commit unless $_REQUEST {error};
+			$db -> {AutoCommit} = 1;
+
 			log_action ();
+			
+
 
 		}
 		else {
@@ -297,7 +304,7 @@ EOH
 
 	}
    
-   	$db -> disconnect;
+#   	$db -> disconnect;
 	
 	return OK;
 
@@ -372,6 +379,8 @@ sub pub_handler {
 
 	our $r   = $use_cgi ? new Zanas::Request () : $_[0];
 	our $apr = $use_cgi ? $r : Apache::Request -> new ($r);
+	
+	$use_cgi or eval "require Apache::Cookie";
 
 	my $parms = $apr -> parms;
 	our %_REQUEST = %{$parms};		
@@ -460,7 +469,7 @@ sub pub_handler {
 	require_fresh ("${_PACKAGE}Config");
 	require_fresh ("${_PACKAGE}Content::pub_page");
 	
-	our $_PAGE = select_pub_page;
+	our $_PAGE = select_pub_page ();
 	return 0 if $_REQUEST {__response_sent};
 	
 	my $type   = $_PAGE -> {type};
@@ -529,7 +538,7 @@ sub pub_handler {
 		
 	}
 
-   	$db -> disconnect;
+#   	$db -> disconnect;
 	
 	return OK;
 

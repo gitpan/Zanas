@@ -4,10 +4,11 @@ WriteMakefile(
     'VERSION_FROM'	=> 'Zanas.pm',
     'PREREQ_PM'		=> {
 	'DBI'			=> '1.21',
-	'DBD::mysql'		=> '2.9002',
+#	'DBD::mysql'		=> '2.9002',
 	'Apache::Request'	=> '0.33',
 	'Number::Format'	=> '1.45',
 	'DBIx::ModelUpdate'	=> '0.2',
+	'Storable'		=> '',
     },
     ($] >= 5.005 ?    
 	(ABSTRACT_FROM => 'Zanas.pm', 
