@@ -246,6 +246,20 @@ EOCSS
 						
 					}
 					
+					function blur_all_inputs () {
+						var inputs = document.body.getElementsByTagName ('input');										
+						if (!inputs) return 1;
+						for (var i = 0; i < inputs.length; i++) inputs [i].blur ();
+						return 0;
+					}
+
+					function focus_on_first_input (td) {					
+						if (!td) return blur_all_inputs ();
+						var inputs = td.getElementsByTagName ('input');
+						if (!inputs || !inputs.length) return blur_all_inputs ();
+						inputs [0].focus ();
+						return 0;
+					}
 					
 										
 				</script>
@@ -329,11 +343,27 @@ EOF
 							|| window.event.keyCode == 186 || window.event.keyCode == 222
 							|| window.event.keyCode == 188 || window.event.keyCode == 190 || window.event.keyCode == 191
 						) {
-							if (!window.event.altKey && !window.event.ctrlKey && document.toolbar_form && document.toolbar_form.q && !q_is_focused) {
-								document.toolbar_form.q.value = '';
-								document.toolbar_form.q.focus ();
-								return;
+							
+							if (!window.event.altKey && !window.event.ctrlKey && document.toolbar_form && !q_is_focused) {
+							
+								var input = null;
+							
+								var children = scrollable_rows [scrollable_table_row].cells [scrollable_table_row_cell].getElementsByTagName ('input');
+								if (children != null && children.length > 0) {
+									input = children [0];
+								}
+								else if (document.toolbar_form && document.toolbar_form.q) {
+									input = document.toolbar_form.q;
+								}
+								
+								if (input) {
+									input.value = '';
+									input.focus ();
+									return;
+								}
+							
 							}
+							
 						}
 
 				
@@ -346,6 +376,7 @@ EOF
 							scrollable_table_row_cell_old_style = scrollable_rows [scrollable_table_row].cells [effective_scrollable_cell].className;
 							scrollable_rows [scrollable_table_row].cells [effective_scrollable_cell].className = 'txt6';
 							scrollable_rows [scrollable_table_row].cells [effective_scrollable_cell].scrollIntoView (false);
+							focus_on_first_input (scrollable_rows [scrollable_table_row].cells [effective_scrollable_cell]);
 							return false;
 
 						}
@@ -359,18 +390,21 @@ EOF
 							scrollable_table_row_cell_old_style = scrollable_rows [scrollable_table_row].cells [effective_scrollable_cell].className;
 							scrollable_rows [scrollable_table_row].cells [effective_scrollable_cell].className = 'txt6';
 							scrollable_rows [scrollable_table_row].cells [effective_scrollable_cell].scrollIntoView ();
+							focus_on_first_input (scrollable_rows [scrollable_table_row].cells [effective_scrollable_cell]);
 							return false;
 
 						}
 
 						if (window.event.keyCode == 37 && scrollable_table_row_cell > 0) {
-
-							scrollable_rows [scrollable_table_row].cells [scrollable_table_row_cell].className = scrollable_table_row_cell_old_style;
-							scrollable_table_row_cell --;
-							scrollable_table_row_cell_old_style = scrollable_rows [scrollable_table_row].cells [scrollable_table_row_cell].className;
-							scrollable_rows [scrollable_table_row].cells [scrollable_table_row_cell].className = 'txt6';
-							return false;
-
+							effective_scrollable_cell = Math.min (scrollable_table_row_cell, scrollable_rows [scrollable_table_row].cells.length - 1);													
+							if (effective_scrollable_cell > 0) {
+								scrollable_rows [scrollable_table_row].cells [scrollable_table_row_cell].className = scrollable_table_row_cell_old_style;
+								scrollable_table_row_cell --;
+								scrollable_table_row_cell_old_style = scrollable_rows [scrollable_table_row].cells [scrollable_table_row_cell].className;
+								scrollable_rows [scrollable_table_row].cells [scrollable_table_row_cell].className = 'txt6';
+								focus_on_first_input (scrollable_rows [scrollable_table_row].cells [effective_scrollable_cell]);
+								return false;
+							}
 						}
 
 						if (window.event.keyCode == 39 && scrollable_table_row_cell < scrollable_rows [scrollable_table_row].cells.length - 1) {
@@ -379,6 +413,7 @@ EOF
 							scrollable_table_row_cell ++;
 							scrollable_table_row_cell_old_style = scrollable_rows [scrollable_table_row].cells [scrollable_table_row_cell].className;
 							scrollable_rows [scrollable_table_row].cells [scrollable_table_row_cell].className = 'txt6';
+							focus_on_first_input (scrollable_rows [scrollable_table_row].cells [effective_scrollable_cell]);
 							return false;
 
 						}
@@ -527,7 +562,7 @@ sub MSIE_5_draw_input_cell {
 	
 	my $attributes = dump_attributes ($data -> {attributes});
 		
-	return qq {<td $attributes><nobr><input type="text" name="$$data{name}" value="$txt" maxlength="$$data{max_len}" size="$$data{size}"></nobr></td>};
+	return qq {<td $attributes><nobr><input onFocus="q_is_focused = true" onBlur="q_is_focused = false" type="text" name="$$data{name}" value="$txt" maxlength="$$data{max_len}" size="$$data{size}"></nobr></td>};
 
 }
 

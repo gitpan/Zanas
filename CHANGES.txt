@@ -1,4 +1,9 @@
-0.75:
+0.76: 16.12.03 10:30
+
+	- various js fixes in table scrolling/focus handling;
+
+
+0.75: 15.12.03 14:00
 
 	- new field type: 'calendar' (control taken from http://dynarch.com/mishoo/calendar.epl);
 
