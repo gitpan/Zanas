@@ -1,3 +1,9 @@
+0.80: 26.12.03 14:30
+
+	- basic js and css is now served from Zanas.pm itself;
+	- fixed a memory leak related to __include_js and __include_css handling;
+	- distro is cleaned up;
+
 0.79: 25.12.03 12:30
 	
 	- added gzipping option ($conf -> {core_sweep_spaces});

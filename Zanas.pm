@@ -110,10 +110,16 @@ sub require_fresh_internal {
 ################################################################################
 
 BEGIN {
-
+	
+	our $STATIC_ROOT = __FILE__;
+	$STATIC_ROOT =~ s{\.pm}{/static/};
+	
 	eval 'require Compress::Zlib';
 
-	delete $conf -> {core_gzip} if $@;
+	if ($@) {
+		delete $conf -> {core_gzip};
+		delete $preconf -> {core_gzip};
+	};
 
 	our %INC_FRESH = ();
 	
@@ -240,7 +246,7 @@ BEGIN {
 
 package Zanas;
 
-$VERSION = '0.79';
+$VERSION = '0.80';
 
 =head1 NAME
 

@@ -1545,4 +1545,9 @@ sub draw_form_field_htmleditor {
 	drawer_call ('draw_form_field_htmleditor', @_);
 }
 
+################################################################################
+
+sub draw__static_files {
+}
+
 1;

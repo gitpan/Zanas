@@ -140,6 +140,36 @@ sub delete_file {
 
 ################################################################################
 
+sub select__static_files {
+
+	$r -> filename =~ /\w+\.\w+/;
+	
+	my $filename = $&;
+
+	my $path = $STATIC_ROOT . $filename . '.pm';
+	
+	my $content_type = 
+		$r -> filename =~ /\.js/ ? 'application/x-javascript' :
+		$r -> filename =~ /\.css/ ? 'text/css' :
+		'application/octet-stream';
+	
+	$r -> header_out ('Content-Type' => $content_type);	
+#	$r -> header_out ('Content-Encoding' => 'gzip') if $r -> filename =~ /\.gz/;
+	$r -> header_out ('Content-Length' => -s $path);
+	$r -> header_out ('Cache-Control' => 'max-age=' . 24 * 60 * 60);
+	
+	$r -> send_http_header ();
+
+	open (F, $path) or die ("Can't open $path: $!\n");
+	$r -> send_fd (F);
+	close (F);
+	
+	$_REQUEST {__response_sent} = 1;
+	
+}
+
+################################################################################
+
 sub download_file {
 
 	my ($options) = @_;

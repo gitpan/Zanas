@@ -19,11 +19,15 @@ sub handler {
 
 	our %_REQUEST = %{$parms};
 	
-	$conf -> {include_js}  ||= ['js', 'navigation'];
-   	$_REQUEST {__include_js} = $conf -> {include_js};
+	$_REQUEST {type} = '_static_files' if $r -> filename =~ /\w\.\w/;
+	
+	$conf -> {include_js}  ||= ['js'];
+   	
+   	$_REQUEST {__include_js} = [];
+   	push @{$_REQUEST {__include_js}}, @{$conf -> {include_js}};
 
-	$conf -> {include_css} ||= ['new'];
-   	$_REQUEST {__include_css} = $conf -> {include_css};
+   	$_REQUEST {__include_css} = [];
+   	push @{$_REQUEST {__include_css}}, @{$conf -> {include_css}};
    	
 	if ($_REQUEST {keepalive}) {
 		my $timeout = 60 * $conf -> {session_timeout} - 1;
@@ -46,7 +50,7 @@ EOH
 	
 	eval "our \$_CALENDAR = new ${_PACKAGE}Calendar (\\\%_REQUEST)";
 
-	if (!$_USER and $_REQUEST {type} ne 'logon') {
+	if (!$_USER and $_REQUEST {type} ne 'logon' and $_REQUEST {type} ne '_static_files') {
 	
 		redirect ("/\?type=logon&_frame=$_REQUEST{_frame}");
 		
@@ -71,9 +75,11 @@ EOH
 
 		$page = get_page ();
 	
-		require_fresh ("${_PACKAGE}Content::$$page{type}");
-		require_fresh ("${_PACKAGE}Presentation::$$page{type}");
-
+		unless ($page -> {type} =~ /^_/) {
+			require_fresh ("${_PACKAGE}Content::$$page{type}");
+			require_fresh ("${_PACKAGE}Presentation::$$page{type}");
+		};
+		
 		if ($action) {
 		
 			my $sub_name = "validate_${action}_$$page{type}";		
@@ -129,6 +135,8 @@ sub out_html {
 
 	my ($options, $html) = @_;
 	
+#print STDERR "out_html: \$html = $html\n";
+	
 	$html or return;
 	
 	if ($_REQUEST {dbf}) {
@@ -152,7 +160,7 @@ sub out_html {
 		$_REQUEST {__content_type} ||= 'text/html; charset=windows-1251';
 		$r -> content_type ($_REQUEST {__content_type});
 		
-		if ($conf -> {core_gzip}) {
+		if ($conf -> {core_gzip} or $preconf -> {core_gzip}) {
 			$r -> header_out ('Content-Encoding' => 'gzip');
 			$html = Compress::Zlib::memGzip ($html);
 		}		

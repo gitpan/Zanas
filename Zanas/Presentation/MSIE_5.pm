@@ -112,6 +112,8 @@ sub MSIE_5_draw_page {
 			$content = call_for_role ($selector);
 		};
 		
+		print STDERR $@ if $@;
+				
 		return '' if $_REQUEST {__response_sent};
 
 		eval {
@@ -175,12 +177,15 @@ EOH
 				<meta name="Generator" content="Zanas/MSIE5 $Zanas::VERSION">
 				$meta_refresh
 				
+				<LINK href="/zanas.css" type=text/css rel=STYLESHEET>
 				@{[ map {<<EOJS} @{$_REQUEST{__include_css}} ]}
 					<LINK href="/i/$_.css" type=text/css rel=STYLESHEET>
 EOJS
 
+					<script src="/navigation.js">
+					</script>
 				@{[ map {<<EOCSS} @{$_REQUEST{__include_js}} ]}
-					<script src="/i/${_}.js">
+					<script type="text/javascript" src="/i/${_}.js">
 					</script>
 EOCSS
 				<script>
@@ -1079,7 +1084,7 @@ sub MSIE_5_draw_form_field_datetime {
 	
 	my $size = $options -> {size} ? "size=$$options{size} maxlength=$$options{size}" : "size=30";	
 	
-	push @{$_REQUEST {__include_js}},  'jscalendar/calendar', 'jscalendar/calendar-setup', 'jscalendar/lang/calendar-ru';
+	push @{$_REQUEST {__include_js}},  'jscalendar/calendar', 'jscalendar/lang/calendar-ru', 'jscalendar/calendar-setup';
 	push @{$_REQUEST {__include_css}}, 'jscalendar/calendar-win2k-1';
 	
 	my $shows_time = $options -> {no_time} ? 'false' : 'true';
