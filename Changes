@@ -1,3 +1,9 @@
+0.95: 03.03.2004 12:30
+
+	- add_totals sub added;
+	- $_REQUEST {__response_sent} is now used when doing actions (by pashka);
+	- redirection target is changed from _top to _parent (by pashka);
+
 0.94: 02.03.2004 16:00
 
 	- (by pashka) no more strong dependency on Apache::Request or even mod_perl.

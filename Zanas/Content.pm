@@ -9,6 +9,31 @@ use Zanas::SQL;
 
 ################################################################################
 
+sub add_totals {
+
+	my $ar = shift;	
+	my $totals = {};
+	
+	foreach my $r (@$ar) {
+		
+		while (my ($key, $value) = each %$r) {
+			
+			next if $key =~ /^id|label$/;
+			
+			$totals -> {$key} += $r -> {$key};
+			
+		}
+		
+	}
+	
+	$totals -> {label} = 'Итого';
+	
+	push @$ar, $totals;
+
+}
+
+################################################################################
+
 sub keep_alive {
 	my $sid = shift;
 	sql_do ("UPDATE sessions SET ts = NULL WHERE id = ? ", $sid);

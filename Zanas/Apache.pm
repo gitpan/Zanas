@@ -132,6 +132,8 @@ EOH
 			}
 			else {
 			
+				delete $_REQUEST {__response_sent};
+
 				eval {	
 					delete_fakes () if $action eq 'create';
 					call_for_role ("do_${action}_$$page{type}");
@@ -154,9 +156,15 @@ EOH
 					$_REQUEST {error} = $@;
 					out_html ({}, draw_page ($page));
 				}
-				else {					
-					my $url = create_url (action => '', redirect_params => '');
-					out_html ({}, qq {<body onLoad="window.open ('$url&salt=' + Math.random (), '_top', 'location=0,menubar=0,status=0,toolbar=0')"></body>});
+				else {
+				
+					unless ($_REQUEST {__response_sent}) {
+				
+						my $url = create_url (action => '', redirect_params => '');
+						out_html ({}, qq {<body onLoad="window.open ('$url&salt=' + Math.random (), '_parent', 'location=0,menubar=0,status=0,toolbar=0')"></body>});
+				
+					}
+				
 				}
 				
 			}
