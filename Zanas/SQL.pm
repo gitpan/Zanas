@@ -72,14 +72,14 @@ my $time = time;
 	
 	);
 	
-	$conf -> {core_cache_html} and $defs {core_cache_html} = (
+	$conf -> {core_cache_html} and $defs {cache_html} = {
 		columns => {
 			uri     => {TYPE_NAME  => 'varchar', COLUMN_SIZE  => 255, _PK    => 1},
 			ts      => {TYPE_NAME  => 'timestamp'},
 		}
-	);
+	};
 
-	$model_update -> assert (%defs);
+	$model_update -> assert (tables => \%defs);
 	
 #print STDERR "sql_assert_core_tables [$$] finished:" . (time - $time) . " ms";	
 	
@@ -103,7 +103,7 @@ sub sql_reconnect {
 	my $driver_name = $db -> {Driver} -> {Name};
 
 	eval "require Zanas::SQL::$driver_name";
-	
+
 	print STDERR $@ if $@;
 	
 	our $SQL_VERSION = sql_version ();
@@ -116,7 +116,6 @@ sub sql_reconnect {
 	our %sts = ();
 
 	sql_assert_core_tables () unless $driver_name eq 'Oracle';
-
 
 }   	
 

@@ -1,3 +1,8 @@
+0.9960:
+
+	- js fix: focus_on_first_input don't try to focus on hidden input;
+	- sql_assert_core_tables fixed (was completely broken :-( );
+
 0.9959:
 
 	- fixed (?) cookie auth in pub_handler;

@@ -26,8 +26,14 @@ sub start {
 
 	$src =~ s{\<perl\>(.*?)\</perl\>}{}gsm;
 	my $perl_section = $1;
+	
+	my $temp = $ENV{TEMP};
+	$temp =~ y{\\}{/};
+	
+	$perl_section =~ s/\%TEMP\%/$temp/;
 
-	eval $perl_section;
+	eval $perl_section;	
+	print STDERR $@ if $@;	
 
 	my $fn = tmpnam ();
 	open (T, ">$fn");
@@ -146,13 +152,15 @@ sub handle_connection {
 			$ENV {'CONTENT_LENGTH'} = $request -> headers -> header ('Content-Length');
 
 			if ($uri =~ m{\/\?}) {
-				$ENV {'PATH_INFO'}    = $`;
+				$ENV {'PATH_INFO'}    = $` . '/';
 				$ENV {'QUERY_STRING'} = $';
 			}
 			else {
 				$ENV {'QUERY_STRING'} = '';
 				$ENV {'PATH_INFO'}    = $uri;
 			}
+
+#print STDERR Dumper \%ENV;
 
 			local *STDOUT = $connection;
 						

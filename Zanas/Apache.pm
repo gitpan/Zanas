@@ -152,6 +152,7 @@ sub handler {
    	});   	
    	
    	my $path_info = $ENV{PATH_INFO} || $ENV{REQUEST_URI};
+   	   	
 	$_REQUEST {type} = '_static_files' if (($path_info =~ /\w\.\w/ && $path_info ne '/index.html') || $r -> filename =~ /\w\.\w/);
 
 	$conf -> {include_js}  ||= ['js'];
@@ -268,7 +269,7 @@ EOH
 					} elsif ($conf -> {core_cache_html}) {
 						sql_do ("DELETE FROM cache_html");
 						my $cache_path = $r -> document_root . '/cache/*';
-						eval {`rm -rf $cache_path`};
+						$^O eq 'MSWin32' or eval {`rm -rf $cache_path`};
 					}
 					
 				};	

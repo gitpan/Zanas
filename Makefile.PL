@@ -7,11 +7,11 @@ WriteMakefile(
 #	'DBD::mysql'		=> '2.9002',
 #	'Apache::Request'	=> '0.33',
 	'Number::Format'	=> '1.45',
-	'DBIx::ModelUpdate'	=> '0.2',
+	'DBIx::ModelUpdate'	=> '0.63',
 	'Storable'		=> '',
 	'MIME::Base64'		=> '',
 	'Time::HiRes'		=> '',
-	'Config::ApacheFormat'  => '',
+#	'Config::ApacheFormat'  => '',
 	'File::Temp'		=> '',
     },
     ($] >= 5.005 ?    

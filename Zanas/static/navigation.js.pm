@@ -82,9 +82,16 @@ function blur_all_inputs () {
 function focus_on_first_input (td) {
 	if (!td) return blur_all_inputs ();
 	var inputs = td.getElementsByTagName ('input');
-	if (!inputs || !inputs.length) return blur_all_inputs ();
-	inputs [0].focus ();
-	inputs [0].select ();
+	var input  = null;
+	for (var i = 0; i < inputs.length; i++) {
+		if (inputs [i].type != 'hidden') {
+			input = inputs [i];
+			break;
+		}
+	}	
+	if (input == null) return blur_all_inputs ();
+	input.focus  ();
+	input.select ();
 	return 0;
 }
 

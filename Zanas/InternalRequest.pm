@@ -63,7 +63,7 @@ sub internal_redirect {
 	my $self = shift;	
 	my $url = $_[0];
 	$url =~ s{^/}{};
-	$self -> {connection} -> send_redirect ('http://' . $ENV{HTTP_HOST} . $url);
+	$self -> {connection} -> send_redirect ('http://' . $ENV{HTTP_HOST} . '/' . $url);
 #	$self -> status ($options -> {status} || 302);
 #	$self -> header_out ('Location' => 'http://' . $ENV{HTTP_HOST} . $url);
 #	$self -> send_http_header;

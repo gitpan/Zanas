@@ -15,7 +15,7 @@ use Zanas::InternalRequest;
 
 BEGIN {	
 
-	$Zanas::VERSION = '0.9959';
+	$Zanas::VERSION = '0.9961';
 
 	$| = 1;
 

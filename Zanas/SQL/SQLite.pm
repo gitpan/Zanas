@@ -1,15 +1,11 @@
 no strict;
 no warnings;
 
-use DBD::Oracle qw(:ora_types);
-
 ################################################################################
 
 sub sql_version {
 
-	my $version = {	strings => [ sql_select_col ('SELECT * FROM V$VERSION') ] };
-	
-	$version -> {string} = $version -> {strings} -> [0];
+	my $version = {	string => 'SQLite ' . sql_select_scalar ('SELECT sqlite_version(*)') };
 	
 	($version -> {number}) = $version -> {string} =~ /([\d\.]+)/;
 	
@@ -22,28 +18,11 @@ sub sql_version {
 ################################################################################
 
 sub sql_prepare {
-
 	my ($sql) = @_;
-	
-#print STDERR "sql_prepare (pid=$$): $sql\n";
-	
-	unless (exists $sts {$sql}) {
-		
-		eval {$sts {$sql} = $db  -> prepare ($sql, {
-			ora_auto_lob => ($sql !~ /for\s+update\s*/ism),
-		})};
-		
-		if ($@) {
-			my $msg = "sql_prepare: $@ (SQL = $sql)\n";
-			print STDERR $msg;
-			die $msg;
-		}
-	
-	}
-	
-	return $sts {$sql};
-
+	$sql =~ s{\#}{--}gm;
+	return $db  -> prepare ($sql);
 }
+
 
 ################################################################################
 
@@ -58,33 +37,17 @@ sub sql_do_refresh_sessions {
 			1;
 	}
 
-	$db -> {AutoCommit} = 0;
-	sql_do ("DELETE FROM sessions WHERE ts < sysdate - ? / 1440", $timeout);
-	sql_do ("UPDATE sessions SET ts = sysdate WHERE id = ?", $_REQUEST {sid});
-	$db -> commit;
-	$db -> {AutoCommit} = 1;
-	
+	sql_do ("DELETE FROM sessions WHERE ts < ?", time - $timeout * 60);
+	sql_do ("UPDATE sessions SET ts = ? WHERE id = ? ", int (time), $_REQUEST {sid});
 }
 
 ################################################################################
 
 sub sql_do {
-
 	my ($sql, @params) = @_;
 	my $st = sql_prepare ($sql);
-	
-#	eval {
-		$st -> execute (@params);
-		$st -> finish;	
-#	};
-	
-#	if ($@ && $@ =~ /ORA\-02292/) {	
-#		$_REQUEST {error} = 'Нарушено ограничение целостности. Операция недопустима.';	
-#	} 
-#	elsif ($@) {
-#		die $@;
-#	}
-	
+	$st -> execute (@params);
+	$st -> finish;	
 }
 
 ################################################################################
@@ -92,33 +55,32 @@ sub sql_do {
 sub sql_select_all_cnt {
 
 	my ($sql, @params) = @_;
-		
-	$sql =~ s{LIMIT\s+(\d+)\s*\,\s*(\d+).*}{}ism;
-	my ($start, $portion) = ($1, $2);
 	
 	my $st = sql_prepare ($sql);
 	$st -> execute (@params);
+	my $result = $st -> fetchall_arrayref ({});	
+	$st -> finish;
+
 	my $cnt = 0;	
-	my @result = ();
+
+
+	$sql =~ s{SELECT.*?FROM}{SELECT COUNT(*) FROM}ism;
 	
-	while (my $i = $st -> fetchrow_hashref ()) {
-	
-		$cnt++;
-		
-		$cnt > $start or next;
-		$cnt <= $start + $portion or last;
-			
-		push @result, lc_hashref ($i);
-	
+	if ($sql =~ s{LIMIT.*}{}ism) {
+#		pop @params;
 	}
 	
-	$st -> finish;
-	
-	$sql =~ s{SELECT.*?FROM}{SELECT COUNT(*) FROM}ism;
-		
-	my $cnt = sql_select_scalar ($sql, @params);
+	$st = sql_prepare ($sql);
+	$st -> execute (@params);
+
+	if ($sql =~ /GROUP\s+BY/i) {
+		$cnt++ while $st -> fetch ();
+	}
+	else {
+		$cnt = $st -> fetchrow_array ();
+	}
 			
-	return (\@result, $cnt);
+	return ($result, $cnt);
 
 }
 
@@ -131,10 +93,6 @@ sub sql_select_all {
 	$st -> execute (@params);
 	my $result = $st -> fetchall_arrayref ({});	
 	$st -> finish;
-	
-	foreach my $i (@$result) {
-		lc_hashref ($i);
-	}
 	
 	return $result;
 
@@ -160,20 +118,6 @@ sub sql_select_col {
 
 ################################################################################
 
-sub lc_hashref {
-
-	my ($hr) = @_;
-	
-	foreach my $key (keys %$hr) {
-		$hr -> {lc $key} = $hr -> {$key};
-	}
-	
-	return $hr;
-
-}
-
-################################################################################
-
 sub sql_select_hash {
 
 	my ($sql_or_table_name, @params) = @_;
@@ -187,9 +131,9 @@ sub sql_select_hash {
 	my $st = sql_prepare ($sql_or_table_name);
 	$st -> execute (@params);
 	my $result = $st -> fetchrow_hashref ();
-	$st -> finish;		
+	$st -> finish;
 	
-	return lc_hashref ($result);
+	return $result;
 
 }
 
@@ -283,61 +227,27 @@ sub sql_select_subtree {
 
 ################################################################################
 
+sub sql_last_insert_id {
+	return 0 + sql_select_array ("SELECT last_insert_rowid()");
+}
+
+################################################################################
+
 sub sql_do_update {
 
 	my ($table_name, $field_list, $options) = @_;
-	
+
 	ref $options eq HASH or $options = {
 		stay_fake => $options,
 		id        => $_REQUEST {id},
 	};
-	
-	$options -> {id} ||= $_REQUEST {id};
-		
-	my %lobs = map {$_ => 1} @{$options -> {lobs}};
-	
-	my @field_list = grep {!$lobs {$_}} @$field_list;
-	
-	if (@field_list > 0) {
-		my $sql = join ', ', map {"$_ = ?"} @field_list;
-		$options -> {stay_fake} or $sql .= ', fake = 0';
-		$sql = "UPDATE $table_name SET $sql WHERE id = ?";	
 
-		my @params = @_REQUEST {(map {"_$_"} @field_list)};	
-		push @params, $options -> {id};
-		sql_do ($sql, @params);
-
-	}
-	
-	foreach my $lob_field (@{$options -> {lobs}}) {
-	
-#print STDERR "Going to write a LOB in ${table_name}.${lob_field}, id = $$options{id}...\n";
-	
-#		$db -> {AutoCommit} = 0;
-	
-		my $st = sql_prepare ("SELECT $lob_field FROM $table_name WHERE id = ? FOR UPDATE");
-		my $lob_locator;
-		$st -> execute ($options -> {id});
-		($lob_locator) = $st -> fetchrow_array;
-	
-		$db -> ora_lob_trim   ($lob_locator, 0);
-		
-		my $value = $_REQUEST {$lob_field} || $_REQUEST {"_$lob_field"};
-		
-		if ($value) {
-		
-			my @args = ($lob_locator, $value);
-
-#print STDERR Dumper (\@args);
-		
-			$db -> ora_lob_append (@args);
-		}
-		
-#		$db -> commit;
-
-#		$db -> {AutoCommit} = 1;
-		
-	}
+	my $sql = join ', ', map {"$_ = ?"} @$field_list;
+	$options -> {stay_fake} or $sql .= ', fake = 0';
+	$sql = "UPDATE $table_name SET $sql WHERE id = ?";	
+	my @params = @_REQUEST {(map {"_$_"} @$field_list)};	
+	push @params, $options -> {id};
+	sql_do ($sql, @params);
 	
 }
 
@@ -362,10 +272,8 @@ sub sql_do_insert {
 	
 	sql_do ("INSERT INTO $table_name ($fields) VALUES ($args)", @params);	
 	
-	my $id = sql_select_scalar ("SELECT ${table_name}_seq.currval FROM DUAL");
-		
-	return $id;
-		
+	return sql_last_insert_id ();
+	
 }
 
 ################################################################################
@@ -373,7 +281,7 @@ sub sql_do_insert {
 sub sql_do_delete {
 
 	my ($table_name, $options) = @_;
-	
+		
 	if (ref $options -> {file_path_columns} eq ARRAY) {
 		
 		map {sql_delete_file ({table => $table_name, path_column => $_})} @{$options -> {file_path_columns}}
@@ -436,7 +344,7 @@ sub sql_upload_file {
 	my ($options) = @_;
 
 	my $uploaded = upload_file ($options) or return;
-	
+		
 	sql_delete_file ($options);
 	
 	my (@fields, @params) = ();
@@ -473,7 +381,6 @@ sub sql_select_loop {
 	
 	our $i;
 	while ($i = $st -> fetchrow_hashref) {
-		lc_hashref ($i);
 		&$coderef ();
 	}
 	
@@ -485,7 +392,7 @@ sub sql_select_loop {
 
 sub keep_alive {
 	my $sid = shift;
-	sql_do ("UPDATE sessions SET ts = sysdate WHERE id = ? ", $sid);
+	sql_do ("UPDATE sessions SET ts = ? WHERE id = ? ", int(time), $sid);
 }
 
 1;
