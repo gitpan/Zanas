@@ -133,6 +133,10 @@ sub check_href {
 		$options -> {href} .= '&_salt=' . rand;
 	}	
 	
+	if ($_REQUEST{period} and $options -> {href} !~ /^(\#|java)/ and $options -> {href} !~ /\&period=/) {
+		$options -> {href} .= "\&period=$_REQUEST{period}";
+	}	
+
 }
 
 ################################################################################
@@ -1133,6 +1137,28 @@ sub draw_calendar {
 sub draw_form_field_image {
 	drawer_call ('draw_form_field_image', @_);
 }
+
+################################################################################
+
+=head1 draw_form_field_string
+
+Отрисовка WYSIWYG-редактора для HTML. Вызывается автоматически из-под C<draw_form>. Работает только для MSIE 5+.
+
+=head2 Опции
+
+=over
+
+=item name
+
+Имя CGI-параметра и одновременно ключа в хэшрефе C<$data>.
+
+=item label
+
+Отображаемое имя
+
+=back
+
+=cut
 
 ################################################################################
 

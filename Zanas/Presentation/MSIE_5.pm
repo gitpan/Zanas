@@ -301,7 +301,7 @@ EOH
 
 		$tr2 .= <<EOH;
 			<td class=bgr1><img height=20 src="/i/0.gif" width=1 border=0></td>
-			<td class=$tclass nowrap>&nbsp;&nbsp;<a class=$aclass id="main_menu_$$type{name}" href="/?type=$$type{name}&sid=$_REQUEST{sid}@{[$$type{search} ? '&search=1' : '']}">$$type{label}</a>&nbsp;&nbsp;</td>
+			<td class=$tclass nowrap>&nbsp;&nbsp;<a class=$aclass id="main_menu_$$type{name}" href="/?type=$$type{name}&sid=$_REQUEST{sid}@{[$_REQUEST{period} ? '&period=' . $_REQUEST {period} : '']}">$$type{label}</a>&nbsp;&nbsp;</td>
 EOH
 
 		$tr3 .= <<EOH;

@@ -2,6 +2,24 @@ use DBI;
 
 use Data::Dumper;
 
+=head1 NAME
+
+SQL.pm - essential DBI wrapper for Zanas. All subs use a unique global database connection.
+
+=cut
+
+################################################################################
+
+=head1 sql_do
+
+Executes a given SQL (DML) statement with supplied parameters. Returns nothing.
+
+=head2 Synopsis
+
+	sql_do ('INSERT INTO my_table (id, name) VALUES (?, ?)', $id, $name);
+
+=cut
+
 ################################################################################
 
 sub sql_do {
@@ -10,6 +28,30 @@ sub sql_do {
 	$st -> execute (@params);
 	$st -> finish;	
 }
+
+
+################################################################################
+
+=head1 sql_select_all_cnt
+
+Executes a given SQL (SELECT) statement with supplied parameters and returns the resultset (listref of hashrefs) and the number of rows in the corresponding selection without the C<LIMIT> clause.
+
+=head2 Synopsis
+
+	my ($rows, $cnt)= sql_select_all_cnt (<<EOS, ...);
+		SELECT 
+			...
+		FROM 
+			...
+		WHERE 
+			...
+		ORDER BY 
+			...
+		LIMIT
+			$start, 15
+EOS
+
+=cut
 
 ################################################################################
 
@@ -40,6 +82,18 @@ sub sql_select_all_cnt {
 
 ################################################################################
 
+=head1 sql_select_all
+
+Executes a given SQL (SELECT) statement with supplied parameters and returns the resultset (listref of hashrefs).
+
+=head2 Synopsis
+
+	my $rows = sql_select_all_cnt ('SELECT id, name FROM my_table WHERE name LIKE ?', '%');
+
+=cut
+
+################################################################################
+
 sub sql_select_all {
 
 	my ($sql, @params) = @_;
@@ -51,6 +105,18 @@ sub sql_select_all {
 	return $result;
 
 }
+
+################################################################################
+
+=head1 sql_select_col
+
+Executes a given SQL (one column SELECT) statement with supplied parameters and returns the resultset (listref of hashrefs).
+
+=head2 Synopsis
+
+	my $rows = sql_select_col ('SELECT name FROM my_table WHERE name LIKE ?', '%');
+
+=cut
 
 ################################################################################
 

@@ -1,3 +1,9 @@
+0.56: 21.10.03 15:56
+	- fixed check_href: period parameter
+
+0.55: 13.10.03 10:23
+	- added sql_select_path sub;
+
 0.54: 30.09.03 10:28
 	- added check_href sub;
 	- new field types: 'image' & 'htmleditor';
