@@ -179,10 +179,16 @@ sub redirect {
 	}
 
 	if ($options -> {kind} eq 'js') {
-		my $msg = $options -> {label} ? 'alert(' . js_escape ($options -> {label}) . '); ' : '';
-		out_html ({}, qq {<body onLoad="$msg window.open ('$url&_salt=' + Math.random (), '_parent')"></body>});
+	
+		if ($options -> {label}) {
+			$options -> {before} = 'alert(' . js_escape ($options -> {label}) . '); ';
+		}
+	
+		$options -> {target} ||= '_parent';
+		out_html ({}, qq {<body onLoad="$$options{before} window.open ('$url&_salt=' + Math.random (), '$$options{target}')"></body>});
 		$_REQUEST {__response_sent} = 1;
 		return;
+		
 	}
 	
 }

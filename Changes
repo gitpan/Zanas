@@ -1,3 +1,8 @@
+0.9917: 
+
+	- new option 'target' in redirect of kind 'js';
+	- new option 'before' in redirect of kind 'js';
+
 0.9916: 
 
 	- added size option for draw_toolbar_input_text;
