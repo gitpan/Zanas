@@ -337,10 +337,23 @@ EOCSS
 				</script>
 				
 			</head>
-			<body bgcolor=white leftMargin=0 topMargin=0 marginwidth="0" marginheight="0" name="body" id="body">
+			<body 
+				bgcolor=white 
+				leftMargin=0 
+				topMargin=0 
+				marginwidth=0 
+				marginheight=0 
+				name="body" 
+				id="body"
+				onkeydown="
+					if (window.event.keyCode == 88 && window.event.altKey) document.location.href = '$_REQUEST{__uri}?type=_logout&sid=$_REQUEST{sid}&salt=@{[rand]}';
+					handle_basic_navigation_keys ();
+					@{[ map {&{"handle_hotkey_$$_{type}"} ($_)} @scan2names ]}
+				"						
+			>
 
 				<script for="body" event="onload">
-				
+								
 					@{[ $_REQUEST{__no_focus} ? '' : 'window.focus ();' ]}
 				
 					@{[ $_REQUEST{sid} ? <<EOK : '' ]}
@@ -354,8 +367,10 @@ EOK
 						window.moveTo ((screen.width - newWidth) / 2, (screen.height - newHeight) / 2);
 EOF
 							
+					if (!document.body.getElementsByTagName) return;
+					
 					var tables = document.body.getElementsByTagName ('table');
-
+					
 					if (tables != null) {										
 						for (var i = 0; i < tables.length; i++) {
 						
@@ -368,7 +383,7 @@ EOF
 							}
 						}					
 					}
-					
+
 					for (var i = 0; i < scrollable_rows.length; i++) {
 					
 						var cells = scrollable_rows [i].cells;
@@ -455,17 +470,6 @@ EOF
 						
 						}
 					
-/*					
-						var inputs = document.body.getElementsByTagName ('input');
-						if (inputs != null) {
-							for (var i = 0; i < inputs.length; i++) {
-								if (inputs [i].type != 'text') continue;
-								if (inputs [i].name == 'q') break;
-								inputs [i].focus ();
-								break;
-							}
-						}
-*/						
 					}
 
 					@{[ $_REQUEST {__blur_all} ? <<EOF : '']}
@@ -477,13 +481,8 @@ EOF
 					}
 					
 EOF
-				</script>
 
-				<script for="body" event="onkeydown">
-					if (window.event.keyCode == 88 && window.event.altKey) document.location.href = '$_REQUEST{__uri}?type=_logout&sid=$_REQUEST{sid}&salt=@{[rand]}';
-					handle_basic_navigation_keys ();
-					@{[ map {&{"handle_hotkey_$$_{type}"} ($_)} @scan2names ]}
-				</script>						
+				</script>
 				
 				@{[ $_REQUEST{__help_url} ? <<EOHELP : '' ]}
 					<script for="body" event="onhelp">
@@ -1626,7 +1625,7 @@ sub draw_form_field {
 	return '' if $field -> {off};
 	
 	my $type = $field -> {type};	
-	if (($_REQUEST {__read_only} or $field -> {read_only}) and $type ne 'hgroup') {
+	if (($_REQUEST {__read_only} or $field -> {read_only}) and ($type ne 'hgroup' && $type ne 'iframe' && $type ne 'text')) {
 		$field -> {value} = $data -> {$field -> {name}} ? $i18n -> {yes} : $i18n -> {no} if ($field -> {type} eq 'checkbox');
 		$type = 'static';
 	}	
@@ -1760,7 +1759,7 @@ sub draw_form {
 		$tr2 .= qq{<td></td>};
 		$tr1 .= qq{<td class='bgr6' width=100%><img src="/0.gif" border=0 hspace=0 vspace=0 width=1 height=1></td>};
 
-		my $class = $items -> [0] -> {is_active} ? 'bgr8' : 'bgr6';
+		my $class = $items -> [0] -> {is_active} ? 'bgr0' : 'bgr6';
 		$tr1 .= qq{<td class='$class'><img src="0.gif" border=0 hspace=0 vspace=0 width=1 height=1></td>};
 
 		$tr3 .= qq{<td rowspan=2 valign=top><img src="/tab_l_${$$items[0]}{is_active}.gif" border=0 hspace=0 vspace=0 width=6 height=17></td>};
@@ -1770,7 +1769,7 @@ sub draw_form {
 			my $item = $items -> [$i];	
 			my $active = $item -> {is_active};
 
-			my $class = $active ? 'bgr8' : 'bgr6';
+			my $class = $active ? 'bgr0' : 'bgr6';
 			$tr1 .= qq{<td class='$class'><img src="/0.gif" border=0 hspace=0 vspace=0 width=1 height=1></td>};
 
 			$tr2 .= qq{<td class="tabs-$active"><a href="$$item{href}" class="main-menu"><nobr>&nbsp;$$item{label}&nbsp;</nobr></a></td>};
@@ -1779,12 +1778,12 @@ sub draw_form {
 
 			if ($i < -1 + @$items) {
 				my $aa = $active . ($items -> [$i + 1] -> {is_active});
-				my $class = $aa ne '00' ? 'bgr8' : 'bgr6';
+				my $class = $aa ne '00' ? 'bgr0' : 'bgr6';
 				$tr1 .= qq{<td class='$class'><img src="/0.gif" border=0 hspace=0 vspace=0 width=1 height=1></td>};
 				$tr3 .= qq{<td rowspan=2><img src="/tab_$aa.gif" border=0 hspace=0 vspace=0 width=8 height=17></td>};
 			}
 			else {
-				my $class = $active ? 'bgr8' : 'bgr6';
+				my $class = $active ? 'bgr0' : 'bgr6';
 				$tr1 .= qq{<td class='$class'><img src="/0.gif" border=0 hspace=0 vspace=0 width=1 height=1></td>};
 				$tr3 .= qq{<td rowspan=2 valign=top><img src="/tab_r_${$$items[-1]}{is_active}.gif" border=0 hspace=0 vspace=0 width=6 height=17></td>};
 			}
@@ -2073,15 +2072,27 @@ sub draw_form_field_text {
 	my $rows = $options -> {rows};
 	$rows ||= 25;
 
-	my $value = $options -> {value};
-	$value ||= '';
-	
 	$tabindex++;
 
 	$options -> {attributes} -> {class} ||= 'form-active-inputs';	
+	$options -> {attributes} -> {readonly} = 1 if $_REQUEST {__read_only} or $options -> {read_only};	
+	
 	my $attributes = dump_attributes ($options -> {attributes});
 
-	return qq {<textarea $attributes onFocus="scrollable_table_is_blocked = true; q_is_focused = true" onBlur="scrollable_table_is_blocked = false; q_is_focused = false" rows=$rows cols=$cols name="_$$options{name}" value="$value" onchange="alert (is_dirty); is_dirty=true; alert (is_dirty);" tabindex=$tabindex>$s</textarea>};
+	return <<EOH;
+		<textarea 
+			$attributes 
+			onFocus="scrollable_table_is_blocked = true; q_is_focused = true" 
+			onBlur="scrollable_table_is_blocked = false; q_is_focused = false" 
+			rows=$rows 
+			cols=$cols 
+			name="_$$options{name}" 
+			tabindex=$tabindex
+			onchange="is_dirty=true;"
+		>$s</textarea>
+
+EOH
+
 }
 
 ################################################################################

@@ -593,12 +593,12 @@ A.button, A.button:link, A.button:active, A.button:hover, A.button:visited {
 
 
 
-td.tabs-1 {
+td.tabs-0 {
 	background-color: #D6D3CE;
 	padding-top:0px;
 	padding-bottom:0px;
 }
-td.tabs-0 {
+td.tabs-1 {
 	background-color: #FFFFFF;
 	padding-top:0px;
 	padding-bottom:0px;

@@ -1,7 +1,21 @@
+5.2.25:
+	
+	- iframe stays iframe in __read_only mode;
+	- textarea stays textarea in __read_only mode (but @readonly = 1);
+	- @body/onkeydown moved to prevent clash with iframes;
+
+5.2.24:
+
+	- fixed html design for tabbed notebook (form menu);
+	- fixed button presets for prev/next;
+
+5.2.18:
+
+	- removed a debug alert in js introduced in 5.2.14;
+
 5.2.14:
 
 	- js fix: no more parent.location...
-	- textarea: onKeyPress -> Onchange (Ctrl-Z is back);
 	- dt fields are highlighted on focus;
 	- $_REQUEST{__no_focus} introduced;
 	- core_recycle_ids - related fix: fake rewriting;

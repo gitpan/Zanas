@@ -425,9 +425,7 @@ sub delete_fakes {
 	$table_name ||= $_REQUEST {type};
 	my @sids = (0, sql_select_col ("SELECT id FROM sessions WHERE id <> ?", $_REQUEST {sid}));	
 	my $sids = join ', ', @sids;
-	
-print STDERR "\$sids = $sids\n";
-	
+
 	if ($conf -> {core_recycle_ids}) {
 		$__last_insert_id = sql_select_scalar ("SELECT MIN(id) FROM $table_name WHERE fake NOT IN ($sids) ORDER BY id");
 		sql_do ("DELETE FROM $table_name WHERE id = ?", $__last_insert_id);
@@ -936,13 +934,13 @@ sub fill_in {
    		back => {
 			icon => 'back', 
 			label => 'back', 
-			hotkey => { code => ESC },
+			hotkey => {code => F11 },
 		},
 
    		next => {
 			icon => 'next',
 			label => 'next',
-   			hotkey => {code => ENTER, ctrl => 1},
+   			hotkey => {code => F12},
 		},
 
    		delete => {
