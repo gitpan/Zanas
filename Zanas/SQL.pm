@@ -266,13 +266,22 @@ sub sql_delete_file {
 
 	my ($options) = @_;	
 	
-	my $path = sql_select_array ("SELECT $$options{path_column} FROM $$options{table} WHERE id = ?", $_REQUEST {id});
+	if ($options -> {path_column}) {
+		$options -> {file_path_columns} = [$options -> {path_column}];
+	}
 	
+	foreach my $column (@{$options -> {file_path_columns}}) {
+
+		my $path = sql_select_array ("SELECT $$options{path_column} FROM $$options{table} WHERE id = ?", $_REQUEST {id});
+
 #print STDERR "sql_delete_file: unlinking '$path'\n";
 
-	unlink $path;
+		delete_file ($path);
 
 #print STDERR "sql_delete_file: '$path' unlinked\n";
+
+	}
+	
 
 }
 
@@ -297,13 +306,9 @@ sub sql_upload_file {
 	
 	my ($options) = @_;
 
-print STDERR "sql_upload_file: purge started\n";
+	my $uploaded = upload_file ($options) or return;
 	
 	sql_delete_file ($options);
-
-print STDERR "sql_upload_file: purge finished\n";
-	
-	my $uploaded = upload_file ($options) or return;
 	
 	my (@fields, @params) = ();
 	
@@ -341,5 +346,23 @@ sub sql_reconnect {
 	our $model_update = DBIx::ModelUpdate -> new ($db, dump_to_stderr => 1);
 
 }   	
+
+################################################################################
+	
+sub sql_select_loop {
+
+	my ($sql, $coderef, @params) = @_;
+	
+	my $st = $db -> prepare ($sql);
+	$st -> execute (@params);
+	
+	our $i;
+	while ($i = $st -> fetchrow_hashref) {
+		&$coderef ();
+	}
+	
+	$st -> finish ();
+
+}
 
 1;

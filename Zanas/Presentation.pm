@@ -33,7 +33,7 @@ sub create_url {
 		$param {$key} = $value;
 	}
 	
-	return '/?' . join ('&', map {($_ !~ /^_/ || $_ eq '__no_navigation') && $param {$_} ? ($_ . '=' . uri_escape ($param {$_})) : ()} keys %param);
+	return $_REQUEST {__uri} . '?' . join ('&', map {($_ !~ /^_/ || $_ eq '__no_navigation') && $param {$_} ? ($_ . '=' . uri_escape ($param {$_})) : ()} keys %param);
 	
 }
 
@@ -135,7 +135,11 @@ sub check_href {
 	
 	if ($_REQUEST{period} and $options -> {href} !~ /^(\#|java)/ and $options -> {href} !~ /\&period=/) {
 		$options -> {href} .= "\&period=$_REQUEST{period}";
-	}			
+	}
+	
+	if ($_REQUEST {__uri} ne '/' && $options -> {href} =~ m{^\/\?}) {
+		$options -> {href} =~ s{^\/\?}{$_REQUEST{__uri}\?};
+	}
 
 }
 

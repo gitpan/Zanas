@@ -232,7 +232,7 @@ EOH
 		</iframe>
 EOH
 
-	my $win_dirty_hack = $^O eq 'MSWin32' ? '/i' : '';
+	my $root = $^O eq 'MSWin32' ? '/i/' : $_REQUEST{__uri};
 	
 	my $request_package = ref $apr;
 	my $mod_perl = $ENV {MOD_PERL};
@@ -245,12 +245,12 @@ EOH
 				<meta name="Generator" content="Zanas.pm ver.$Zanas::VERSION; parameters are fetched with $request_package; gateway_interface is $ENV{GATEWAY_INTERFACE}; $mod_perl is in use">
 				$meta_refresh
 				
-				<LINK href="$win_dirty_hack/zanas.css" type=text/css rel=STYLESHEET>
+				<LINK href="${root}zanas.css" type=text/css rel=STYLESHEET>
 				@{[ map {<<EOJS} @{$_REQUEST{__include_css}} ]}
 					<LINK href="/i/$_.css" type=text/css rel=STYLESHEET>
 EOJS
 
-					<script src="$win_dirty_hack/navigation.js">
+					<script src="${root}navigation.js">
 					</script>
 				@{[ map {<<EOCSS} @{$_REQUEST{__include_js}} ]}
 					<script type="text/javascript" src="/i/${_}.js">
@@ -343,7 +343,7 @@ EOF
 				</script>
 
 				<script for="body" event="onkeydown">												
-					if (window.event.keyCode == 88 && window.event.altKey) document.location.href = '/?_salt=@{[rand]}';					
+					if (window.event.keyCode == 88 && window.event.altKey) document.location.href = '$_REQUEST{__uri}?_salt=@{[rand]}';
 					handle_basic_navigation_keys ();
 					@{[ map {&{"handle_hotkey_$$_{type}"} ($_)} @scan2names ]}							
 					
@@ -432,7 +432,7 @@ EOH
 			$onhover = qq {onmouseover="open_popup_menu ('$$type{name}')"};
 		}
 		
-		my $href = $type -> {no_page} ? '#' : "/?type=$$type{name}&sid=$_REQUEST{sid}@{[$_REQUEST{period} ? '&period=' . $_REQUEST {period} : '']}@{[$type->{role} ? '&role=' . $type->{role} : '']}";
+		my $href = $type -> {no_page} ? '#' : "$_REQUEST{__uri}?type=$$type{name}&sid=$_REQUEST{sid}@{[$_REQUEST{period} ? '&period=' . $_REQUEST {period} : '']}@{[$type->{role} ? '&role=' . $type->{role} : '']}";
 		
 		$tr2 .= <<EOH;
 			<td class=bgr1><img height=20 src="/0.gif" width=1 border=0></td>
@@ -497,7 +497,7 @@ EOH
 						nowrap 
 						onmouseover="this.style.background='#efefef'" 
 						onmouseout="this.style.background='#d5d5d5'"
-						onclick="parent.location.href='/?type=$$type{name}&sid=$_REQUEST{sid}@{[$_REQUEST{period} ? '&period=' . $_REQUEST {period} : '']}@{[$type->{role} ? '&role=' . $type->{role} : '']}'"
+						onclick="parent.location.href='$_REQUEST{__uri}?type=$$type{name}&sid=$_REQUEST{sid}@{[$_REQUEST{period} ? '&period=' . $_REQUEST {period} : '']}@{[$type->{role} ? '&role=' . $type->{role} : '']}'"
 						style="font-weight: normal; font-size: 11px; color: #000000; font-family: verdana; text-decoration: none"
 					>
 						&nbsp;&nbsp;$$type{label}&nbsp;&nbsp;
@@ -675,7 +675,7 @@ sub draw_one_cell_table {
 		@{[ $options -> {js_ok_escape} ? js_ok_escape () : '' ]}
 		
 		<table cellspacing=0 cellpadding=0 width="100%">
-				<form name=form action=/ method=post enctype=multipart/form-data target=invisible>
+				<form name=form action=$_REQUEST{__uri} method=post enctype=multipart/form-data target=invisible>
 					<tr><td class=bgr8>$body
 				</form>
 		</table>
@@ -808,7 +808,7 @@ EOH
 		
 		<table cellspacing=0 cellpadding=0 width="100%"><tr><td class=bgr8>
 		
-			<form name=$$options{name} action=/ method=post enctype=multipart/form-data target=invisible>
+			<form name=$$options{name} action=$_REQUEST{__uri} method=post enctype=multipart/form-data target=invisible>
 			
 				<input type=hidden name=type value=$$options{type}> 
 				<input type=hidden name=action value=$$options{action}> 
@@ -942,7 +942,7 @@ sub draw_toolbar {
 	
 	return <<EOH
 		<table class=bgr5 cellspacing=0 cellpadding=0 width="100%" border=0>
-			<form action=/ name=$form_name target="$$options{target}">
+			<form action=$_REQUEST{__uri} name=$form_name target="$$options{target}">
 			
 				@{[ map {<<EO} @{$options -> {keep_params}} ]}
 					<input type=hidden name=$_ value=$_REQUEST{$_}>
@@ -1248,7 +1248,7 @@ $path<table cellspacing=1 cellpadding=5 width="100%">
 
 			@{[ js_ok_escape ($options) ]}
 			
-			<form name=$name action=/ method=post enctype=multipart/form-data target=$target>
+			<form name=$name action=$_REQUEST{__uri} method=post enctype=multipart/form-data target=$target>
 				<input type=hidden name=type value=$type> 
 				<input type=hidden name=id value=$id> 
 				<input type=hidden name=action value=$action> 
@@ -1866,8 +1866,8 @@ sub draw_auth_toolbar {
 EOH
 
 	$top_banner = interpolate ($conf -> {top_banner});
-	
-	$conf -> {exit_url} ||= '/?sid=0';
+		
+	my $exit_url = $conf -> {exit_url} || "$_REQUEST{__uri}?sid=0";	
 	
 	return <<EOH;
 
@@ -1899,9 +1899,9 @@ EOLPT
 				<td class=bgr1><nobr><A id="help" class=lnk2 href="$_REQUEST{__help_url}" target="_blank">[$$i18n{F1}]</A>&nbsp;&nbsp;</nobr></td>
 EOHELP
 
-				@{[ $_USER ? <<EOEXIT : '' ]}
+				@{[ $$_USER{id} ? <<EOEXIT : '' ]}
 				<td class=bgr1><img height=22 src="/0.gif" width=4 border=0></td>
-				<td class=bgr1><nobr><A class=lnk2 href="$$conf{exit_url}">[$$i18n{Exit}]</A>&nbsp;&nbsp;</nobr></td>
+				<td class=bgr1><nobr><A class=lnk2 href="$exit_url">[$$i18n{Exit}]</A>&nbsp;&nbsp;</nobr></td>
 EOEXIT
 
 				<td class=bgr1><img height=22 src="/0.gif" width=4 border=0></td>

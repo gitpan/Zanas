@@ -37,6 +37,8 @@ sub handler {
 	our %_REQUEST = %{$parms};
 	
 	$_REQUEST {type} =~ s/_for_.*//;
+	$_REQUEST {__uri} = $r -> uri;
+	$_REQUEST {__uri} =~ s{\/\w+\.\w+$}{};
 	
 	$number_format or our $number_format = Number::Format -> new (%{$conf -> {number_format}});
 	
@@ -107,8 +109,10 @@ sub handler {
 		Select                   => 'Sélection',
    	});
 
-	$_REQUEST {type} = '_static_files' if $r -> filename =~ /\w\.\w/;
+#	$_REQUEST {type} = '_static_files' if $r -> filename =~ /\w\.\w/;
 	
+	$_REQUEST {type} = '_static_files' if $ENV{PATH_INFO} =~ /\w\.\w/;
+
 	$conf -> {include_js}  ||= ['js'];
    	
    	$_REQUEST {__include_js} = [];

@@ -170,6 +170,10 @@ sub redirect {
 		$url = create_url (%$url);
 	}
 	
+	if ($_REQUEST {__uri} ne '/' && $url =~ m{^\/\?}) {
+		$url =~ s{^\/\?}{$_REQUEST{__uri}\?};
+	}
+	
 	$options ||= {};
 	$options -> {kind} ||= 'internal';
 	
@@ -218,14 +222,16 @@ sub delete_file {
 
 sub select__static_files {
 
-	$r -> filename =~ /\w+\.\w+/;
+#	$r -> filename =~ /\w+\.\w+/;
+	
+	$ENV{PATH_INFO} =~ /\w+\.\w+/;
 	
 	my $filename = $&;
 
 	my $content_type = 
-		$r -> filename =~ /\.js/ ? 'application/x-javascript' :
-		$r -> filename =~ /\.css/ ? 'text/css' :
-		$r -> filename =~ /\.htm/ ? 'text/html' :
+		$filename =~ /\.js/ ? 'application/x-javascript' :
+		$filename =~ /\.css/ ? 'text/css' :
+		$filename =~ /\.htm/ ? 'text/html' :
 		'application/octet-stream';
 
 	my $path = $STATIC_ROOT . $filename . '.gz.pm';
@@ -300,7 +306,9 @@ sub upload_file {
 	
 	my $fh = $upload -> fh;
 	
-	my $path = "/i/$$options{dir}/" . time . '-' . $$;
+	$upload -> filename =~ /[A-Za-z0-9]+$/;
+	
+	my $path = "/i/$$options{dir}/" . time . "-$$.$&";
 	
 	my $real_path = $r -> document_root . $path;
 	

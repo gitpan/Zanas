@@ -1,3 +1,10 @@
+0.9918: 
+
+	- saving files fith original extensions in upload_file;
+	- file purging fixes;
+	- new sub: sql_select_loop;
+	- Zanas.pm application can now live in a separated subdirectory (e.g. /admin/?sid=123456, /crm/?sid=6666666...);
+
 0.9917: 
 
 	- new option 'target' in redirect of kind 'js';
