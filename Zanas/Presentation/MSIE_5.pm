@@ -363,6 +363,8 @@ sub draw_menu {
 
 	foreach my $type (@$types)	{
 	
+		next if $type -> {off};
+	
 		register_hotkey ($type, 'href', 'main_menu_' . $type -> {name});
 	
 		$tr1 .= <<EOH;
