@@ -1,9 +1,13 @@
+0.9912: 
+
+	- create_url sub fixed to always set random 'salt' parameter;
+	- new feature: js redirects with messages;
+
 0.9911: 
 
 	- js fix: checkboxes (draw_checkbox_cell) are now toggled by spacebar even when focused;
 	- js fixes related to focus handling on slider move;
 	- 'undocumented' warnings in docs generator;
-
 
 0.9910: 
 

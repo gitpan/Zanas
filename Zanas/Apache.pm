@@ -137,12 +137,14 @@ EOH
 				}
 				else {
 				
-					unless ($_REQUEST {__response_sent}) {
+					$_REQUEST {__response_sent} or redirect ({action => '', redirect_params => ''}, {kind => 'js'});
 				
-						my $url = create_url (action => '', redirect_params => '');
-						out_html ({}, qq {<body onLoad="window.open ('$url&salt=' + Math.random (), '_parent', 'location=0,menubar=0,status=0,toolbar=0')"></body>});
+#					unless ($_REQUEST {__response_sent}) {
 				
-					}
+#						my $url = create_url (action => '', redirect_params => '');
+#						out_html ({}, qq {<body onLoad="window.open ('$url&salt=' + Math.random (), '_parent', 'location=0,menubar=0,status=0,toolbar=0')"></body>});
+				
+#					}
 				
 				}
 				

@@ -340,6 +340,12 @@ our $deparse = B::Deparse -> new ();
 	},
 
 	{
+		name     => 'add_columns',
+		label_en => "HASHREF of additional column names => values to store.",
+		label_ru => "Хэш с именами и значениями дополнительных полей, которые надо сохранить в таблице.",
+	},
+
+	{
 		name     => 'new_image_url',
 		label_en => "Path to image selection dialog box",
 		label_ru => "Адрес страницы выбора изображения",
@@ -361,6 +367,12 @@ our $deparse = B::Deparse -> new ();
 		name     => 'height',
 		label_en => "Value of HEIGHT attribute",
 		label_ru => "Значение атрибута HEIGHT (высота)",
+	},
+
+	{
+		name     => 'title',
+		label_en => "Value of TITLE attribute (tooltip text)",
+		label_ru => "Значение атрибута TITLE (всплывающий текст)",
 	},
 
 	{
@@ -451,7 +463,7 @@ EO
 
 	{
 		name     => 'check_title',
-#		options  => [qw()],
+		options  => [qw(title)],
 		syn      => <<EO,	
 	check_title ({
 		...
@@ -476,7 +488,7 @@ EO
 
 	{
 		name     => 'check_href',
-#		options  => [qw()],
+		options  => [qw(href)],
 		syn      => <<EO,	
 	check_href ({
 		...
@@ -579,7 +591,7 @@ EO
 		name     => 'upload_file',
 		options	 => [qw(name dir)],
 		syn      => <<EO,	
-	my \$file = sql_upload_file ({
+	my \$file = upload_file ({
 		name             => 'photo',
 		dir		 => 'i/upload/user_photos'
 	});
@@ -603,7 +615,7 @@ EO
 
 	{
 		name     => 'sql_upload_file',
-		options	 => [qw(name dir table path_column type_column file_name_column size_column)],
+		options	 => [qw(name dir table path_column type_column file_name_column size_column add_columns)],
 		syn      => <<EO,	
 	sql_upload_file ('users', {
 		name             => 'photo',
@@ -613,6 +625,9 @@ EO
 		type_column      => 'type_photo',
 		file_name_column => 'flnm_photo',
 		size_column      => 'size_photo',
+		add_columns      => [
+			flag => 'erected',
+		],
 	});
 EO
 		label_en => 'Uploads the file and stores its info in the table.',
@@ -624,7 +639,7 @@ EO
 
 	{
 		name     => 'sql_download_file',
-		options	 => [qw(path_column type_column file_name_column)],
+		options	 => [qw(table path_column type_column file_name_column)],
 		syn      => <<EO,	
 	sql_download_file ('users', {
 		path_column      => 'path_photo',
@@ -642,6 +657,7 @@ EO
 
 	{
 		name     => 'sql_do_delete',
+		options	 => [qw(file_path_columns)],
 		syn      => <<EO,	
 	sql_do_delete ('users', {
 		file_path_columns => ['path_photo'],
@@ -1049,7 +1065,7 @@ EO
 
 	{
 		name     => 'draw_form_field_htmleditor',
-		options  => [qw(name label width height)],
+		options  => [qw(name label width height off)],
 		label_en => 'Draws the WYIWYG HTML editing area (see http://www.fredck.com/FCKeditor/). Invoked by draw_form.',
 		label_ru => 'Отрисовывает интерактивный редактор HTML (см. http://www.fredck.com/FCKeditor/). Вызывается процедурой draw_form.',
 		see_also => [qw(draw_form)]
@@ -1149,7 +1165,7 @@ EO
 
 	{
 		name     => 'draw_form_field_file',
-		options  => [qw(name label)],
+		options  => [qw(name label size)],
 		label_en => 'Draws the file upload form input. Invoked by draw_form.',
 		label_ru => 'Отрисовывает поле ввода для загрузки файла. Вызывается процедурой draw_form.',
 		see_also => [qw(draw_form)]
@@ -1179,7 +1195,7 @@ EO
 
 	{
 		name     => 'draw_form_field_datetime',
-		options  => [qw(name label value off format/$$conf{format_dt} no_time onClose)],
+		options  => [qw(name label value off format/$$conf{format_dt} no_time onClose max_len)],
 		label_en => 'Draws the calendar form input (DHTML from http://dynarch.com/mishoo/calendar.epl).',
 		label_ru => 'Отрисовывает поле ввода типа "календарь" (DHTML-код позаимствован с http://dynarch.com/mishoo/calendar.epl).',
 		see_also => [qw(draw_form)]
@@ -1205,7 +1221,7 @@ EO
 
 	{
 		name     => 'draw_toolbar_input_select',
-		options  => [qw(name values value empty)],
+		options  => [qw(name values value empty max_len)],
 		syn      => <<EO,	
 	draw_toolbar_input_select ({
 		name   => 'id_topic',
@@ -1803,11 +1819,12 @@ sub generate_sub {
 
 	my ($lang, $s) = @_;
 	
-	my $body = '';
-	eval '$body = $deparse -> coderef2text(\&Zanas::' . $s -> {name} . ')';
-	
-	my @soptions = ($body =~ m{\$\$options\{\'(\w+)\'\}});
-	my %soptions = map {$_ => 1} @soptions;
+#	if ($lang eq 'en') {
+		my $body = '';
+		eval '$body = $deparse -> coderef2text(\&Zanas::' . $s -> {name} . ')';	
+		my @soptions = ($body =~ m{\$\$options\{\'(\w+)\'\}});
+		my %soptions = map {$_ => 1} @soptions;
+#	}
 
 	my $options = '';
 	foreach my $o (@{$s -> {options}}) {
@@ -1820,7 +1837,7 @@ sub generate_sub {
 		delete $soptions {$name};
 	}
 	
-	print STDERR join '', map {"Warning! undocumented option '$_' in sub '$$s{name}': \n"} sort keys %soptions;
+	print STDERR join '', map {"Warning! undocumented option '$_' in sub '$$s{name}': \n"} sort keys %soptions if ($lang eq 'en');
 	
 	$options and $options = <<EOF;
 					<dt>${$i18n{OPTIONS}}{$lang}

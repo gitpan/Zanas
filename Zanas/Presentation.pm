@@ -26,6 +26,7 @@ sub trunc_string {
 sub create_url {
 
 	my %over = @_;	
+	$over {salt} = rand ();
 	my %param = %_REQUEST;
 	$over {password} = '';
 	while (my ($key, $value) = each %over) {

@@ -541,11 +541,11 @@ EOH
 
 sub draw_input_cell {
 
-	my ($data) = @_;
+	my ($data, $options) = @_;
 	
 	return '' if $data -> {off};
 	
-	return draw_text_cell ($data) if $_REQUEST {__read_only} || $data -> {read_only};
+	return draw_text_cell ($data, $options) if $_REQUEST {__read_only} || $data -> {read_only};
 	
 	$data -> {max_len} ||= $conf -> {max_len};
 	$data -> {max_len} ||= 30;
@@ -562,8 +562,10 @@ sub draw_input_cell {
 	$txt ||= '';
 	
 	my $attributes = dump_attributes ($data -> {attributes});
+	
+	check_title ($data);
 		
-	return qq {<td $attributes><nobr><input onFocus="q_is_focused = true" onBlur="q_is_focused = false" type="text" name="$$data{name}" value="$txt" maxlength="$$data{max_len}" size="$$data{size}"></nobr></td>};
+	return qq {<td $$data{title} $attributes><nobr><input onFocus="q_is_focused = true" onBlur="q_is_focused = false" type="text" name="$$data{name}" value="$txt" maxlength="$$data{max_len}" size="$$data{size}"></nobr></td>};
 
 }
 
@@ -583,7 +585,9 @@ sub draw_checkbox_cell {
 
 	return qq {<td $attributes>&nbsp;} if $data -> {off};	
 
-	return qq {<td $attributes><input type=checkbox name=$$data{name} $checked value='$value'></td>};
+	check_title ($data);
+
+	return qq {<td $$data{title} $attributes><input type=checkbox name=$$data{name} $checked value='$value'></td>};
 	
 }
 
@@ -1285,16 +1289,12 @@ sub draw_form_field_string {
 sub draw_form_field_datetime {
 
 	my ($options, $data) = @_;
-	
-	$options -> {max_len} ||= $conf -> {max_len};	
-	$options -> {max_len} ||= $options -> {size};
-	
+		
 	unless ($options -> {format}) {
 	
 		if ($options -> {no_time}) {
 			$conf -> {format_d}   ||= '%d.%m.%Y';
 			$options -> {format}  ||= $conf -> {format_d};
-			$options -> {max_len} ||= 20;		
 			$options -> {size}    ||= 11;
 		}
 		else {
@@ -1325,7 +1325,7 @@ sub draw_form_field_datetime {
 	my $shows_time = $options -> {no_time} ? 'false' : 'true';
 	
 	return <<EOH
-		<input $attributes onFocus="scrollable_table_is_blocked = true; q_is_focused = true" onBlur="scrollable_table_is_blocked = false; q_is_focused = false" autocomplete="off" type="text" maxlength="$$options{max_len}" name="_$$options{name}" value="$s" $size onKeyPress="if (window.event.keyCode != 27) is_dirty=true">
+		<input $attributes onFocus="scrollable_table_is_blocked = true; q_is_focused = true" onBlur="scrollable_table_is_blocked = false; q_is_focused = false" autocomplete="off" type="text" name="_$$options{name}" value="$s" $size onKeyPress="if (window.event.keyCode != 27) is_dirty=true">
 		<button id="calendar_trigger_$$options{name}" class="txt7">...</button>
 		
 		<script type="text/javascript">
@@ -1642,7 +1642,12 @@ sub draw_esc_toolbar {
 
 	draw_centered_toolbar ($options, [
 		@{$options -> {additional_buttons}},
-		{icon => 'cancel', label => 'вернуться', href => "$options->{href}", id => 'esc'},
+		{
+			icon => 'cancel', 
+			label => 'вернуться', 
+			href => $options -> {href}, 
+			id => 'esc'
+		},
 	])
 	
 }

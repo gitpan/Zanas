@@ -144,8 +144,28 @@ sub get_filehandle {
 ################################################################################
 
 sub redirect {
-#	print $q -> redirect ($_[0]);
-	$r -> internal_redirect ($_[0]);
+
+	my ($url, $options) = @_;
+	
+	if (ref $url eq HASH) {
+		$url = create_url (%$url);
+	}
+	
+	$options ||= {};
+	$options -> {kind} ||= 'internal';
+	
+	if ($options -> {kind} eq 'internal') {
+		$r -> internal_redirect ($url);
+		return;
+	}
+
+	if ($options -> {kind} eq 'js') {
+		my $msg = $options -> {label} ? 'alert(' . js_escape ($options -> {label}) . '); ' : '';
+		out_html ({}, qq {<body onLoad="$msg window.open ('$url&_salt=' + Math.random (), '_parent')"></body>});
+		$_REQUEST {__response_sent} = 1;
+		return;
+	}
+	
 }
 
 ################################################################################
