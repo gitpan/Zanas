@@ -1,3 +1,8 @@
+0.69: 25.11.03 15:50
+	- added picture option in draw_text_cell sub (Number::Format is now required for install);
+	- added draw_text_cells sub;
+	- added tooltips in draw_text_cell sub;
+
 0.68: 24.11.03 10:10
 	- js fix (char 13 from keyboard & javascript href);
 	- added checked option in draw_form_field_checkbox sub (by hekima);

@@ -470,10 +470,21 @@ sub MSIE_5_draw_checkbox_cell {
 
 ################################################################################
 
+sub MSIE_5_draw_text_cells {
+
+	my $options = (ref $_[0] eq HASH) ? shift () : {};
+	
+	return join '', map { MSIE_5_draw_text_cell ($_) } @{$_[0]};
+	
+}
+
+
+################################################################################
+
 sub MSIE_5_draw_text_cell {
 
 	my ($data) = @_;
-	
+		
 	return '' if $data -> {off};
 	
 	$data -> {max_len} ||= $conf -> {max_len};
@@ -483,15 +494,23 @@ sub MSIE_5_draw_text_cell {
 	$data -> {attributes} -> {class} ||= 'txt4';
 			
 	$data -> {a_class} ||= 'lnk4';
-
-	my $txt = trunc_string ($data -> {label}, $data -> {max_len});
+	
+	my $txt;
+	
+	if ($data -> {picture}) {	
+		$txt = $number_format -> format_picture ($data -> {label}, $data -> {picture});
+		$data -> {attributes} -> {align} ||= 'right';
+	}
+	else {
+		$txt = trunc_string ($data -> {label}, $data -> {max_len});
+	}
 	
 	$txt ||= '&nbsp;';
 	
 	if ($data -> {href}) {
 		check_href ($data);
 		my $target = $data -> {target} ? "target='$$data{target}'" : '';
-		$txt = qq { <a class=$$data{a_class} $target href="$$data{href}" onFocus="blur()">$txt</a> };
+		$txt = qq { <a title="$$data{label}" class=$$data{a_class} $target href="$$data{href}" onFocus="blur()">$txt</a> };
 	}
 	
 	my $attributes = join ' ', map {"$_='" . $data -> {attributes} -> {$_} . "'"} keys %{$data -> {attributes}};

@@ -243,12 +243,17 @@ sub draw_hr {
 
 CSS-класс ссылки. По умолчанию равен C<lnk4>. 
 
+=item picture 
+
+Числовой формат. 
+
 =back
 
 =head2 Использование
 
 	draw_text_cell ({ 
-		label   => '$1 000 000',
+		label   => 1000000,
+		picture => '$ ### ### ###',
 		href    => '/?type=bank&action=pillage',
 		target  => 'invisible',
 		max_len => 255,
@@ -265,6 +270,42 @@ CSS-класс ссылки. По умолчанию равен C<lnk4>.
 
 sub draw_text_cell {
 	drawer_call ('draw_text_cell', @_);	
+}
+
+
+################################################################################
+
+=head1 draw_text_cells
+
+=head2 Использование
+
+	draw_text_cells ([
+	
+		{ 
+			label   => 'foo',
+		},
+		
+		{ 
+			label   => 1000000,
+			picture => '$ ### ### ###',
+			href    => '/?type=bank&action=pillage',
+			target  => 'invisible',
+			max_len => 255,
+			attributes => {
+				width => '1%',
+				align => 'right',
+			},
+			a_class => 'red_hot_link'
+		},
+
+	]);
+
+=cut
+
+################################################################################
+
+sub draw_text_cells {
+	drawer_call ('draw_text_cells', @_);	
 }
 
 ################################################################################
