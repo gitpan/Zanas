@@ -15,22 +15,15 @@ use constant OK => 200;
 
 BEGIN {	
 
-	$Zanas_VERSION = $Zanas::VERSION = '5.3.25';
-	$Zanas_VERSION_NAME = $Zanas::VERSION_NAME = 'Thinning';
+	$Zanas_VERSION = $Zanas::VERSION = '5.5.11';
+	$Zanas_VERSION_NAME = $Zanas::VERSION_NAME = 'Infinity';
 	
 	eval {
 		require Storable;
 	};
 	
 	unless ($preconf -> {core_path}) {
-
-		if ($preconf -> {core_xul}) {
-			require Zanas::Presentation::XUL;
-		}
-		else {
-			require Zanas::Presentation::MSIE_5;
-		}
-	
+		require Zanas::Presentation::MSIE_5;
 		require Zanas::Apache;
 		require Zanas::Content;
 		require Zanas::InternalRequest;

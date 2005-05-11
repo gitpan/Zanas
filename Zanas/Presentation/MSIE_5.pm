@@ -62,9 +62,7 @@ sub hotkeys {
 sub hotkey {
 
 	my ($def) = $_[0];
-	
-#	return if $def -> {off};
-	
+		
 	$def -> {type} ||= 'href';
 
 	if ($def -> {code} =~ /^F(\d+)/) {
@@ -113,15 +111,30 @@ sub handle_hotkey_href {
 		$r -> {confirm} ? 'window.confirm(' . js_escape ($r -> {confirm}) . ')' : 
 		'1';
 
-	return <<EOJS
-		if (window.event.keyCode == $$r{code} && $alt window.event.altKey && $ctrl window.event.ctrlKey) {
-			if ($condition) {
-				var a = document.getElementById ('$$r{data}');
-				activate_link (a.href, a.target);
+	if ($r -> {href}) {
+			
+		return <<EOJS
+			if (window.event.keyCode == $$r{code} && $alt window.event.altKey && $ctrl window.event.ctrlKey) {
+				if ($condition) {
+					window.open ('$$r{href}&__from_table=1&salt=' + Math.random () + '&' + scrollable_rows [scrollable_table_row].id, '_self');
+				}
+				blockEvent ();
 			}
-			blockEvent ();
-		}
 EOJS
+
+	}
+	else {
+		
+		return <<EOJS
+			if (window.event.keyCode == $$r{code} && $alt window.event.altKey && $ctrl window.event.ctrlKey) {
+				if ($condition) {
+					var a = document.getElementById ('$$r{data}');
+					activate_link (a.href, a.target);
+				}
+				blockEvent ();
+			}
+EOJS
+	}
 
 }
 
@@ -129,7 +142,7 @@ EOJS
 
 sub js_escape {
 	my ($s) = @_;	
-	$s =~ s/\"/\'/gsm;
+	$s =~ s/\"/\'/gsm; #"
 	$s =~ s{[\n\r]+}{ }gsm;
 	$s =~ s{\\}{\\\\}g; #'
 	$s =~ s{\'}{\\\'}g; #'
@@ -188,6 +201,7 @@ sub draw_page {
 
 		our $prototype = <<EOX;
 <?xml version="1.0" encoding="$$i18n{_charset}"?>
+<!-- ?xml-stylesheet type="text/xsl" href="i/zanas-html.xsl"? -->
 <page>
 EOX
 
@@ -213,7 +227,7 @@ EOX
 				
 				content => $content,				
 				
-				prototype => $prototype,
+#				prototype => $prototype,
 				
 			});
 		}
@@ -283,7 +297,6 @@ EOH
 
 	}
 	
-#	$_USER -> {role} eq 'admin' and $_REQUEST{id} or my $lpt = $body =~ s{<table[^\>]*lpt\=\"?1\"?[^\>]*\>}{\<table cellspacing\=1 cellpadding\=5 id='scrollable_table' width\=100\%\>}gsm; #"
 	my $lpt = $body =~ s{<table[^\>]*lpt\=\"?1\"?[^\>]*\>}{\<table cellspacing\=1 cellpadding\=2 id='scrollable_table' width\=100\%\> <!--**-->}gsm; #"
 	
 	my $menu = draw_menu ($page -> {menu}, $page -> {highlighted_type}, {lpt => $lpt});
@@ -294,7 +307,6 @@ EOH
 	
 	my $auth_toolbar = $conf -> {core_no_auth_toolbar} ? '' : draw_auth_toolbar ({lpt => $lpt});
 
-#	my $root = $^O eq 'MSWin32' ? '/i/' : $_REQUEST{__uri};
 	my $root = $_REQUEST{__uri};
 	
 	my $request_package = ref $apr;
@@ -304,6 +316,16 @@ EOH
 	my $timeout = 1000 * (60 * $conf -> {session_timeout} - 1);
 	
 	$_REQUEST {__select_rows} += 0;
+	
+	my $static_salt = $Zanas_VERSION_NAME;
+	$static_salt .= '_00000';
+	if ($_REQUEST {sid}) {
+		$static_salt .= $_REQUEST {sid};
+	}
+	else {
+		$static_salt .= $$ . time ();
+		$static_salt =~ s{\.}{}g;
+	}
 					
 	return <<EOH;
 		<html>		
@@ -315,12 +337,12 @@ EOH
 				
 				$meta_refresh
 				
-				<LINK href="${root}zanas_${Zanas::VERSION_NAME}.css" type=text/css rel=STYLESHEET>
+				<LINK href="${root}zanas_${static_salt}.css" type=text/css rel=STYLESHEET>
 				@{[ map {<<EOJS} @{$_REQUEST{__include_css}} ]}
 					<LINK href="/i/$_.css" type=text/css rel=STYLESHEET>
 EOJS
 
-					<script src="${root}navigation_${Zanas::VERSION_NAME}.js">
+					<script src="${root}navigation_${static_salt}.js">
 					</script>
 				@{[ map {<<EOCSS} @{$_REQUEST{__include_js}} ]}
 					<script type="text/javascript" src="/i/${_}.js">
@@ -331,7 +353,8 @@ EOCSS
 					var select_rows = $_REQUEST{__select_rows};
 					var scrollable_table = null;
 					var scrollable_table_row = 0;
-					var scrollable_table_row_cell = 0;						
+					var scrollable_table_row_id = 0;
+					var scrollable_table_row = 0;
 					var scrollable_table_row_cell_old_style = '';
 					var is_dirty = false;					
 					var scrollable_table_is_blocked = false;
@@ -940,9 +963,6 @@ sub draw_text_cell {
 		$prototype .= qq{\t\t\t<column label="$__header" text="$$data{label}" />\n};
 	}
 
-#	return '' if $data -> {off};
-	
-#	$data -> {max_len} ||= $data -> {size} || $conf -> {max_len} || 30;
 	$data -> {max_len} ||= $data -> {size} || $conf -> {size}  || $conf -> {max_len} || 30;
 	
 	$data -> {attributes} ||= {};
@@ -964,7 +984,7 @@ sub draw_text_cell {
 		
 	$txt =~ s{^\s+}{};
 	$txt =~ s{\s+$}{};
-	$txt = "\&nbsp;$txt\&nbsp;";
+	$txt = "\&nbsp;$txt\&nbsp;" unless $_REQUEST {xls};
 
 	unless ($data -> {no_nobr}) {
 		$txt = '<nobr>' . $txt . '</nobr>';
@@ -1094,9 +1114,7 @@ sub draw_table {
 	$prototype .= qq{\t<table title="$__last_window_title">\n};
 
 	if (ref $options -> {top_toolbar} eq ARRAY) {			
-#		$_FLAG_ADD_LAST_QUERY_STRING = 1;
 		$options -> {top_toolbar} = draw_toolbar (@{ $options -> {top_toolbar} });
-#		$_FLAG_ADD_LAST_QUERY_STRING = 0;
 	}
 	
 	$prototype .= qq{\t\t<toolbar>\n};
@@ -1149,6 +1167,11 @@ EOH
 			our @__types = (@__global_types);
 			push @__types, BREAK if @__types > 0;
 			my $tr = &$callback () or next;
+			
+			my $tr_id = {href => 'id=' . $i -> {id}};
+			check_href ($tr_id);
+			$tr_id -> {salt} =~ s{\&salt=[\d\.]+}{};
+			
 			undef $_FLAG_ADD_LAST_QUERY_STRING;
 			
 			my $oncontextmenu = '';
@@ -1157,7 +1180,7 @@ EOH
 				$oncontextmenu  = qq{ oncontextmenu="open_popup_menu('$i'); blockEvent ();"};
 			}
 
-			$trs .= "<tr id='$i'";
+			$trs .= "<tr id='$$tr_id{href}'";
 			$trs .= $oncontextmenu;
 			$trs .= '>';
 			$trs .= $tr;
@@ -1325,8 +1348,6 @@ sub draw_toolbar {
 	
 	return '' if $options -> {off};	
 	
-#	$__last_top_toolbar = qq{\t\t<toolbar>\n};
-
 	$_REQUEST {__toolbars_number} ||= 0;
 		
 	my $form_name = $_REQUEST {__toolbars_number} ? 'toolbar_form_' . $_REQUEST {__toolbars_number} : 'toolbar_form';
@@ -1345,13 +1366,11 @@ sub draw_toolbar {
 			icon    => 'cancel',
 			id      => 'cancel',
 			label   => $i18n -> {close},
-#			href    => 'javaScript:window.opener.focus();window.close()',
 			href    => "javaScript:window.parent.restoreSelectVisibility('_$_REQUEST{select}', true);window.parent.focus();",
 		};
 		
 	}
 	
-#	my $buttons = join '', map { ref $_ eq HASH ? ( &{'draw_toolbar_' . ($$_{type} || 'button')} ($_) ) : $_ } @buttons;
 	my $buttons = '';
 	foreach my $button (@buttons) {
 		if (ref $button eq HASH) {
@@ -1362,8 +1381,6 @@ sub draw_toolbar {
 			$buttons .= $button;
 		}
 	};
-
-#	$__last_top_toolbar .= qq{\t\t</toolbar>\n};
 
 	return <<EOH
 		<table class=bgr8 cellspacing=0 cellpadding=0 width="100%" border=0>
@@ -1434,8 +1451,6 @@ sub draw_toolbar_button {
 	return '' if $options -> {off};
 	
 	$__last_top_toolbar .= qq{\t\t\t<button label="$$options{label}" icon="$$options{icon}" />\n};
-
-#	$options -> {target} ||= '_self';
 	
 	$conf -> {kb_options_buttons} ||= {ctrl => 1, alt => 1};	
 	
@@ -1456,10 +1471,6 @@ sub draw_toolbar_button {
 		my $label = $options -> {label};
 		$label =~ s{\<.*?\>}{}g;
 		$bra = qq|<img src="/i/buttons/$$options{icon}.gif" alt="$label" border=0 hspace=0 vspace=1 align=absmiddle>&nbsp;|
-	}
-	else {
-#		$bra = '<b>[';
-#		$ket = ']</b>';
 	}
 	
 	my $vert_line = {label => $options -> {label}, href => $options -> {href}};
@@ -1545,7 +1556,6 @@ sub draw_toolbar_input_datetime {
 	
 	}
 	
-#	$options -> {onClose} ||= "document.all.$$options{name}.form.submit()";
 	$options -> {onClose} ||= 'null';
 	
 	my $s = $options -> {value};
@@ -1622,31 +1632,36 @@ sub draw_toolbar_pager {
 	my $label = '';	
 
 	$conf -> {kb_options_pager} ||= $conf -> {kb_options_buttons};
-	$conf -> {kb_options_pager} ||= {ctrl => 1, alt => 1};
+	$conf -> {kb_options_pager} ||= {ctrl => 1};
 
 	if ($start > $options -> {portion}) {
 		$url = create_url (start => 0);
-		$label .= qq {&nbsp;<a TABINDEX=-1 href="$url" class=lnk0 onFocus="blur()"><b>&lt;&lt;</b></a>&nbsp;};
+		$label .= qq {&nbsp;<a TABINDEX=-1 href="$url" class=lnk0 onFocus="blur()">&lt;&lt;</a>&nbsp;&nbsp;};
 	}
 
 	if ($start > 0) {
-		register_hotkey ({label => '&<'}, 'href', '_pager_prev', $conf -> {kb_options_pager});
+		hotkey ({
+			code => 33, 
+			data  => '_pager_prev', 
+			%{$conf -> {kb_options_pager}},
+		});
 		$url = create_url (start => ($start - $options -> {portion} < 0 ? 0 : $start - $options -> {portion}));
-		$label .= qq {&nbsp;<a TABINDEX=-1 href="$url" class=lnk0 id="_pager_prev" onFocus="blur()"><b><u>&lt;</u></b></a>&nbsp;};
+		$label .= qq {&nbsp;<a TABINDEX=-1 href="$url" class=lnk0 id="_pager_prev" onFocus="blur()">&lt;</a>&nbsp;&nbsp;};
 	}
 	
 	$options -> {total} or return qq {<td nowrap>$$i18n{toolbar_pager_empty_list}<td><img height=15 vspace=1 hspace=4 src="/i/toolbars/razd1.gif" width=2 border=0></td>};
 	
-#	$label .= qq {<input type=text size=4 name=start value=@{[$start+1]} onFocus="scrollable_table_is_blocked = true; q_is_focused = true" onBlur="scrollable_table_is_blocked = false; q_is_focused = false" onchange="s=document.toolbar_form.start.value; s=(isNaN(s) ? 1 : s); s=(s < 1 ? 1 : s); lp=$$options{total}; s=(s > lp ? lp : s); document.toolbar_form.start.value=s-1; toolbar_form.submit()">};
-#	$label .= ' - ' . ($start + $$options{cnt}) . $$i18n{toolbar_pager_of} . $$options{total};
+	$label .= ($start + 1) . ' - ' . ($start + $$options{cnt}) . $$i18n{toolbar_pager_of} . '<a TABINDEX=-1 class=lnk0 href="' . create_url (__infty => 1 - $_REQUEST {__infty}, __no_infty => 1 - $_REQUEST {__no_infty}) . '">' . ($$options{total} > 0 ? $$options{total} : $i18n -> {infty}) . '</a>';
 	
-	$label .= ($start + 1) . ' - ' . ($start + $$options{cnt}) . $$i18n{toolbar_pager_of} . $$options{total};
+	if ($start + $$options{cnt} < $$options{total} || $$options{total} == -1) {
 	
-	if ($start + $$options{cnt} < $$options{total}) {
-	
-		register_hotkey ({label => '&>'}, 'href', '_pager_next', $conf -> {kb_options_pager});
+		hotkey ({
+			code => 34, 
+			data  => '_pager_next', 
+			%{$conf -> {kb_options_pager}},
+		});
 		$url = create_url (start => $start + $options -> {portion});
-		$label .= qq {&nbsp;<a TABINDEX=-1 href="$url" class=lnk0 id="_pager_next" onFocus="blur()"><b><u>&gt;</u></b></a>&nbsp;};
+		$label .= qq {&nbsp;&nbsp;<a TABINDEX=-1 href="$url" class=lnk0 id="_pager_next" onFocus="blur()">&gt;</a>&nbsp;};
 	}
 	
 	$__last_top_toolbar .= qq{\t\t\t<pager />\n};
@@ -1818,7 +1833,7 @@ sub draw_form {
 	my $proto_path = join ' / ', map {$_ -> {name}} @{$data -> {path}};
 	$prototype .= qq{\t<form path="$proto_path">\n};
 	
-	if ($_REQUEST {__edit}) {
+	if ($_REQUEST {__edit} && !$_REQUEST{__from_table}) {
 		$options -> {esc} = create_url ();
 	}	
 	elsif ($conf -> {core_auto_esc} && $_REQUEST {__last_query_string}) {
@@ -1987,34 +2002,6 @@ EOH
 ################################################################################
 
 sub js_ok_escape {
-	
-#	my ($options) = @_;
-	
-#	$options -> {name} ||= 'form';
-#	$options -> {confirm_ok} ||= $i18n -> {confirm_ok};	
-#	$options -> {confirm_esc} ||= $i18n -> {confirm_esc};
-	
-#	$options -> {confirm_ok} = js_escape ($options -> {confirm_ok});
-#	$options -> {confirm_esc} = js_escape ($options -> {confirm_esc});
-
-#	return <<EOH
-	
-#		<script for="body" event="onkeypress">
-		
-#			if (window.event.keyCode == 27 && (!is_dirty || window.confirm ($$options{confirm_esc}))) {
-#				activate_link (document.getElementById ('esc').href);
-#			}
-			
-#			@{[ $options -> {no_ok} ? '' : <<EOOK ]}
-		
-#			if (window.event.keyCode == 10 && window.confirm ($$options{confirm_ok})) {
-#				document.$$options{name}.submit ();
-#			}
-#EOOK
-													
-#		</script>
-		
-#EOH
 
 	return '';
 
@@ -2321,21 +2308,39 @@ sub draw_form_field_radio {
 		
 	$prototype .= qq{\t\t\t<input label="$$options{label}" type="radio">\n};
 
-	$html .= '<table border=0 cellspacing=2 cellpadding=0>';
+	$html .= '<table border=0 cellspacing=2 cellpadding=0 width=100%>';
 	foreach my $value (@{$options -> {values}}) {
+	
+		next if $value -> {off};
 
 		$prototype .= qq{\t\t\t\t<option label="$$value{label}"};
 
 		$tabindex++;
 		my $checked = $data -> {$options -> {name}} == $value -> {id} ? 'checked' : '';
-		$html .= qq {<tr><td><input id="$value" onFocus="scrollable_table_is_blocked = true; q_is_focused = true" onBlur="scrollable_table_is_blocked = false; q_is_focused = false" type="radio" name="_$$options{name}" value="$$value{id}" $checked onClick="is_dirty=true" tabindex=$tabindex onKeyDown="tabOnEnter()">&nbsp;$$value{label}};
+		$html .= qq {<tr><td valign=top width=1%><nobr><input id="$value" onFocus="scrollable_table_is_blocked = true; q_is_focused = true" onBlur="scrollable_table_is_blocked = false; q_is_focused = false" type="radio" name="_$$options{name}" value="$$value{id}" $checked onClick="is_dirty=true" tabindex=$tabindex onKeyDown="tabOnEnter()">&nbsp;$$value{label}</nobr>};
 		
-		if ($value -> {values}) {
+		if ($value -> {values} && $value -> {type} eq 'checkboxes') {
+
+			$prototype .= qq{>\n};
+			
+			my $s = draw_form_field_checkboxes ({
+				values => $value -> {values},
+				name   => $value -> {name},
+				height => $value -> {height},
+			}, $data);
+			$html .= qq{<td valign=top style="display:expression(getElementById('$value').checked ? 'block' : 'none')">};
+			$html .= $s;
+			
+			$prototype .= qq{\t\t\t\t</option>};
+			
+		}
+		elsif ($value -> {values}) {
 			$prototype .= qq{>\n};
 			my $s = draw_form_field_select ({
 				values => $value -> {values},
 				name   => $value -> {name},
 				empty  => $value -> {empty},
+				other  => $value -> {other},
 			}, $data);
 			$s =~ s{\<select}{<select style="display:expression(getElementById('$value').checked ? 'block' : 'none')"};
 			$html .= '<td>';	
@@ -2516,8 +2521,8 @@ sub draw_form_field_select {
 		my $selected = (($value -> {id} eq $data -> {$options -> {name}}) or ($value -> {id} eq $options -> {value})) ? 'selected' : '';
 		my $label = trunc_string ($value -> {label}, $options -> {max_len});						
 		my $id = $value -> {id};
-		$value -> {id} =~ s{\"}{\&quot;}g;
-		$html .= qq {<option value="$$value{id}" $selected>$label</option>\n};
+		$value -> {id} =~ s{\"}{\&quot;}g; #"
+		$html .= qq {<option value="$$value{id}" $selected>$label</option>\n}; 
 	}
 	
 	my $iframe = '';
@@ -2729,7 +2734,6 @@ sub draw_centered_toolbar_button {
 		$options -> {id} ||= $options;
 		$options -> {hotkey} -> {data}    = $options -> {id};
 		$options -> {hotkey} -> {off}     = $options -> {off};
-#		$options -> {hotkey} -> {confirm} = $options -> {confirm};
 		hotkey ($options -> {hotkey});
 	}
 
@@ -2750,8 +2754,6 @@ sub draw_centered_toolbar_button {
 
 	my ($bra, $ket, $icon) = ();
 	if (($conf -> {core_show_icons} || $_REQUEST {__core_show_icons}) && $options -> {icon}) {	
-#		$icon = qq|<td><a onclick="$$options{onclick}" href="$$options{href}" target="$$options{target}"><img hspace=3 src="/i/buttons/$$options{icon}.gif" border=0></a></td>|;		
-#		$icon = qq|<a onclick="$$options{onclick}" href="$$options{href}" target="$$options{target}"><img hspace=3 src="/i/buttons/$$options{icon}.gif" border=0></a>|;		
 		$bra = qq|<img src="/i/buttons/$$options{icon}.gif" alt="$label" border=0 hspace=0 vspace=1 align=absmiddle>&nbsp;|
 	}
 	else {
@@ -2759,12 +2761,6 @@ sub draw_centered_toolbar_button {
 		$ket = ']</b>';
 	}
 	
-#	return <<EOH
-#		$icon
-#		<td nowrap>&nbsp;<a class=lnk0 onclick="$$options{onclick}" id="$$options{id}" href="$$options{href}" target="$$options{target}">${bra}$$options{label}${ket}</a>&nbsp;</td>
-#		<td><img height=15 vspace=1 hspace=4 src="/i/toolbars/razd1.gif" width=2 border=0></td>
-#EOH
-
 	$__last_centered_toolbar .= qq {\t\t\t<button label="$$options{label}" icon="$$options{icon}" />\n};
 
 	return <<EOH
@@ -2962,7 +2958,7 @@ sub draw_select_cell {
 		my $label = trunc_string ($value -> {label}, $data -> {max_len});						
 		my $id = $value -> {id};
 		$value -> {id} =~ s{\"}{\&quot;}g;
-		$html .= qq {<option value="$$value{id}" $selected>$label</option>\n};
+		$html .= qq {<option value="$$value{id}" $selected>$label</option>\n}; #"
 	}
 	
 	my $multiple = $data -> {rows} > 1 ? "multiple size=$$options{rows}" : '';
@@ -2984,7 +2980,7 @@ sub draw_form_field_htmleditor {
 	my $s = $$data{$$options{name}};
 		
 	$s =~ s{\\}{\\\\}gsm;
-	$s =~ s{\"}{\\\"}gsm;
+	$s =~ s{\"}{\\\"}gsm; #"
 	$s =~ s{\'}{\\\'}gsm;
 	$s =~ s{[\n\r]+}{\\n}gsm;
 

@@ -493,7 +493,7 @@ our $charset = {
 	{
 		name     => 'root',
 		label_en => "Supplementary path record inserted before the first one",
-		label_ru => "Дополнительная запись path, предшествующая всем осальным.",
+		label_ru => "Дополнительная запись path, предшествующая всем остальным.",
 	},
 
 	{
@@ -1520,7 +1520,7 @@ EO
 		name     => 'sql_upload_file',
 		options	 => [qw(name dir table path_column type_column file_name_column size_column add_columns)],
 		syn      => <<EO,	
-	sql_upload_file ('users', {
+	sql_upload_file ({
 		name             => 'photo',
 		table            => 'users',
 		dir		 => 'i/upload/user_photos'
@@ -1544,7 +1544,7 @@ EO
 		name     => 'sql_download_file',
 		options	 => [qw(table path_column type_column file_name_column)],
 		syn      => <<EO,	
-	sql_download_file ('users', {
+	sql_download_file ({
 		path_column      => 'path_photo',
 		type_column      => 'type_photo',
 		file_name_column => 'flnm_photo',

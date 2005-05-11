@@ -1,41 +1,41 @@
 BODY {
-	FONT-SIZE: 11px; FONT-FAMILY: Verdana; background-color: #D6D3CE
+	FONT-SIZE: 9pt; FONT-FAMILY: MS Sans Serif; background-color: #D6D3CE
 }
 TD, TH {
-	FONT-SIZE: 11px; FONT-FAMILY: Verdana
+	FONT-SIZE: 9pt; FONT-FAMILY: MS Sans Serif
 }
 .bgr0 {
-	FONT-SIZE: 11px; FONT-FAMILY: Verdana; background-color: #ffffff
+	FONT-SIZE: 9pt; FONT-FAMILY: MS Sans Serif; background-color: #ffffff
 }
 .bgr1 {
-	FONT-SIZE: 11px; FONT-FAMILY: Verdana; background-color: #485F70 /*#596084*/ /*#5f7452*/
+	FONT-SIZE: 9pt; FONT-FAMILY: MS Sans Serif; background-color: #485F70 /*#596084*/ /*#5f7452*/
 }
 .bgr2 {
-	FONT-SIZE: 11px; FONT-FAMILY: Verdana; background-color: #293869
+	FONT-SIZE: 9pt; FONT-FAMILY: MS Sans Serif; background-color: #293869
 }
 .bgr3 {
-	FONT-SIZE: 11px; FONT-FAMILY: Verdana; background-color: #aab3d1
+	FONT-SIZE: 9pt; FONT-FAMILY: MS Sans Serif; background-color: #aab3d1
 }
 .bgr4 {
-	FONT-SIZE: 11px; FONT-FAMILY: Verdana; background-color: #efefef
+	FONT-SIZE: 9pt; FONT-FAMILY: MS Sans Serif; background-color: #efefef
 }
 .bgr5 {
-	FONT-SIZE: 11px; FONT-FAMILY: Verdana; background-color: #dededc
+	FONT-SIZE: 9pt; FONT-FAMILY: MS Sans Serif; background-color: #dededc
 }
 .bgr6 {
-	FONT-SIZE: 11px; FONT-FAMILY: Verdana; background-color: #888888
+	FONT-SIZE: 9pt; FONT-FAMILY: MS Sans Serif; background-color: #888888
 }
 .bgr7 {
-	FONT-SIZE: 11px; FONT-FAMILY: Verdana; background-color: #b0b0b0
+	FONT-SIZE: 9pt; FONT-FAMILY: MS Sans Serif; background-color: #b0b0b0
 }
 .bgr8 {
-	FONT-SIZE: 11px; FONT-FAMILY: Verdana; background-color: #D6D3CE
+	FONT-SIZE: 9pt; FONT-FAMILY: MS Sans Serif; background-color: #D6D3CE
 }
 .bgr9 {
-	FONT-SIZE: 11px; FONT-FAMILY: Verdana; background-color: #dde5ef
+	FONT-SIZE: 9pt; FONT-FAMILY: MS Sans Serif; background-color: #dde5ef
 }
 .bgr13 {
-	FONT-SIZE: 11px; FONT-FAMILY: Verdana; background-color: #ffe0e0
+	FONT-SIZE: 9pt; FONT-FAMILY: MS Sans Serif; background-color: #ffe0e0
 }
 .bgr10 {
 	background-color: #424142
@@ -54,433 +54,433 @@ TD, TH {
 	BORDER-RIGHT: #ffffff 1px solid; BORDER-TOP: #2d2d2d 1px solid; BORDER-LEFT: #2d2d2d 1px solid; WIDTH: 100%; BORDER-BOTTOM: #ffffff 1px solid; HEIGHT: 100%
 }
 .color0 {
-	FONT-SIZE: 11px; COLOR: #ffffff; FONT-FAMILY: Verdana
+	FONT-SIZE: 9pt; COLOR: #ffffff; FONT-FAMILY: MS Sans Serif
 }
 .color1 {
-	FONT-SIZE: 11px; COLOR: #000000; FONT-FAMILY: Verdana
+	FONT-SIZE: 9pt; COLOR: #000000; FONT-FAMILY: MS Sans Serif
 }
 .color2 {
-	FONT-SIZE: 11px; COLOR: #5e5e5e; FONT-FAMILY: Verdana
+	FONT-SIZE: 9pt; COLOR: #5e5e5e; FONT-FAMILY: MS Sans Serif
 }
 .color3 {
-	FONT-SIZE: 11px; COLOR: #293869; FONT-FAMILY: Verdana
+	FONT-SIZE: 9pt; COLOR: #293869; FONT-FAMILY: MS Sans Serif
 }
 .color4 {
-	FONT-SIZE: 11px; COLOR: #ab300f; FONT-FAMILY: Verdana
+	FONT-SIZE: 9pt; COLOR: #ab300f; FONT-FAMILY: MS Sans Serif
 }
 .header0 {
-	FONT-WEIGHT: bold; FONT-SIZE: 11px; COLOR: #ffffff; FONT-FAMILY: Verdana; background-color: #5f7452
+	FONT-WEIGHT: bold; FONT-SIZE: 9pt; COLOR: #ffffff; FONT-FAMILY: MS Sans Serif; background-color: #5f7452
 }
 .header1 {
-	FONT-WEIGHT: bold; FONT-SIZE: 11px; COLOR: #ffffff; FONT-FAMILY: Verdana; background-color: #293869
+	FONT-WEIGHT: bold; FONT-SIZE: 9pt; COLOR: #ffffff; FONT-FAMILY: MS Sans Serif; background-color: #293869
 }
 .header2 {
-	FONT-WEIGHT: bold; FONT-SIZE: 11px; COLOR: #ffffff; FONT-FAMILY: Verdana; background-color: #888888
+	FONT-WEIGHT: bold; FONT-SIZE: 9pt; COLOR: #ffffff; FONT-FAMILY: MS Sans Serif; background-color: #888888
 }
 .header3 {
-	FONT-WEIGHT: bold; FONT-SIZE: 11px; COLOR: #ffffff; FONT-FAMILY: Verdana; background-color: #b0b0b0
+	FONT-WEIGHT: bold; FONT-SIZE: 9pt; COLOR: #ffffff; FONT-FAMILY: MS Sans Serif; background-color: #b0b0b0
 }
 .header4 {
-	FONT-WEIGHT: bold; FONT-SIZE: 11px; COLOR: #000000; FONT-FAMILY: Verdana; background-color: #ffffff
+	FONT-WEIGHT: bold; FONT-SIZE: 9pt; COLOR: #000000; FONT-FAMILY: MS Sans Serif; background-color: #ffffff
 }
 .header5 {
-	FONT-WEIGHT: bold; FONT-SIZE: 11px; COLOR: #000000; FONT-FAMILY: Verdana; background-color: #efefef
+	FONT-WEIGHT: bold; FONT-SIZE: 9pt; COLOR: #000000; FONT-FAMILY: MS Sans Serif; background-color: #efefef
 }
 .header6 {
-	FONT-WEIGHT: bold; FONT-SIZE: 11px; COLOR: #000000; FONT-FAMILY: Verdana; background-color: #dededc
+	FONT-WEIGHT: bold; FONT-SIZE: 9pt; COLOR: #000000; FONT-FAMILY: MS Sans Serif; background-color: #dededc
 }
 .header7 {
-	FONT-WEIGHT: bold; FONT-SIZE: 11px; COLOR: #293869; FONT-FAMILY: Verdana; background-color: #ffffff
+	FONT-WEIGHT: bold; FONT-SIZE: 9pt; COLOR: #293869; FONT-FAMILY: MS Sans Serif; background-color: #ffffff
 }
 .header8 {
-	FONT-WEIGHT: bold; FONT-SIZE: 11px; COLOR: #293869; FONT-FAMILY: Verdana; background-color: #efefef
+	FONT-WEIGHT: bold; FONT-SIZE: 9pt; COLOR: #293869; FONT-FAMILY: MS Sans Serif; background-color: #efefef
 }
 .header9 {
-	FONT-WEIGHT: bold; FONT-SIZE: 11px; COLOR: #293869; FONT-FAMILY: Verdana; background-color: #dededc
+	FONT-WEIGHT: bold; FONT-SIZE: 9pt; COLOR: #293869; FONT-FAMILY: MS Sans Serif; background-color: #dededc
 }
 .header10 {
-	FONT-WEIGHT: bold; FONT-SIZE: 11px; COLOR: #ab300f; FONT-FAMILY: Verdana; background-color: #ffffff
+	FONT-WEIGHT: bold; FONT-SIZE: 9pt; COLOR: #ab300f; FONT-FAMILY: MS Sans Serif; background-color: #ffffff
 }
 .header11 {
-	FONT-WEIGHT: bold; FONT-SIZE: 11px; COLOR: #ab300f; FONT-FAMILY: Verdana; background-color: #efefef
+	FONT-WEIGHT: bold; FONT-SIZE: 9pt; COLOR: #ab300f; FONT-FAMILY: MS Sans Serif; background-color: #efefef
 }
 .header12 {
-	FONT-WEIGHT: bold; FONT-SIZE: 11px; COLOR: #ab300f; FONT-FAMILY: Verdana; background-color: #dededc
+	FONT-WEIGHT: bold; FONT-SIZE: 9pt; COLOR: #ab300f; FONT-FAMILY: MS Sans Serif; background-color: #dededc
 }
 .header13 {
-	FONT-WEIGHT: bold; FONT-SIZE: 11px; COLOR: #ab300f; FONT-FAMILY: Verdana; background-color: #888888
+	FONT-WEIGHT: bold; FONT-SIZE: 9pt; COLOR: #ab300f; FONT-FAMILY: MS Sans Serif; background-color: #888888
 }
 .header14 {
-	FONT-WEIGHT: bold; FONT-SIZE: 11px; COLOR: #ab300f; FONT-FAMILY: Verdana; background-color: #b0b0b0
+	FONT-WEIGHT: bold; FONT-SIZE: 9pt; COLOR: #ab300f; FONT-FAMILY: MS Sans Serif; background-color: #b0b0b0
 }
 .header15 {
-	FONT-WEIGHT: bold; FONT-SIZE: 9pt; COLOR: #ffffff; FONT-FAMILY: Verdana; background-color: #8e8e8e
+	FONT-WEIGHT: bold; FONT-SIZE: 9pt; COLOR: #ffffff; FONT-FAMILY: MS Sans Serif; background-color: #8e8e8e
 }
 .txt0 {
-	FONT-WEIGHT: normal; FONT-SIZE: 11px; COLOR: #ffffff; FONT-FAMILY: Verdana; background-color: #5f7452
+	FONT-WEIGHT: normal; FONT-SIZE: 9pt; COLOR: #ffffff; FONT-FAMILY: MS Sans Serif; background-color: #5f7452
 }
 .txt1 {
-	FONT-WEIGHT: normal; FONT-SIZE: 11px; COLOR: #ffffff; FONT-FAMILY: Verdana; background-color: #293869
+	FONT-WEIGHT: normal; FONT-SIZE: 9pt; COLOR: #ffffff; FONT-FAMILY: MS Sans Serif; background-color: #293869
 }
 .txt2 {
-	FONT-WEIGHT: normal; FONT-SIZE: 11px; COLOR: #ffffff; FONT-FAMILY: Verdana; background-color: #888888
+	FONT-WEIGHT: normal; FONT-SIZE: 9pt; COLOR: #ffffff; FONT-FAMILY: MS Sans Serif; background-color: #888888
 }
 .txt3 {
-	FONT-WEIGHT: normal; FONT-SIZE: 11px; COLOR: #ffffff; FONT-FAMILY: Verdana; background-color: #b0b0b0
+	FONT-WEIGHT: normal; FONT-SIZE: 9pt; COLOR: #ffffff; FONT-FAMILY: MS Sans Serif; background-color: #b0b0b0
 }
 .txt4 {
-	FONT-WEIGHT: normal; FONT-SIZE: 11px; COLOR: #000000; FONT-FAMILY: Verdana; background-color: #ffffff
+	FONT-WEIGHT: normal; FONT-SIZE: 9pt; COLOR: #000000; FONT-FAMILY: MS Sans Serif; background-color: #ffffff
 }
 .txt5 {
-	FONT-WEIGHT: normal; FONT-SIZE: 11px; COLOR: #000000; FONT-FAMILY: Verdana; background-color: #efefef
+	FONT-WEIGHT: normal; FONT-SIZE: 9pt; COLOR: #000000; FONT-FAMILY: MS Sans Serif; background-color: #efefef
 }
 .txt6 {
-	FONT-WEIGHT: normal; FONT-SIZE: 11px; COLOR: #000000; FONT-FAMILY: Verdana; background-color: #dededc
+	FONT-WEIGHT: normal; FONT-SIZE: 9pt; COLOR: #000000; FONT-FAMILY: MS Sans Serif; background-color: #dededc
 }
 .txt7 {
-	FONT-WEIGHT: normal; FONT-SIZE: 11px; COLOR: #293869; FONT-FAMILY: Verdana; background-color: #ffffff
+	FONT-WEIGHT: normal; FONT-SIZE: 9pt; COLOR: #293869; FONT-FAMILY: MS Sans Serif; background-color: #ffffff
 }
 .txt8 {
-	FONT-WEIGHT: normal; FONT-SIZE: 11px; COLOR: #293869; FONT-FAMILY: Verdana; background-color: #efefef
+	FONT-WEIGHT: normal; FONT-SIZE: 9pt; COLOR: #293869; FONT-FAMILY: MS Sans Serif; background-color: #efefef
 }
 .txt9 {
-	FONT-WEIGHT: normal; FONT-SIZE: 11px; COLOR: #293869; FONT-FAMILY: Verdana; background-color: #dededc
+	FONT-WEIGHT: normal; FONT-SIZE: 9pt; COLOR: #293869; FONT-FAMILY: MS Sans Serif; background-color: #dededc
 }
 .txt10 {
-	FONT-WEIGHT: normal; FONT-SIZE: 11px; COLOR: #c8c8c8; FONT-FAMILY: Verdana; background-color: #ffffff
+	FONT-WEIGHT: normal; FONT-SIZE: 9pt; COLOR: #c8c8c8; FONT-FAMILY: MS Sans Serif; background-color: #ffffff
 }
 .txt11 {
-	FONT-WEIGHT: normal; FONT-SIZE: 9pt; COLOR: #000000; FONT-FAMILY: Verdana; background-color: #ffffff
+	FONT-WEIGHT: normal; FONT-SIZE: 9pt; COLOR: #000000; FONT-FAMILY: MS Sans Serif; background-color: #ffffff
 }
 .txt12 {
-	FONT-WEIGHT: normal; FONT-SIZE: 11px; COLOR: #ab300f; FONT-FAMILY: Verdana; background-color: #efefef
+	FONT-WEIGHT: normal; FONT-SIZE: 9pt; COLOR: #ab300f; FONT-FAMILY: MS Sans Serif; background-color: #efefef
 }
 .txt13 {
-	FONT-WEIGHT: normal; FONT-SIZE: 11px; COLOR: #ab300f; FONT-FAMILY: Verdana; background-color: #ffffff
+	FONT-WEIGHT: normal; FONT-SIZE: 9pt; COLOR: #ab300f; FONT-FAMILY: MS Sans Serif; background-color: #ffffff
 }
 A {
-	FONT-WEIGHT: normal; FONT-SIZE: 11px; COLOR: #b0b0b0; FONT-FAMILY: Verdana; TEXT-DECORATION: none
+	FONT-WEIGHT: normal; FONT-SIZE: 9pt; COLOR: #b0b0b0; FONT-FAMILY: MS Sans Serif; TEXT-DECORATION: none
 }
 A:link {
-	FONT-WEIGHT: normal; FONT-SIZE: 11px; COLOR: #b0b0b0; FONT-FAMILY: Verdana; TEXT-DECORATION: none
+	FONT-WEIGHT: normal; FONT-SIZE: 9pt; COLOR: #b0b0b0; FONT-FAMILY: MS Sans Serif; TEXT-DECORATION: none
 }
 A:active {
-	FONT-WEIGHT: normal; FONT-SIZE: 11px; COLOR: #b0b0b0; FONT-FAMILY: Verdana; TEXT-DECORATION: none
+	FONT-WEIGHT: normal; FONT-SIZE: 9pt; COLOR: #b0b0b0; FONT-FAMILY: MS Sans Serif; TEXT-DECORATION: none
 }
 A:hover {
-	FONT-WEIGHT: normal; FONT-SIZE: 11px; COLOR: #b0b0b0; FONT-FAMILY: Verdana; TEXT-DECORATION: none
+	FONT-WEIGHT: normal; FONT-SIZE: 9pt; COLOR: #b0b0b0; FONT-FAMILY: MS Sans Serif; TEXT-DECORATION: none
 }
 A:visited {
-	FONT-WEIGHT: normal; FONT-SIZE: 11px; COLOR: #b0b0b0; FONT-FAMILY: Verdana; TEXT-DECORATION: none
+	FONT-WEIGHT: normal; FONT-SIZE: 9pt; COLOR: #b0b0b0; FONT-FAMILY: MS Sans Serif; TEXT-DECORATION: none
 }
 
 A.lnk0 {
-	FONT-WEIGHT: normal; FONT-SIZE: 11px; COLOR: #000000; FONT-FAMILY: Verdana; TEXT-DECORATION: none
+	FONT-WEIGHT: normal; FONT-SIZE: 9pt; COLOR: #000000; FONT-FAMILY: MS Sans Serif; TEXT-DECORATION: none
 }
 A.lnk0:link {
-	FONT-WEIGHT: normal; FONT-SIZE: 11px; COLOR: #000000; FONT-FAMILY: Verdana; TEXT-DECORATION: none
+	FONT-WEIGHT: normal; FONT-SIZE: 9pt; COLOR: #000000; FONT-FAMILY: MS Sans Serif; TEXT-DECORATION: none
 }
 A.lnk0:active {
-	FONT-WEIGHT: normal; FONT-SIZE: 11px; COLOR: #000000; FONT-FAMILY: Verdana; TEXT-DECORATION: none
+	FONT-WEIGHT: normal; FONT-SIZE: 9pt; COLOR: #000000; FONT-FAMILY: MS Sans Serif; TEXT-DECORATION: none
 }
 A.lnk0:hover {
-	FONT-WEIGHT: normal; FONT-SIZE: 11px; COLOR: #000000; FONT-FAMILY: Verdana; TEXT-DECORATION: none
+	FONT-WEIGHT: normal; FONT-SIZE: 9pt; COLOR: #000000; FONT-FAMILY: MS Sans Serif; TEXT-DECORATION: none
 }
 A.lnk0:visited {
-	FONT-WEIGHT: normal; FONT-SIZE: 11px; COLOR: #000000; FONT-FAMILY: Verdana; TEXT-DECORATION: none
+	FONT-WEIGHT: normal; FONT-SIZE: 9pt; COLOR: #000000; FONT-FAMILY: MS Sans Serif; TEXT-DECORATION: none
 }
 
 A.lnk1 {
-	FONT-WEIGHT: bold; FONT-SIZE: 11px; COLOR: #596084; FONT-FAMILY: Verdana; TEXT-DECORATION: none
+	FONT-WEIGHT: bold; FONT-SIZE: 9pt; COLOR: #596084; FONT-FAMILY: MS Sans Serif; TEXT-DECORATION: none
 }
 A.lnk1:link {
-	FONT-WEIGHT: bold; FONT-SIZE: 11px; COLOR: #596084; FONT-FAMILY: Verdana; TEXT-DECORATION: none
+	FONT-WEIGHT: bold; FONT-SIZE: 9pt; COLOR: #596084; FONT-FAMILY: MS Sans Serif; TEXT-DECORATION: none
 }
 A.lnk1:active {
-	FONT-WEIGHT: bold; FONT-SIZE: 11px; COLOR: #596084; FONT-FAMILY: Verdana; TEXT-DECORATION: none
+	FONT-WEIGHT: bold; FONT-SIZE: 9pt; COLOR: #596084; FONT-FAMILY: MS Sans Serif; TEXT-DECORATION: none
 }
 A.lnk1:hover {
-	FONT-WEIGHT: bold; FONT-SIZE: 11px; COLOR: #596084; FONT-FAMILY: Verdana; TEXT-DECORATION: none
+	FONT-WEIGHT: bold; FONT-SIZE: 9pt; COLOR: #596084; FONT-FAMILY: MS Sans Serif; TEXT-DECORATION: none
 }
 A.lnk1:visited {
-	FONT-WEIGHT: bold; FONT-SIZE: 11px; COLOR: #596084; FONT-FAMILY: Verdana; TEXT-DECORATION: none
+	FONT-WEIGHT: bold; FONT-SIZE: 9pt; COLOR: #596084; FONT-FAMILY: MS Sans Serif; TEXT-DECORATION: none
 }
 
 A.lnk2 {
-	FONT-WEIGHT: normal; FONT-SIZE: 11px; COLOR: #ffffff; FONT-FAMILY: Verdana; TEXT-DECORATION: none
+	FONT-WEIGHT: normal; FONT-SIZE: 9pt; COLOR: #ffffff; FONT-FAMILY: MS Sans Serif; TEXT-DECORATION: none
 }
 A.lnk2:link {
-	FONT-WEIGHT: normal; FONT-SIZE: 11px; COLOR: #ffffff; FONT-FAMILY: Verdana; TEXT-DECORATION: none
+	FONT-WEIGHT: normal; FONT-SIZE: 9pt; COLOR: #ffffff; FONT-FAMILY: MS Sans Serif; TEXT-DECORATION: none
 }
 A.lnk2:active {
-	FONT-WEIGHT: normal; FONT-SIZE: 11px; COLOR: #ffffff; FONT-FAMILY: Verdana; TEXT-DECORATION: none
+	FONT-WEIGHT: normal; FONT-SIZE: 9pt; COLOR: #ffffff; FONT-FAMILY: MS Sans Serif; TEXT-DECORATION: none
 }
 A.lnk2:hover {
-	FONT-WEIGHT: normal; FONT-SIZE: 11px; COLOR: #ffffff; FONT-FAMILY: Verdana; TEXT-DECORATION: none
+	FONT-WEIGHT: normal; FONT-SIZE: 9pt; COLOR: #ffffff; FONT-FAMILY: MS Sans Serif; TEXT-DECORATION: none
 }
 A.lnk2:visited {
-	FONT-WEIGHT: normal; FONT-SIZE: 11px; COLOR: #ffffff; FONT-FAMILY: Verdana; TEXT-DECORATION: none
+	FONT-WEIGHT: normal; FONT-SIZE: 9pt; COLOR: #ffffff; FONT-FAMILY: MS Sans Serif; TEXT-DECORATION: none
 }
 A.lnk3 {
-	FONT-WEIGHT: bold; FONT-SIZE: 11px; COLOR: #ffffff; FONT-FAMILY: Verdana; TEXT-DECORATION: none
+	FONT-WEIGHT: bold; FONT-SIZE: 9pt; COLOR: #ffffff; FONT-FAMILY: MS Sans Serif; TEXT-DECORATION: none
 }
 A.lnk3:link {
-	FONT-WEIGHT: bold; FONT-SIZE: 11px; COLOR: #ffffff; FONT-FAMILY: Verdana; TEXT-DECORATION: none
+	FONT-WEIGHT: bold; FONT-SIZE: 9pt; COLOR: #ffffff; FONT-FAMILY: MS Sans Serif; TEXT-DECORATION: none
 }
 A.lnk3:active {
-	FONT-WEIGHT: bold; FONT-SIZE: 11px; COLOR: #ffffff; FONT-FAMILY: Verdana; TEXT-DECORATION: none
+	FONT-WEIGHT: bold; FONT-SIZE: 9pt; COLOR: #ffffff; FONT-FAMILY: MS Sans Serif; TEXT-DECORATION: none
 }
 A.lnk3:hover {
-	FONT-WEIGHT: bold; FONT-SIZE: 11px; COLOR: #ffffff; FONT-FAMILY: Verdana; TEXT-DECORATION: none
+	FONT-WEIGHT: bold; FONT-SIZE: 9pt; COLOR: #ffffff; FONT-FAMILY: MS Sans Serif; TEXT-DECORATION: none
 }
 A.lnk3:visited {
-	FONT-WEIGHT: bold; FONT-SIZE: 11px; COLOR: #ffffff; FONT-FAMILY: Verdana; TEXT-DECORATION: none
+	FONT-WEIGHT: bold; FONT-SIZE: 9pt; COLOR: #ffffff; FONT-FAMILY: MS Sans Serif; TEXT-DECORATION: none
 }
 A.lnk4 {
-	FONT-WEIGHT: normal; FONT-SIZE: 11px; COLOR: #293869; FONT-FAMILY: Verdana; TEXT-DECORATION: none
+	FONT-WEIGHT: normal; FONT-SIZE: 9pt; COLOR: #293869; FONT-FAMILY: MS Sans Serif; TEXT-DECORATION: none
 }
 A.lnk4:link {
-	FONT-WEIGHT: normal; FONT-SIZE: 11px; COLOR: #293869; FONT-FAMILY: Verdana; TEXT-DECORATION: none
+	FONT-WEIGHT: normal; FONT-SIZE: 9pt; COLOR: #293869; FONT-FAMILY: MS Sans Serif; TEXT-DECORATION: none
 }
 A.lnk4:active {
-	FONT-WEIGHT: normal; FONT-SIZE: 11px; COLOR: #293869; FONT-FAMILY: Verdana; TEXT-DECORATION: none
+	FONT-WEIGHT: normal; FONT-SIZE: 9pt; COLOR: #293869; FONT-FAMILY: MS Sans Serif; TEXT-DECORATION: none
 }
 A.lnk4:hover {
-	FONT-WEIGHT: normal; FONT-SIZE: 11px; COLOR: #293869; FONT-FAMILY: Verdana; TEXT-DECORATION: none
+	FONT-WEIGHT: normal; FONT-SIZE: 9pt; COLOR: #293869; FONT-FAMILY: MS Sans Serif; TEXT-DECORATION: none
 }
 A.lnk4:visited {
-	FONT-WEIGHT: normal; FONT-SIZE: 11px; COLOR: #293869; FONT-FAMILY: Verdana; TEXT-DECORATION: none
+	FONT-WEIGHT: normal; FONT-SIZE: 9pt; COLOR: #293869; FONT-FAMILY: MS Sans Serif; TEXT-DECORATION: none
 }
 A.lnk5 {
-	FONT-WEIGHT: bold; FONT-SIZE: 11px; COLOR: #293869; FONT-FAMILY: Verdana; TEXT-DECORATION: none
+	FONT-WEIGHT: bold; FONT-SIZE: 9pt; COLOR: #293869; FONT-FAMILY: MS Sans Serif; TEXT-DECORATION: none
 }
 A.lnk5:link {
-	FONT-WEIGHT: bold; FONT-SIZE: 11px; COLOR: #293869; FONT-FAMILY: Verdana; TEXT-DECORATION: none
+	FONT-WEIGHT: bold; FONT-SIZE: 9pt; COLOR: #293869; FONT-FAMILY: MS Sans Serif; TEXT-DECORATION: none
 }
 A.lnk5:active {
-	FONT-WEIGHT: bold; FONT-SIZE: 11px; COLOR: #293869; FONT-FAMILY: Verdana; TEXT-DECORATION: none
+	FONT-WEIGHT: bold; FONT-SIZE: 9pt; COLOR: #293869; FONT-FAMILY: MS Sans Serif; TEXT-DECORATION: none
 }
 A.lnk5:hover {
-	FONT-WEIGHT: bold; FONT-SIZE: 11px; COLOR: #293869; FONT-FAMILY: Verdana; TEXT-DECORATION: none
+	FONT-WEIGHT: bold; FONT-SIZE: 9pt; COLOR: #293869; FONT-FAMILY: MS Sans Serif; TEXT-DECORATION: none
 }
 A.lnk5:visited {
-	FONT-WEIGHT: bold; FONT-SIZE: 11px; COLOR: #293869; FONT-FAMILY: Verdana; TEXT-DECORATION: none
+	FONT-WEIGHT: bold; FONT-SIZE: 9pt; COLOR: #293869; FONT-FAMILY: MS Sans Serif; TEXT-DECORATION: none
 }
 A.lnk6 {
-	FONT-WEIGHT: normal; FONT-SIZE: 11px; COLOR: #000000; FONT-FAMILY: Verdana; TEXT-DECORATION: none
+	FONT-WEIGHT: normal; FONT-SIZE: 9pt; COLOR: #000000; FONT-FAMILY: MS Sans Serif; TEXT-DECORATION: none
 }
 A.lnk6:link {
-	FONT-WEIGHT: normal; FONT-SIZE: 11px; COLOR: #000000; FONT-FAMILY: Verdana; TEXT-DECORATION: none
+	FONT-WEIGHT: normal; FONT-SIZE: 9pt; COLOR: #000000; FONT-FAMILY: MS Sans Serif; TEXT-DECORATION: none
 }
 A.lnk6:active {
-	FONT-WEIGHT: normal; FONT-SIZE: 11px; COLOR: #000000; FONT-FAMILY: Verdana; TEXT-DECORATION: none
+	FONT-WEIGHT: normal; FONT-SIZE: 9pt; COLOR: #000000; FONT-FAMILY: MS Sans Serif; TEXT-DECORATION: none
 }
 A.lnk6:hover {
-	FONT-WEIGHT: normal; FONT-SIZE: 11px; COLOR: #000000; FONT-FAMILY: Verdana; TEXT-DECORATION: none
+	FONT-WEIGHT: normal; FONT-SIZE: 9pt; COLOR: #000000; FONT-FAMILY: MS Sans Serif; TEXT-DECORATION: none
 }
 A.lnk6:visited {
-	FONT-WEIGHT: normal; FONT-SIZE: 11px; COLOR: #000000; FONT-FAMILY: Verdana; TEXT-DECORATION: none
+	FONT-WEIGHT: normal; FONT-SIZE: 9pt; COLOR: #000000; FONT-FAMILY: MS Sans Serif; TEXT-DECORATION: none
 }
 A.lnk7 {
-	FONT-WEIGHT: normal; FONT-SIZE: 10px; COLOR: #293869; FONT-FAMILY: Verdana; TEXT-DECORATION: none
+	FONT-WEIGHT: normal; FONT-SIZE: 10px; COLOR: #293869; FONT-FAMILY: MS Sans Serif; TEXT-DECORATION: none
 }
 A.lnk7:link {
-	FONT-WEIGHT: normal; FONT-SIZE: 10px; COLOR: #293869; FONT-FAMILY: Verdana; TEXT-DECORATION: none
+	FONT-WEIGHT: normal; FONT-SIZE: 10px; COLOR: #293869; FONT-FAMILY: MS Sans Serif; TEXT-DECORATION: none
 }
 A.lnk7:active {
-	FONT-WEIGHT: normal; FONT-SIZE: 10px; COLOR: #293869; FONT-FAMILY: Verdana; TEXT-DECORATION: none
+	FONT-WEIGHT: normal; FONT-SIZE: 10px; COLOR: #293869; FONT-FAMILY: MS Sans Serif; TEXT-DECORATION: none
 }
 A.lnk7:visited {
-	FONT-WEIGHT: normal; FONT-SIZE: 10px; COLOR: #5e5e5e; FONT-FAMILY: Verdana; TEXT-DECORATION: none
+	FONT-WEIGHT: normal; FONT-SIZE: 10px; COLOR: #5e5e5e; FONT-FAMILY: MS Sans Serif; TEXT-DECORATION: none
 }
 A.lnk7:hover {
-	FONT-WEIGHT: normal; FONT-SIZE: 10px; COLOR: #5e5e5e; FONT-FAMILY: Verdana; TEXT-DECORATION: none
+	FONT-WEIGHT: normal; FONT-SIZE: 10px; COLOR: #5e5e5e; FONT-FAMILY: MS Sans Serif; TEXT-DECORATION: none
 }
 A.lnk8 {
-	FONT-WEIGHT: normal; FONT-SIZE: 11px; COLOR: #ab300f; FONT-FAMILY: Verdana; TEXT-DECORATION: none
+	FONT-WEIGHT: normal; FONT-SIZE: 9pt; COLOR: #ab300f; FONT-FAMILY: MS Sans Serif; TEXT-DECORATION: none
 }
 A.lnk8:link {
-	FONT-WEIGHT: normal; FONT-SIZE: 11px; COLOR: #ab300f; FONT-FAMILY: Verdana; TEXT-DECORATION: none
+	FONT-WEIGHT: normal; FONT-SIZE: 9pt; COLOR: #ab300f; FONT-FAMILY: MS Sans Serif; TEXT-DECORATION: none
 }
 A.lnk8:active {
-	FONT-WEIGHT: normal; FONT-SIZE: 11px; COLOR: #ab300f; FONT-FAMILY: Verdana; TEXT-DECORATION: none
+	FONT-WEIGHT: normal; FONT-SIZE: 9pt; COLOR: #ab300f; FONT-FAMILY: MS Sans Serif; TEXT-DECORATION: none
 }
 A.lnk8:hover {
-	FONT-WEIGHT: normal; FONT-SIZE: 11px; COLOR: #ab300f; FONT-FAMILY: Verdana; TEXT-DECORATION: none
+	FONT-WEIGHT: normal; FONT-SIZE: 9pt; COLOR: #ab300f; FONT-FAMILY: MS Sans Serif; TEXT-DECORATION: none
 }
 A.lnk8:visited {
-	FONT-WEIGHT: normal; FONT-SIZE: 11px; COLOR: #ab300f; FONT-FAMILY: Verdana; TEXT-DECORATION: none
+	FONT-WEIGHT: normal; FONT-SIZE: 9pt; COLOR: #ab300f; FONT-FAMILY: MS Sans Serif; TEXT-DECORATION: none
 }
 A.lnk9 {
-	FONT-WEIGHT: bold; FONT-SIZE: 11px; COLOR: #ab300f; FONT-FAMILY: Verdana; TEXT-DECORATION: none
+	FONT-WEIGHT: bold; FONT-SIZE: 9pt; COLOR: #ab300f; FONT-FAMILY: MS Sans Serif; TEXT-DECORATION: none
 }
 A.lnk9:link {
-	FONT-WEIGHT: bold; FONT-SIZE: 11px; COLOR: #ab300f; FONT-FAMILY: Verdana; TEXT-DECORATION: none
+	FONT-WEIGHT: bold; FONT-SIZE: 9pt; COLOR: #ab300f; FONT-FAMILY: MS Sans Serif; TEXT-DECORATION: none
 }
 A.lnk9:active {
-	FONT-WEIGHT: bold; FONT-SIZE: 11px; COLOR: #ab300f; FONT-FAMILY: Verdana; TEXT-DECORATION: none
+	FONT-WEIGHT: bold; FONT-SIZE: 9pt; COLOR: #ab300f; FONT-FAMILY: MS Sans Serif; TEXT-DECORATION: none
 }
 A.lnk9:hover {
-	FONT-WEIGHT: bold; FONT-SIZE: 11px; COLOR: #ab300f; FONT-FAMILY: Verdana; TEXT-DECORATION: none
+	FONT-WEIGHT: bold; FONT-SIZE: 9pt; COLOR: #ab300f; FONT-FAMILY: MS Sans Serif; TEXT-DECORATION: none
 }
 A.lnk9:visited {
-	FONT-WEIGHT: bold; FONT-SIZE: 11px; COLOR: #ab300f; FONT-FAMILY: Verdana; TEXT-DECORATION: none
+	FONT-WEIGHT: bold; FONT-SIZE: 9pt; COLOR: #ab300f; FONT-FAMILY: MS Sans Serif; TEXT-DECORATION: none
 }
 A.lnk10 {
-	FONT-WEIGHT: normal; FONT-SIZE: 11px; COLOR: #000000; FONT-FAMILY: Verdana; TEXT-DECORATION: none
+	FONT-WEIGHT: normal; FONT-SIZE: 9pt; COLOR: #000000; FONT-FAMILY: MS Sans Serif; TEXT-DECORATION: none
 }
 A.lnk10:link {
-	FONT-WEIGHT: normal; FONT-SIZE: 11px; COLOR: #000000; FONT-FAMILY: Verdana; TEXT-DECORATION: none
+	FONT-WEIGHT: normal; FONT-SIZE: 9pt; COLOR: #000000; FONT-FAMILY: MS Sans Serif; TEXT-DECORATION: none
 }
 A.lnk10:active {
-	FONT-WEIGHT: normal; FONT-SIZE: 11px; COLOR: #000000; FONT-FAMILY: Verdana; TEXT-DECORATION: none
+	FONT-WEIGHT: normal; FONT-SIZE: 9pt; COLOR: #000000; FONT-FAMILY: MS Sans Serif; TEXT-DECORATION: none
 }
 A.lnk10:hover {
-	FONT-WEIGHT: normal; FONT-SIZE: 11px; COLOR: #000000; FONT-FAMILY: Verdana; TEXT-DECORATION: none
+	FONT-WEIGHT: normal; FONT-SIZE: 9pt; COLOR: #000000; FONT-FAMILY: MS Sans Serif; TEXT-DECORATION: none
 }
 A.lnk10:visited {
-	FONT-WEIGHT: normal; FONT-SIZE: 11px; COLOR: #000000; FONT-FAMILY: Verdana; TEXT-DECORATION: none
+	FONT-WEIGHT: normal; FONT-SIZE: 9pt; COLOR: #000000; FONT-FAMILY: MS Sans Serif; TEXT-DECORATION: none
 }
 A.lnk11 {
-	FONT-WEIGHT: normal; FONT-SIZE: 11px; COLOR: #000000; FONT-FAMILY: Verdana; TEXT-DECORATION: none
+	FONT-WEIGHT: normal; FONT-SIZE: 9pt; COLOR: #000000; FONT-FAMILY: MS Sans Serif; TEXT-DECORATION: none
 }
 A.lnk11:link {
-	FONT-WEIGHT: normal; FONT-SIZE: 11px; COLOR: #000000; FONT-FAMILY: Verdana; TEXT-DECORATION: none
+	FONT-WEIGHT: normal; FONT-SIZE: 9pt; COLOR: #000000; FONT-FAMILY: MS Sans Serif; TEXT-DECORATION: none
 }
 A.lnk11:active {
-	FONT-WEIGHT: normal; FONT-SIZE: 11px; COLOR: #000000; FONT-FAMILY: Verdana; TEXT-DECORATION: none
+	FONT-WEIGHT: normal; FONT-SIZE: 9pt; COLOR: #000000; FONT-FAMILY: MS Sans Serif; TEXT-DECORATION: none
 }
 A.lnk11:hover {
-	FONT-WEIGHT: normal; FONT-SIZE: 11px; COLOR: #000000; FONT-FAMILY: Verdana; TEXT-DECORATION: none
+	FONT-WEIGHT: normal; FONT-SIZE: 9pt; COLOR: #000000; FONT-FAMILY: MS Sans Serif; TEXT-DECORATION: none
 }
 A.lnk11:active {
-	FONT-WEIGHT: normal; FONT-SIZE: 11px; COLOR: #293869; FONT-FAMILY: Verdana; TEXT-DECORATION: none
+	FONT-WEIGHT: normal; FONT-SIZE: 9pt; COLOR: #293869; FONT-FAMILY: MS Sans Serif; TEXT-DECORATION: none
 }
 A.lnk11:visited {
-	FONT-WEIGHT: normal; FONT-SIZE: 11px; COLOR: #909090; FONT-FAMILY: Verdana; TEXT-DECORATION: none
+	FONT-WEIGHT: normal; FONT-SIZE: 9pt; COLOR: #909090; FONT-FAMILY: MS Sans Serif; TEXT-DECORATION: none
 }
 A.lnk12 {
-	FONT-SIZE: 11px; COLOR: #293869; FONT-FAMILY: Verdana; TEXT-DECORATION: none
+	FONT-SIZE: 9pt; COLOR: #293869; FONT-FAMILY: MS Sans Serif; TEXT-DECORATION: none
 }
 A.lnk12:link {
-	FONT-SIZE: 11px; COLOR: #293869; FONT-FAMILY: Verdana; TEXT-DECORATION: none
+	FONT-SIZE: 9pt; COLOR: #293869; FONT-FAMILY: MS Sans Serif; TEXT-DECORATION: none
 }
 A.lnk12:active {
-	FONT-SIZE: 11px; COLOR: #293869; FONT-FAMILY: Verdana; TEXT-DECORATION: none
+	FONT-SIZE: 9pt; COLOR: #293869; FONT-FAMILY: MS Sans Serif; TEXT-DECORATION: none
 }
 A.lnk12:hover {
-	FONT-SIZE: 11px; COLOR: #293869; FONT-FAMILY: Verdana; TEXT-DECORATION: none
+	FONT-SIZE: 9pt; COLOR: #293869; FONT-FAMILY: MS Sans Serif; TEXT-DECORATION: none
 }
 A.lnk12:visited {
-	FONT-SIZE: 11px; COLOR: #293869; FONT-FAMILY: Verdana; TEXT-DECORATION: none
+	FONT-SIZE: 9pt; COLOR: #293869; FONT-FAMILY: MS Sans Serif; TEXT-DECORATION: none
 }
 A.lnk13 {
-	FONT-WEIGHT: normal; FONT-SIZE: 10px; COLOR: #ff0000; FONT-FAMILY: Verdana; TEXT-DECORATION: none
+	FONT-WEIGHT: normal; FONT-SIZE: 10px; COLOR: #ff0000; FONT-FAMILY: MS Sans Serif; TEXT-DECORATION: none
 }
 A.lnk13:link {
-	FONT-WEIGHT: normal; FONT-SIZE: 10px; COLOR: #ff0000; FONT-FAMILY: Verdana; TEXT-DECORATION: none
+	FONT-WEIGHT: normal; FONT-SIZE: 10px; COLOR: #ff0000; FONT-FAMILY: MS Sans Serif; TEXT-DECORATION: none
 }
 A.lnk13:active {
-	FONT-WEIGHT: normal; FONT-SIZE: 10px; COLOR: #ff0000; FONT-FAMILY: Verdana; TEXT-DECORATION: none
+	FONT-WEIGHT: normal; FONT-SIZE: 10px; COLOR: #ff0000; FONT-FAMILY: MS Sans Serif; TEXT-DECORATION: none
 }
 A.lnk13:hover {
-	FONT-WEIGHT: normal; FONT-SIZE: 10px; COLOR: #ff0000; FONT-FAMILY: Verdana; TEXT-DECORATION: none
+	FONT-WEIGHT: normal; FONT-SIZE: 10px; COLOR: #ff0000; FONT-FAMILY: MS Sans Serif; TEXT-DECORATION: none
 }
 A.lnk13:active {
-	FONT-WEIGHT: normal; FONT-SIZE: 10px; COLOR: #ff0000; FONT-FAMILY: Verdana; TEXT-DECORATION: none
+	FONT-WEIGHT: normal; FONT-SIZE: 10px; COLOR: #ff0000; FONT-FAMILY: MS Sans Serif; TEXT-DECORATION: none
 }
 A.lnk13:visited {
-	FONT-WEIGHT: normal; FONT-SIZE: 11px; COLOR: #ffffff; FONT-FAMILY: Verdana; TEXT-DECORATION: none
+	FONT-WEIGHT: normal; FONT-SIZE: 9pt; COLOR: #ffffff; FONT-FAMILY: MS Sans Serif; TEXT-DECORATION: none
 }
 A.lnk14 {
-	FONT-WEIGHT: bold; FONT-SIZE: 11px; COLOR: #415d8c; FONT-STYLE: italic; FONT-FAMILY: Verdana; TEXT-DECORATION: none
+	FONT-WEIGHT: bold; FONT-SIZE: 9pt; COLOR: #415d8c; FONT-STYLE: italic; FONT-FAMILY: MS Sans Serif; TEXT-DECORATION: none
 }
 A.lnk14:link {
-	FONT-WEIGHT: bold; FONT-SIZE: 11px; COLOR: #415d8c; FONT-STYLE: italic; FONT-FAMILY: Verdana; TEXT-DECORATION: none
+	FONT-WEIGHT: bold; FONT-SIZE: 9pt; COLOR: #415d8c; FONT-STYLE: italic; FONT-FAMILY: MS Sans Serif; TEXT-DECORATION: none
 }
 A.lnk14:active {
-	FONT-WEIGHT: bold; FONT-SIZE: 11px; COLOR: #415d8c; FONT-STYLE: italic; FONT-FAMILY: Verdana; TEXT-DECORATION: none
+	FONT-WEIGHT: bold; FONT-SIZE: 9pt; COLOR: #415d8c; FONT-STYLE: italic; FONT-FAMILY: MS Sans Serif; TEXT-DECORATION: none
 }
 A.lnk14:hover {
-	FONT-WEIGHT: bold; FONT-SIZE: 11px; COLOR: #415d8c; FONT-STYLE: italic; FONT-FAMILY: Verdana; TEXT-DECORATION: none
+	FONT-WEIGHT: bold; FONT-SIZE: 9pt; COLOR: #415d8c; FONT-STYLE: italic; FONT-FAMILY: MS Sans Serif; TEXT-DECORATION: none
 }
 A.lnk14:visited {
-	FONT-WEIGHT: bold; FONT-SIZE: 11px; COLOR: #415d8c; FONT-STYLE: italic; FONT-FAMILY: Verdana; TEXT-DECORATION: none
+	FONT-WEIGHT: bold; FONT-SIZE: 9pt; COLOR: #415d8c; FONT-STYLE: italic; FONT-FAMILY: MS Sans Serif; TEXT-DECORATION: none
 }
 A.lnk15 {
-	FONT-WEIGHT: normal; FONT-SIZE: 11px; COLOR: #909090; FONT-FAMILY: Verdana; TEXT-DECORATION: none
+	FONT-WEIGHT: normal; FONT-SIZE: 9pt; COLOR: #909090; FONT-FAMILY: MS Sans Serif; TEXT-DECORATION: none
 }
 A.lnk15:link {
-	FONT-WEIGHT: normal; FONT-SIZE: 11px; COLOR: #909090; FONT-FAMILY: Verdana; TEXT-DECORATION: none
+	FONT-WEIGHT: normal; FONT-SIZE: 9pt; COLOR: #909090; FONT-FAMILY: MS Sans Serif; TEXT-DECORATION: none
 }
 A.lnk15:active {
-	FONT-WEIGHT: normal; FONT-SIZE: 11px; COLOR: #909090; FONT-FAMILY: Verdana; TEXT-DECORATION: none
+	FONT-WEIGHT: normal; FONT-SIZE: 9pt; COLOR: #909090; FONT-FAMILY: MS Sans Serif; TEXT-DECORATION: none
 }
 A.lnk15:hover {
-	FONT-WEIGHT: normal; FONT-SIZE: 11px; COLOR: #909090; FONT-FAMILY: Verdana; TEXT-DECORATION: none
+	FONT-WEIGHT: normal; FONT-SIZE: 9pt; COLOR: #909090; FONT-FAMILY: MS Sans Serif; TEXT-DECORATION: none
 }
 A.lnk15:visited {
-	FONT-WEIGHT: normal; FONT-SIZE: 11px; COLOR: #909090; FONT-FAMILY: Verdana; TEXT-DECORATION: none
+	FONT-WEIGHT: normal; FONT-SIZE: 9pt; COLOR: #909090; FONT-FAMILY: MS Sans Serif; TEXT-DECORATION: none
 }
 A.lnk16 {
-	FONT-WEIGHT: bold; FONT-SIZE: 11px; COLOR: #909090; FONT-FAMILY: Verdana; TEXT-DECORATION: none
+	FONT-WEIGHT: bold; FONT-SIZE: 9pt; COLOR: #909090; FONT-FAMILY: MS Sans Serif; TEXT-DECORATION: none
 }
 A.lnk16:link {
-	FONT-WEIGHT: bold; FONT-SIZE: 11px; COLOR: #909090; FONT-FAMILY: Verdana; TEXT-DECORATION: none
+	FONT-WEIGHT: bold; FONT-SIZE: 9pt; COLOR: #909090; FONT-FAMILY: MS Sans Serif; TEXT-DECORATION: none
 }
 A.lnk16:active {
-	FONT-WEIGHT: bold; FONT-SIZE: 11px; COLOR: #909090; FONT-FAMILY: Verdana; TEXT-DECORATION: none
+	FONT-WEIGHT: bold; FONT-SIZE: 9pt; COLOR: #909090; FONT-FAMILY: MS Sans Serif; TEXT-DECORATION: none
 }
 A.lnk16:hover {
-	FONT-WEIGHT: bold; FONT-SIZE: 11px; COLOR: #909090; FONT-FAMILY: Verdana; TEXT-DECORATION: none
+	FONT-WEIGHT: bold; FONT-SIZE: 9pt; COLOR: #909090; FONT-FAMILY: MS Sans Serif; TEXT-DECORATION: none
 }
 A.lnk16:visited {
-	FONT-WEIGHT: bold; FONT-SIZE: 11px; COLOR: #909090; FONT-FAMILY: Verdana; TEXT-DECORATION: none
+	FONT-WEIGHT: bold; FONT-SIZE: 9pt; COLOR: #909090; FONT-FAMILY: MS Sans Serif; TEXT-DECORATION: none
 }
 
 A.lnk17 {
-	FONT-WEIGHT: normal; FONT-SIZE: 11px; COLOR: #293869; FONT-FAMILY: Verdana; TEXT-DECORATION: none
+	FONT-WEIGHT: normal; FONT-SIZE: 9pt; COLOR: #293869; FONT-FAMILY: MS Sans Serif; TEXT-DECORATION: none
 }
 A.lnk17:link {
-	FONT-WEIGHT: normal; FONT-SIZE: 11px; COLOR: #293869; FONT-FAMILY: Verdana; TEXT-DECORATION: none
+	FONT-WEIGHT: normal; FONT-SIZE: 9pt; COLOR: #293869; FONT-FAMILY: MS Sans Serif; TEXT-DECORATION: none
 }
 A.lnk17:active {
-	FONT-WEIGHT: normal; FONT-SIZE: 11px; COLOR: #293869; FONT-FAMILY: Verdana; TEXT-DECORATION: none
+	FONT-WEIGHT: normal; FONT-SIZE: 9pt; COLOR: #293869; FONT-FAMILY: MS Sans Serif; TEXT-DECORATION: none
 }
 A.lnk17:hover {
-	FONT-WEIGHT: normal; FONT-SIZE: 11px; COLOR: #293869; FONT-FAMILY: Verdana; TEXT-DECORATION: none
+	FONT-WEIGHT: normal; FONT-SIZE: 9pt; COLOR: #293869; FONT-FAMILY: MS Sans Serif; TEXT-DECORATION: none
 }
 A.lnk17:visited {
-	FONT-WEIGHT: normal; FONT-SIZE: 11px; COLOR: #293869; FONT-FAMILY: Verdana; TEXT-DECORATION: none
+	FONT-WEIGHT: normal; FONT-SIZE: 9pt; COLOR: #293869; FONT-FAMILY: MS Sans Serif; TEXT-DECORATION: none
 }
 
 A.lnk18 {
-	FONT-WEIGHT: normal; FONT-SIZE: 11px; COLOR: #000000; FONT-FAMILY: Verdana; TEXT-DECORATION: none; font-style: italic
+	FONT-WEIGHT: normal; FONT-SIZE: 9pt; COLOR: #000000; FONT-FAMILY: MS Sans Serif; TEXT-DECORATION: none; font-style: italic
 }
 A.lnk18:link {
-	FONT-WEIGHT: normal; FONT-SIZE: 11px; COLOR: #000000; FONT-FAMILY: Verdana; TEXT-DECORATION: none; font-style: italic
+	FONT-WEIGHT: normal; FONT-SIZE: 9pt; COLOR: #000000; FONT-FAMILY: MS Sans Serif; TEXT-DECORATION: none; font-style: italic
 }
 A.lnk18:active {
-	FONT-WEIGHT: normal; FONT-SIZE: 11px; COLOR: #000000; FONT-FAMILY: Verdana; TEXT-DECORATION: none; font-style: italic
+	FONT-WEIGHT: normal; FONT-SIZE: 9pt; COLOR: #000000; FONT-FAMILY: MS Sans Serif; TEXT-DECORATION: none; font-style: italic
 }
 A.lnk18:hover {
-	FONT-WEIGHT: normal; FONT-SIZE: 11px; COLOR: #000000; FONT-FAMILY: Verdana; TEXT-DECORATION: none; font-style: italic
+	FONT-WEIGHT: normal; FONT-SIZE: 9pt; COLOR: #000000; FONT-FAMILY: MS Sans Serif; TEXT-DECORATION: none; font-style: italic
 }
 A.lnk18:visited {
-	FONT-WEIGHT: normal; FONT-SIZE: 11px; COLOR: #000000; FONT-FAMILY: Verdana; TEXT-DECORATION: none; font-style: italic
+	FONT-WEIGHT: normal; FONT-SIZE: 9pt; COLOR: #000000; FONT-FAMILY: MS Sans Serif; TEXT-DECORATION: none; font-style: italic
 }
 
 INPUT {
-	FONT-SIZE: 11px; COLOR: #000000; FONT-FAMILY: Verdana
+	FONT-SIZE: 9pt; COLOR: #000000; FONT-FAMILY: MS Sans Serif
 }
 SELECT {
-	FONT-SIZE: 11px; COLOR: #000000; FONT-FAMILY: Verdana
+	FONT-SIZE: 9pt; COLOR: #000000; FONT-FAMILY: MS Sans Serif
 }
 OPTION {
-	FONT-SIZE: 11px; COLOR: #000000; FONT-FAMILY: Verdana
+	FONT-SIZE: 9pt; COLOR: #000000; FONT-FAMILY: MS Sans Serif
 }
 TEXTAREA {
-	FONT-SIZE: 11px; COLOR: #000000; FONT-FAMILY: Verdana
+	FONT-SIZE: 9pt; COLOR: #000000; FONT-FAMILY: MS Sans Serif
 }
 
 
@@ -586,7 +586,7 @@ td.button {
 	border-color:#D6D3CE;
 }
 A.button, A.button:link, A.button:active, A.button:hover, A.button:visited {
-	FONT-WEIGHT: normal; FONT-SIZE: 11px; COLOR: #000000; FONT-FAMILY: Verdana; TEXT-DECORATION: none
+	FONT-WEIGHT: normal; FONT-SIZE: 9pt; COLOR: #000000; FONT-FAMILY: MS Sans Serif; TEXT-DECORATION: none
 }
 
 

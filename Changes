@@ -1,3 +1,31 @@
+	- sid is now appended to static file names (anti-broken cache);
+	- $_REQUEST {__infty} introduced;
+	- prototype is swapped away from dump (caused IE to view the content as broken XML);
+	- (hidden) xsl tag is added to prototype;
+
+
+5.4.18:
+
+	- Zanas::Offline introduced;
+
+5.4.1:
+
+	- {other} option for <selects> from under radios;
+	- HTML cleanup for XL (no more nbsps);
+	- $conf -> {core_unlimit_xls} introduced;
+
+5.3.31:
+
+	- {type => checkboxes} allowed in draw_form_field_radio;
+	- values can now be turned {off} in draw_form_field_radio;
+	- get_ids sub introduced;
+
+5.3.28:
+
+	- get rid of XUL;
+	- code cleanup;
+	- new option in hotkye[s] sub: href (hotkeys for current table row);
+
 5.3.25:
 
 	- no_esc introduced;

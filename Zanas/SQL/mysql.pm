@@ -127,6 +127,32 @@ sub sql_select_all_cnt {
 
 	my ($sql, @params) = @_;
 	
+
+	if ((!$conf -> {core_infty} && $_REQUEST {__infty}) || ($conf -> {core_infty} && !$_REQUEST {__no_infty})) {
+		
+		$sql =~ s{LIMIT\s+(\d+)\s*\,\s*(\d+)}{LIMIT $1, @{[$2 + 1]}}ism;
+		
+		my ($start, $portion) = ($1, $2);
+				
+		my $result = sql_select_all ($sql, @params);
+				
+		if (0 + @$result <= $portion) {
+			return ($result, $start + @$result);
+		}
+		else {
+			pop @$result;
+			return ($result, -1);
+		}
+		
+		
+	}
+
+	if ($_REQUEST {xls} && $conf -> {core_unlimit_xls} && !$_REQUEST {__limit_xls}) {
+		$sql =~ s{LIMIT.*}{}ism;
+		my $result = sql_select_all ($sql, @params);
+		return ($result, 0 + @$result);
+	}
+	
 	if ($SQL_VERSION -> {number_tokens} -> [0] > 3) {	
 		$sql =~ s{SELECT}{SELECT SQL_CALC_FOUND_ROWS}i;
 	}

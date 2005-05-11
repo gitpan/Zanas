@@ -600,8 +600,10 @@ sub select__static_files {
 
 #print STDERR "\$filename = '$filename' (1)\n";
 	
-	my $v = '_' . $Zanas::VERSION_NAME;	
+	my $v = '_' . $Zanas_VERSION_NAME;
 	$filename =~ s{$v}{}i;
+
+	$filename =~ s{_00000\d+(\.[a-z]{2,3})$}{$1};
 
 #print STDERR "\$v = '$v'\n";
 #print STDERR "\$filename = '$filename' (2)\n";
@@ -984,6 +986,7 @@ sub fill_in {
 		confirm_close_vocabulary => 'Вы выбрали',
 		session_terminated       => 'Сессия завершена',
 		save_or_cancel           => 'Пожалуйста, сначала сохраните данные (Ctrl-Enter) или отмените ввод (Esc)',
+		infty                    => '&infin;', 
    	});
    	
    	fill_in_i18n ('ENG', {
@@ -1012,6 +1015,7 @@ sub fill_in {
 		confirm_close_vocabulary => 'Your choice is',
 		session_terminated       => 'Logged off',
 		save_or_cancel           => 'Please save your data (Ctrl-Enter) or cancel pending input (Esc)',
+		infty                    => '&infin;', 
    	});
 	
    	fill_in_i18n ('FRE', {
@@ -1040,6 +1044,7 @@ sub fill_in {
 		confirm_close_vocabulary => 'Vous avez choisi',
 		session_terminated       => 'Dйconnetcй',
 		save_or_cancel           => "Veuillez sauvegarder vos donnйes (Ctrl-Enter) ou bien alluler l'opйration (Esc)",
+		infty                    => '&infin;', 
    	});   	
 
 }
@@ -1078,5 +1083,24 @@ sub fill_in_button_presets {
 	$conf -> {button_presets} -> {_is_filled} = 1;
 
 };
+
+################################################################################
+
+sub get_ids {
+
+	my ($name) = @_;
+	
+	$name .= '_';
+	
+	my @ids = ();
+	
+	while (my ($key, $value) = each %_REQUEST) {
+		$key =~ /$name(\d+)/ or next;
+		push @ids, $1;
+	}
+	
+	return @ids;	
+
+}
 
 1;

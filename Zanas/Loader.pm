@@ -20,14 +20,12 @@ sub import {
 	${$package . '::PACKAGE_ROOT'} = $root;
 	${$package . '::preconf'}      = $preconf;
 	
-	my $renderer = $preconf -> {core_xul} ? 'XUL' : 'MSIE_5';
-	
 	my $dos = $preconf -> {core_path} ? <<EOL : 'require Zanas::Util; require Zanas;';
 		do "$$preconf{core_path}/Zanas/Apache.pm";
 		do "$$preconf{core_path}/Zanas/Content.pm";
 		do "$$preconf{core_path}/Zanas/InternalRequest.pm";
 		do "$$preconf{core_path}/Zanas/Presentation.pm";
-		do "$$preconf{core_path}/Zanas/Presentation/${renderer}.pm";
+		do "$$preconf{core_path}/Zanas/Presentation/MSIE_5.pm";
 		do "$$preconf{core_path}/Zanas/Request.pm";
 		do "$$preconf{core_path}/Zanas/Request/Upload.pm";
 		do "$$preconf{core_path}/Zanas/SQL.pm";
@@ -41,8 +39,6 @@ EOL
 		$dos
 EOC
 	
-#	print STDERR $cmd;
-
 	eval $cmd;
 
 	print STDERR $@ if $@;
