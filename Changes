@@ -1,8 +1,9 @@
+5.5.11:
+
 	- sid is now appended to static file names (anti-broken cache);
 	- $_REQUEST {__infty} introduced;
 	- prototype is swapped away from dump (caused IE to view the content as broken XML);
 	- (hidden) xsl tag is added to prototype;
-
 
 5.4.18:
 

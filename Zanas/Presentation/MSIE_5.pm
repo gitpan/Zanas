@@ -662,8 +662,10 @@ EOH
 				$tr2
 				<td class=bgr8 width=100%><img height=1 src="$_REQUEST{__uri}0.gif" width=1 border=0></td>
 				@{[ $_options -> {lpt} ? <<EOLPT : '']}
+<!--				
 				<td class="main-menu" nowrap>&nbsp;&nbsp;<a class="main-menu" id="main_menu__lpt" target="_blank" href="@{[ create_url (lpt => 1) ]}">$$i18n{Print}</a>&nbsp;&nbsp;</td>
-				<td class="main-menu" nowrap>&nbsp;&nbsp;<a class="main-menu" id="main_menu__xls" target="_blank" href="@{[ create_url (xls => 1, salt => rand * time) ]}">MS Excel</a>&nbsp;&nbsp;</td>
+-->				
+				<td class="main-menu" nowrap>&nbsp;&nbsp;<a class="main-menu" id="main_menu__xls" target="invisible" href="@{[ create_url (xls => 1, salt => rand * time) ]}">MS Excel</a>&nbsp;&nbsp;</td>
 EOLPT
 				$dump_item
 				<td class="main-menu" nowrap>&nbsp;&nbsp;<a class="main-menu" id="main_menu__logout" TABINDEX=-1 href="$exit_url">$$i18n{Exit}</a>&nbsp;&nbsp;</td>
