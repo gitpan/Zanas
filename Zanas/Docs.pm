@@ -22,11 +22,16 @@ our $charset = {
 
 
 	{
+		name     => 'expand_all',
+		label_en => "If true, all subcheckboxes are shown.",
+		label_ru => "Если истина, то раскрыты все подчинённые checkbox'ы.",
+	},
+
+	{
 		name     => 'force_label',
 		label_en => "If true, the label is shown even when core_show_icons is on.",
 		label_ru => "Если истина, то надпись показывается даже при core_show_icons.",
 	},
-
 
 	{
 		name     => 'no_time',
@@ -525,6 +530,87 @@ our $charset = {
 ################################################################################
 
 @subs = (
+
+
+					#######################################
+
+	{
+		name     => 'get_ids',
+		syn      => <<EO,
+		
+			# _user_17=1&_user_23=1&_user_75=1
+					
+			my @ids = get_ids ('user'); # (17, 23, 75)
+		
+EO
+		label_en => 'Get id list from parameter names',
+		label_ru => 'Получение списка id из имён параметров',
+		
+	},
+
+
+					#######################################
+
+	{
+		name     => 'vld_date',
+		syn      => <<EO,
+			
+		my @dt_from = vld_date ('dt_from');  
+		my @dt_to   = vld_date ('dt_to');  
+		
+		Delta_Days (@dt_from, @dt_to) >= 0 or return 'Dates skewed!!!'; # Requires Date::[P]Calc;
+		
+EO
+		label_en => ' " dd :;№:%;№?: mm " -> "year-mm-dd" with validation',
+		label_ru => 'Преобразованием дат вида " dd :;№:%;№?: mm [yy[yy]] " к виду "year-mm-dd" с валидацией',
+		
+	},
+
+					#######################################
+
+	{
+		name     => 'vld_unique',
+		syn      => <<EO,
+			
+		vld_unique ('roles', {   
+			field => 'label',  
+			value => $_REQUEST {label},  
+			id    => $_REQUEST {id},   
+		}) or return "#_label#:Duplicate label!"; 
+		
+		vld_unique ('roles', {   
+			field => 'label',   
+		}) or return "#_label#:Duplicate label!";
+		
+		vld_unique ('roles') or return "#_label#:Duplicate label!";
+
+EO
+		label_en => 'Check for uniqueness',
+		label_ru => 'Проверка единственности записи с заданным значением поля',
+	},
+
+					#######################################
+
+	{
+		name     => 'vld_noref',
+		syn      => <<EO,
+			
+			vld_noref ('users', {    
+				id         => $_REQUEST {id},    
+				field      => 'id_role',  
+				data_field => 'label',  
+				message    => 'This record is referenced by \"$label\". Deletion cancelled.',
+			}); 
+			
+			vld_noref ('users');
+
+EO
+		
+		label_en => 'Check for external references',		
+		label_ru => 'Проверка отсутствия ссылок на данную запись',
+		
+	},
+
 
 					#######################################
 
@@ -2042,7 +2128,7 @@ EO
 
 	{
 		name     => 'draw_form_field_checkboxes',
-		options  => [qw(name label value values off)],
+		options  => [qw(name label value values expand_all off)],
 		label_en => 'Draws the group of checkboxes. Invoked by draw_form.',
 		label_ru => 'Отрисовывает группу checkbox\'ов. Вызывается процедурой draw_form.',
 		see_also => [qw(draw_form)]
@@ -2504,7 +2590,7 @@ EO
 
 	{
 		name     => 'draw_checkbox_cell',
-		options  => [qw(name value/1 attributes)],
+		options  => [qw(name value/1 attributes checked)],
 		syn      => <<EO,	
 	draw_checkbox_cell ({
 		name  => "_adding_\$\$i{id}",

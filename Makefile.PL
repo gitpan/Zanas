@@ -13,6 +13,9 @@ WriteMakefile(
 	'Time::HiRes'		=> '',
 #	'Config::ApacheFormat'  => '',
 	'File::Temp'		=> '',
+	'Digest::MD5'		=> '',
+	'Fcntl'			=> '',
+	'XML::Simple'		=> '2.14',
     },
     ($] >= 5.005 ?    
 	(

@@ -1,3 +1,231 @@
+5.12.19
+
+	- $_SKIN introduced (very alpha);
+	- draw_form fixed for [{off => 1}] case;
+
+5.12.12
+
+	- draw_select_cell fixed for __read_only support (by pashka);
+	- draw_cells fixed for select cell support (by pashka);
+	- sql_select_vocabulary: options filter and limit added (by pashka);
+	- i18n fixes for ..._input_datetime;
+	- French vocabulary fixed;
+
+5.12.7
+
+	- cursor related js patch (by pashka);
+	- draw_form fixed for backward compatibility (by pashka);
+	- auto_load introduced;
+	- sessions are attached to ips (inspired by billy);
+
+5.11.25
+
+	- __x hotfix: gave broken XML since 5.11.23!!!
+	- js fix: no more js errors for broken validator;
+	- js fix: restoring normal cursor after validation;
+	- Makefile fixed for XML::Simple version (by pashka);
+	- draw_text_cell fixed for proper colspan/rowspan setting;
+	- added break_table option in draw_toolbar_break sub;
+	- select__logout fixed for improper core_auto_esc placement (by pashka);
+
+5.11.23:
+
+	- DHTML fix: table height now includes bottom toolbar;
+	- CSS fix: draw_input_cell;
+	- maxlen 255;
+	- peering introduced;
+	- handler fixed for checking non-emptiness of action;
+	- $preconf -> {core_mtu} introduced;
+	- value option in draw_form_field_text sub (by pashka);
+	- DBIx::ModelUpdate and __access_log unlinked from some places (by pashka);
+	- Zanas::Request::the_request introduced (by pashka);
+	- Oracle backend is hardly patched by pashka;
+	- sql_select_hash ('my_table', 17) and sql_select_hash ('my_table', {id => 17}) allowed (suggested by pashka);
+	- draw_text_cell fixed for colspan setting (by pashka);
+
+5.11.11:
+
+	- off option for form tabs (idea by pashka);
+	- handler fixed: Referer is now checked for both __last_query_string and type (inspired by pashka);
+	- check_href is now used in draw_path (inspired by pashka);
+	- last link is not anchored in draw_path;
+	- esc_href defaults to "/?type=$_REQUEST{type}";
+	- added keep_esc option in draw_centered_toolbar_button sub;
+	- draw_table is hardly reworked for proper table scrolling;
+
+5.11.9:
+
+	- fixed q/qq in vld_noref (by pashka);
+	- added keep_esc option in draw_row_button sub (idea by pashka);
+	- fixed empty 'select' inheritance (idea by pashka);
+
+5.11.3:
+
+	- fixed a typo in call_for_role;
+	- DEFAULT type;
+	- some code cleanup;
+	- js fix: open_popup_menu returns unless the menu is found;
+	- esc href is now inherited on form tabs;
+
+5.11.2:
+
+	- core_auto_esc 2.0;
+	- added keep_esc option in draw_toolbar_button sub;
+	- CSS & js optimisation in draw_vert_menu;
+	- no more top items in vert menu;
+	- create_url refactored;
+	- hourglass cursor onbeforeunload;
+	- Backspace is blocked unless some text is being edited;
+
+5.11.1:
+
+	- CSS fix: hrefs on forms are no more shifted;
+	- draw_form_field_hgroup refactored;
+	- js fix: focus on input field now blocks left and right keys;
+	
+
+5.10.25:
+
+	- print method added to Zanas::Request;
+	- base64 encoding in send_mail;
+
+5.9.30:
+
+	- $DB_MODEL variable and sql_weave_model / sql_do_relink subs added;
+
+5.9.22:
+
+	- vld_date fixed for proper support of short years (0..99);
+	- $Data::Dumper::Sortkeys = 1;
+	- no more core_spy_modules in Config.pm. Only httpd.conf;
+	- Update scripts are working;
+	- no more internal redirects (Apache::AuthenNTLM conflicts);
+	- Zanas::Auth::NTLM introduced;
+
+5.9.9:
+	
+	- create_url sub fixed for inheriting 0 value;
+
+5.9.7:
+	
+	- delete_fakes sub fixed for the case of $preconf -> {core_recycle_ids};
+	- 'off' option added in draw_toolbar_input_datetime, draw_toolbar_input_select and draw_toolbar_input_checkbox;
+
+5.8.29:
+
+	- '..' is now no_select_href;
+	- $preconf -> {core_no_xml} introduced;
+
+5.8.26:
+
+	- file --> static;
+	- 'other' option can now be simply a scalar (href), label is $i18n -> {voc};
+
+5.8.22:
+
+	- toolbars are off in xls mode;
+	- window titles are off in xls mode;
+	- added off option in draw_form sub;
+
+5.8.17:
+
+	- exists $options -> {strike} or $data -> {strike} ||= $i -> {fake} < 0;
+	- pr0n reature fixed (targets);
+	
+5.8.16:
+
+	- fixed default hidden_name in draw_form_field_static sub;
+	- draw_table_header fixed (by pashka);
+	- clear button in draw_toolbar_input_datetime fixed (by pashka);
+	- added hidden option in draw_table_header and draw_text_cell subs;
+	- draw_text_cell sub fixed for right align when picture is defined;
+	- added bold and strike options draw_text_cell sub, strike is default when $i -> {fake} < 0;
+	- some pr0n technologies used :-)
+
+5.8.11:
+
+	- draw_path is ro only in __edit mode (by pashka);
+	- fixed draw_table_header ($ -> $$) (by pashka);
+	- no more autofocus on selects (by pashka);
+	- always __infty=1 on MS Excel button;
+	- fixed is_recording for the case where sid='0';
+
+5.8.4:
+
+	- draw_form_field_radio fixed for broken HTML (by pashka);
+	- draw_form_field fixed for proper radio rendering (by pashka);
+	- added colspan and rowspan options in draw_table_header sub;
+	- added style option in draw_text_cell sub, $data -> {attributes} -> {style} overrives $data -> {attributes} -> {class};
+	- added colspan option in draw_text_cell sub;
+	- added bgcolor option in draw_text_cell sub;
+	- is_off sub first introduced;
+
+5.8.2:
+
+	- handler cleaned up after get_page sweep (by pashka);
+	- draw_form_field_static patched for nested select rendering (by pashka);
+
+5.8.1:
+
+	- draw_menu and draw_form_field_select fixed for proper <select> hiding when popup menu is on;
+	- draw_toolbar_input_datetime fixed for auto refreshing;
+
+5.7.29:
+
+	- draw_path fixed ($_REQUEST {__read_only});
+	- draw_vert_menu altered to always display {no_page} submenus;
+	- hasMouse fixed for some edge effects;
+	- fake option introduced in sql_select_all and sql_select_all_cnt;
+
+5.7.25:
+
+	- another url fix by pashka;
+	- sql_do_update fixed for explicit fakes (by pashka);
+	- no_esc option added in draw_ok_esc_toolbar (by pashka);
+	- added no_select_href option in draw_text_cell (by hekima);
+	- Content/type.pm and Content/page.pm are no longer needed;
+	- get_menu_for_$role is deprecated in favour of select_menu_for_$role;
+	
+5.7.14:
+
+	- some url fixes by pashka (0.gif in tabs);
+	- > 0 filter in delete_fakes;
+	- is_recording sub introduced;
+
+5.7.12:
+
+	- core_recording added;
+
+5.7.1:
+
+	- js fix: popup menus spawn from scrolled pages now work correctly (document.body.scrollTop is used);
+
+5.6.30:
+
+	- vld_date   sub added;
+	- vld_unique sub added;
+	- vld_noref  sub added;
+
+5.6.2:
+
+	- expand_all option added in draw_form_field_checkboxes sub;
+	- get_mac patched for non-DNS resolving;
+
+5.5.31:
+
+	- hotkeys are now allowed in form menu (tabs);
+
+5.5.27:
+
+	- draw_form_field_radio fixed for displaying hgroup subinputs in read_only mode;
+
+5.5.26:
+
+	- draw_form_field_radio now allows arbitary subinputs;
+	- die allowed in validate_...;
+	- download_file fixed for type setting when charset is given;
+
+
 5.5.11:
 
 	- sid is now appended to static file names (anti-broken cache);

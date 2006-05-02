@@ -56,6 +56,24 @@ sub sql_select_all_cnt {
 
 	my ($sql, @params) = @_;
 	
+	my $options = {};
+	if (@params > 0 and ref ($params [-1]) eq HASH) {
+		$options = pop @params;
+	}
+	
+	if ($options -> {fake}) {
+	
+		my $where = 'WHERE ';
+		my $fake  = $_REQUEST {fake} || 0;
+	
+		foreach my $table (split /\,/, $options -> {fake}) {
+			$where .= "$table.fake IN ($fake) AND ";
+		}	
+		
+		$sql =~ s{where}{$where}i;
+			
+	}
+
 	my $st = sql_prepare ($sql);
 	$st -> execute (@params);
 	my $result = $st -> fetchall_arrayref ({});	
@@ -89,6 +107,27 @@ sub sql_select_all_cnt {
 sub sql_select_all {
 
 	my ($sql, @params) = @_;
+
+
+	my $options = {};
+	if (@params > 0 and ref ($params [-1]) eq HASH) {
+		$options = pop @params;
+	}
+	
+	if ($options -> {fake}) {
+	
+		my $where = 'WHERE ';
+		my $fake  = $_REQUEST {fake} || 0;
+	
+		foreach my $table (split /\,/, $options -> {fake}) {
+			$where .= "$table.fake IN ($fake) AND ";
+		}	
+		
+		$sql =~ s{where}{$where}i;
+			
+	}
+
+
 	my $st = sql_prepare ($sql);
 	$st -> execute (@params);
 	my $result = $st -> fetchall_arrayref ({});	
@@ -263,11 +302,11 @@ sub sql_do_insert {
 
 	$pairs -> {fake} = $_REQUEST {sid} unless exists $pairs -> {fake};
 
-	while (my ($field, $value) = each %$pairs) {	
+	foreach my $field (keys %$pairs) { 
 		my $comma = @params ? ', ' : '';	
 		$fields .= "$comma $field";
 		$args   .= "$comma ?";
-		push @params, $value;	
+		push @params, $pairs -> {$field};	
 	}
 	
 	sql_do ("INSERT INTO $table_name ($fields) VALUES ($args)", @params);	
@@ -291,8 +330,8 @@ sub sql_do_delete {
 	our %_OLD_REQUEST = %_REQUEST;	
 	eval {
 		my $item = sql_select_hash ($table_name);
-		while (my ($key, $value) = each %$item) {
-			$_OLD_REQUEST {'_' . $key} = $value;
+		foreach my $key (keys %$item) { {
+			$_OLD_REQUEST {'_' . $key} = $item -> {$key};
 		}
 	};
 	

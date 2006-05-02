@@ -4,6 +4,74 @@ no warnings;
 
 ################################################################################
 
+sub sql_weave_model {
+
+	my ($db_model) = @_;
+	
+	foreach my $table_name (keys %{$db_model -> {tables}}) {
+	
+		my $def = $db_model -> {tables} -> {$table_name};
+
+		$def -> {name} = $table_name;
+			
+		foreach my $column_name (keys %{$def -> {columns}}) {
+			$def -> {columns} -> {$column_name} -> {name}       = $column_name;
+			$def -> {columns} -> {$column_name} -> {table_name} = $table_name;
+		}
+
+		$db_model -> {aliases} -> {$table_name} = $def;
+		
+		foreach my $alias (@{$def -> {aliases}}) {
+			$db_model -> {aliases} -> {$alias} = $def;
+		}		
+	
+	}
+
+	foreach my $table_name (keys %{$db_model -> {tables}}) {
+		my $def = $db_model -> {tables} -> {$table_name};
+
+		foreach my $column_name (keys %{$def -> {columns}}) {
+			my $column_def = $def -> {columns} -> {$column_name};
+				
+			$column_name =~ /^ids?_(.*)/ or next;
+			
+			my $target2 = $1;
+			my $target1 = $target2;
+		
+			if ($target2 =~ /y$/) {
+				$target1 =~ s{y$}{ies};
+			}
+			else {
+				$target1 .= 's';
+			}
+			
+			my $referenced_table_def = undef;
+			
+			if ($column_def -> {ref}) {
+				$referenced_table_def = $db_model -> {aliases} -> {$column_def -> {ref}}
+			}
+			else {
+				$referenced_table_def =
+					$db_model -> {aliases} -> {$target1} ||
+					$db_model -> {aliases} -> {$target2} ||
+					$db_model -> {aliases} -> {'voc_' . $target1} ||
+					$db_model -> {aliases} -> {'voc_' . $target2} ||
+					undef;
+			}
+
+			$referenced_table_def or next;
+			$referenced_table_def -> {references} ||= [];
+			push @{$referenced_table_def -> {references}}, $column_def;
+						
+		}		
+	
+	}
+
+
+}
+
+################################################################################
+
 sub sql_assert_core_tables {
 
 my $time = time;
@@ -12,6 +80,62 @@ my $time = time;
 
 	my %defs = (
 	
+		_script_checksums => {
+		
+			columns => {
+				name     => {TYPE_NAME => 'varchar', COLUMN_SIZE => 255, _PK => 1},
+				ts       => {TYPE_NAME => 'timestamp'},
+				checksum => {TYPE_NAME => 'char', COLUMN_SIZE => 22},
+			}
+
+		},
+
+		__access_log => {
+		
+			columns => {
+				id         => {TYPE_NAME => 'bigint', _EXTRA => 'auto_increment', _PK => 1},
+				id_session => {TYPE_NAME => 'bigint'},
+				ts         => {TYPE_NAME => 'timestamp'},
+				no         => {TYPE_NAME => 'int'},
+				href       => {TYPE_NAME => 'text'},
+			},
+			
+			keys => {
+				ix => 'id_session,no',
+				ix2 => 'id_session,href(255)',
+			},
+
+		},
+		
+		__moved_links => {
+		
+			columns => {
+				id          => {TYPE_NAME => 'bigint', _EXTRA => 'auto_increment', _PK => 1},
+				table_name  => {TYPE_NAME => 'varchar', COLUMN_SIZE => 255},
+				column_name => {TYPE_NAME => 'varchar', COLUMN_SIZE => 255},
+				id_from     => {TYPE_NAME => 'int'},
+				id_to       => {TYPE_NAME => 'int'},
+			},
+			
+			keys => {
+				id_to => 'id_to',
+			},
+
+		},
+		
+		__required_files => {
+		
+			columns => {
+				unix_ts   => {TYPE_NAME => 'bigint'},
+				file_name => {TYPE_NAME => 'varchar', COLUMN_SIZE  => 255},
+			},
+			
+			keys => {
+				ix => 'file_name',
+			},
+
+		},
+
 		sessions => {
 		
 			columns => {
@@ -20,6 +144,13 @@ my $time = time;
 				id_user => {TYPE_NAME  => 'int'},
 				id_role => {TYPE_NAME  => 'int'},
 				ts      => {TYPE_NAME  => 'timestamp'},
+
+				ip =>     {TYPE_NAME => 'varchar', COLUMN_SIZE => 255},
+				ip_fw =>  {TYPE_NAME => 'varchar', COLUMN_SIZE => 255},
+	
+				peer_server => {TYPE_NAME    => 'varchar', COLUMN_SIZE  => 255},
+				peer_id => {TYPE_NAME    => 'bigint'},
+				
 			}
 
 		},
@@ -44,7 +175,12 @@ my $time = time;
 				login =>    {TYPE_NAME => 'varchar', COLUMN_SIZE => 255},
 				label =>    {TYPE_NAME => 'varchar', COLUMN_SIZE => 255},
 				password => {TYPE_NAME => 'varchar', COLUMN_SIZE => 255},
-				id_role =>  {TYPE_NAME => 'int'},
+				mail     => {TYPE_NAME => 'varchar', COLUMN_SIZE => 255},
+				id_role  =>  {TYPE_NAME => 'int'},
+
+				peer_server => {TYPE_NAME    => 'varchar', COLUMN_SIZE  => 255},
+				peer_id => {TYPE_NAME    => 'int'},
+				
 			}
 
 		},
@@ -56,8 +192,8 @@ my $time = time;
 				fake => {TYPE_NAME  => 'bigint', COLUMN_DEF => 0, NULLABLE => 0},
 				id_user =>   {TYPE_NAME => 'int'},
 				id_object => {TYPE_NAME => 'int'},
-				ip =>     {TYPE_NAME => 'varchar', COLUMN_SIZE => 15},
-				ip_fw =>  {TYPE_NAME => 'varchar', COLUMN_SIZE => 15},
+				ip =>     {TYPE_NAME => 'varchar', COLUMN_SIZE => 255},
+				ip_fw =>  {TYPE_NAME => 'varchar', COLUMN_SIZE => 255},
 				type =>   {TYPE_NAME => 'varchar', COLUMN_SIZE => 255},
 				action => {TYPE_NAME => 'varchar', COLUMN_SIZE => 255},
 				error  => {TYPE_NAME => 'varchar', COLUMN_SIZE => 255},
@@ -91,11 +227,11 @@ sub sql_temporality_callback {
 	
 	my $needed_tables = $params {tables};
 	
-	while (my ($name, $definition) = each %$needed_tables) {
+	foreach my $name (keys (%$needed_tables)) {
 
 		sql_is_temporal_table ($name) or next;
 		
-		my $log_def = Storable::dclone ($definition);
+		my $log_def = Storable::dclone ($needed_tables -> {$name});
 		
 		foreach my $key (keys %{$log_def -> {columns}}) {
 			delete $log_def -> {columns} -> {$key} -> {_EXTRA};
@@ -164,15 +300,22 @@ sub sql_is_temporal_table {
 
 sub sql_reconnect {
 
-	return if $db and $db -> ping;
+
+	if ($db) {
+		my $ping = $db -> ping;
+		return if $ping;
+	}
 	
 	$conf = {%$conf, %$preconf};
+
+   	$conf -> {dbf_dsn} and our $dbf = DBI -> connect ($conf -> {dbf_dsn}, {RaiseError => 1});
 
 	our $db  = DBI -> connect ($conf -> {'db_dsn'}, $conf -> {'db_user'}, $conf -> {'db_password'}, {
 		RaiseError  => 1, 
 		AutoCommit  => 1,
 		LongReadLen => 100000000,
 		LongTruncOk => 1,
+		InactiveDestroy => 0,
 	});
 
 	my $driver_name = $db -> {Driver} -> {Name};
@@ -186,28 +329,30 @@ sub sql_reconnect {
 
 	delete $INC {"Zanas/SQL/${driver_name}.pm"};
 
-	our $model_update = DBIx::ModelUpdate -> new (
-		$db, 
-		dump_to_stderr => 1, 
-		before_assert  => $conf -> {'db_temporality'} ? \&sql_temporality_callback : undef,
-	);
+	unless ($preconf -> {no_model_update}) {
+	
+		our $model_update = DBIx::ModelUpdate -> new (		
+			$db, 
+			dump_to_stderr => 1,
+			before_assert  => $conf -> {'db_temporality'} ? \&sql_temporality_callback : undef,
+		);
+		
+		sql_assert_core_tables (); # unless $driver_name eq 'Oracle';
+		
+		$preconf -> {no_model_update} = 1;
+		
+	}
 		
 	our %sts = ();
-
-# print STDERR "sql_reconnect: calling sql_assert_core_tables\n";
-
-	sql_assert_core_tables (); # unless $driver_name eq 'Oracle';
 
 }   	
 
 ################################################################################
 
 sub sql_disconnect {
-
-	$db -> disconnect;	
+	if ($db) { $db -> disconnect; }
 	undef $db;
-	undef %sts;
-	
+	undef %sts;	
 }
 
 ################################################################################
@@ -215,7 +360,58 @@ sub sql_disconnect {
 sub sql_select_vocabulary {
 	my ($table_name, $options) = @_;	
 	$options -> {order} ||= 'label';
-	return sql_select_all ("SELECT id, label FROM $table_name WHERE fake = 0 ORDER BY $$options{order}");
+	my ($filter, $limit);
+	$filter = "AND $options->{filter}" if $options -> {filter};
+	$limit = "LIMIT $options->{limit}" if $options -> {limit};
+	return sql_select_all ("SELECT id, label FROM $table_name WHERE fake = 0 $filter ORDER BY $$options{order} $limit");
 }
+
+################################################################################
+
+sub sql_select_ids {
+	my ($sql, @params) = @_;
+	my @ids = sql_select_col ($sql, @params);
+	push @ids, -1;
+	return join ',', @ids;
+}
+
+################################################################################
+
+sub sql_select_id {
+
+	my ($table, $values, @lookup_field_sets) = @_;
+	
+	exists $values -> {fake} or $values -> {fake} = 0;
+	
+	@lookup_field_sets = (['label']) if @lookup_field_sets == 0;
+	
+	my $record = {};
+	
+	foreach my $lookup_fields (@lookup_field_sets) {
+
+		my $sql = "SELECT * FROM $table WHERE fake <= 0";
+		my @params = ();
+
+		foreach my $lookup_field (@$lookup_fields) {
+			$sql .= " AND $lookup_field = ?";
+			push @params, $values -> {$lookup_field};
+		}
+
+		$sql .= " ORDER BY fake DESC, id DESC";
+		
+		$record = sql_select_hash ($sql, @params);
+		
+		last if $record -> {id};
+
+	}
+		
+	while (my $id = ($record -> {is_merged_to} || $record -> {id_merged_to})) {
+		$record = sql_select_hash ($table, $id);
+	}
+	
+	return $record -> {id} || sql_do_insert ($table, $values);
+
+}
+
 
 1;

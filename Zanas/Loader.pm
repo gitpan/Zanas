@@ -23,18 +23,20 @@ sub import {
 	my $dos = $preconf -> {core_path} ? <<EOL : 'require Zanas::Util; require Zanas;';
 		do "$$preconf{core_path}/Zanas/Apache.pm";
 		do "$$preconf{core_path}/Zanas/Content.pm";
+		do "$$preconf{core_path}/Zanas/Validators.pm";
 		do "$$preconf{core_path}/Zanas/InternalRequest.pm";
 		do "$$preconf{core_path}/Zanas/Presentation.pm";
-		do "$$preconf{core_path}/Zanas/Presentation/MSIE_5.pm";
 		do "$$preconf{core_path}/Zanas/Request.pm";
 		do "$$preconf{core_path}/Zanas/Request/Upload.pm";
 		do "$$preconf{core_path}/Zanas/SQL.pm";
 		do "$$preconf{core_path}/Zanas.pm";
+	
+		require_fresh ("$package::Config.pm");
+		
 EOL
 
 	my $cmd = <<EOC;
 		package $package;
-		do "$$root[0]/Config.pm";
 		do "$$root[0]/Calendar.pm";
 		$dos
 EOC
@@ -42,6 +44,7 @@ EOC
 	eval $cmd;
 
 	print STDERR $@ if $@;
+	
 
 }
 

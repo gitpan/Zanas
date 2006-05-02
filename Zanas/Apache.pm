@@ -48,6 +48,8 @@ sub handler {
 	undef %_REQUEST;
 	our %_REQUEST = %{$parms};
 	
+	delete $_REQUEST {__x} if $preconf -> {core_no_xml};
+	
 	$_REQUEST {__no_navigation} ||= $_REQUEST {select};
 		
 	$_REQUEST {type} =~ s/_for_.*//;
@@ -56,32 +58,35 @@ sub handler {
 	$_REQUEST {__uri} =~ s{\/\w+\.\w+$}{};
 	$_REQUEST {__uri} =~ s{\?.*}{};
 	$_REQUEST {__uri} =~ s{^/+}{/};
+	$_REQUEST {__uri} =~ s{\&salt\=[\d\.]+}{}gsm;
 	
+	our $_SKIN = 'Zanas::Presentation::Skins::' . get_skin_name ();	
+	eval "require $_SKIN";
+	$_SKIN -> {options} ||= $_SKIN -> options;
+	*{$_SKIN . '::_REQUEST'} = *{$_PACKAGE . '_REQUEST'};
+	*{$_SKIN . '::_USER'}    = *{$_PACKAGE . '_USER'};
+	*{$_SKIN . '::Zanas_VERSION_NAME'}    = *{$_PACKAGE . 'Zanas_VERSION_NAME'};
+	*{$_SKIN . '::SQL_VERSION'}    = *{$_PACKAGE . 'SQL_VERSION'};
+	*{$_SKIN . '::conf'    } = *{$_PACKAGE . 'conf'};
+	*{$_SKIN . '::preconf' } = *{$_PACKAGE . 'preconf'};
+	*{$_SKIN . '::r'       } = *{$_PACKAGE . 'r'};
+	*{$_SKIN . '::i18n'    } = *{$_PACKAGE . 'i18n'};
+	*{$_SKIN . '::create_url'    } = *{$_PACKAGE . 'create_url'};
+
+	if ($r -> uri =~ m{/\w+\.(css|gif|ico|js|html)$}) {
+		select__static_files ();
+		return OK;
+	}
+
 	if ($preconf -> {core_auth_cookie}) {
 		my $c = $_COOKIES {sid};
 		$_REQUEST {sid} ||= $c -> value if $c;
 	}
-	
-	$number_format or our $number_format = Number::Format -> new (%{$conf -> {number_format}});
-	
+		
    	sql_reconnect ();
 
 	require_fresh ($_PACKAGE . 'Config');
-
-   	$conf -> {dbf_dsn} and our $dbf = DBI -> connect ($conf -> {dbf_dsn}, {RaiseError => 1});
-   	   	
-	fill_in ();
-   	   	
-	$_REQUEST {type} = '_static_files' if $r -> uri =~ m{/(navigation_\w+\.js|0\.html|0\.gif|folder\.gif|zanas_\w+\.css|favicon\.ico|tab_([blr]_)?[01]{1,2}\.gif)};
-
-	$conf -> {include_js}  ||= ['js'];
-   	
-   	$_REQUEST {__include_js} = [];
-   	push @{$_REQUEST {__include_js}}, @{$conf -> {include_js}};
-
-   	$_REQUEST {__include_css} = [];
-   	push @{$_REQUEST {__include_css}}, @{$conf -> {include_css}};
-   	
+	   	   	   	   	   	   	
 	if ($_REQUEST {keepalive}) {
 		my $timeout = 60 * $conf -> {session_timeout} - 1;
 		$_REQUEST {virgin} or keep_alive ($_REQUEST {keepalive});
@@ -92,24 +97,28 @@ sub handler {
 				<META HTTP-EQUIV=Refresh CONTENT="$timeout; URL=$_REQUEST{__uri}?keepalive=$_REQUEST{keepalive}">
 			</head></html>			
 EOH
-		return;
-	}	
+		return OK;
+	}		
+	
+	if ($_REQUEST {__whois}) {
+		my $user = sql_select_hash ('SELECT users.id, users.label, users.mail, roles.name AS role FROM sessions INNER JOIN users ON sessions.id_user = users.id INNER JOIN roles ON users.id_role = roles.id WHERE sessions.id = ?', $_REQUEST {__whois});
+		out_html ({}, Dumper ({data => $user}));
+		return OK;
+	}
    	
-	my $action = $_REQUEST {action};
-		
 	our $_USER = get_user ();
-	
-	$_REQUEST {lang} ||= $_USER -> {lang} if $_USER;
-	
-	$_REQUEST {lang} ||= $preconf -> {lang} || $conf -> {lang}; # According to NISO Z39.53
-	
-	our $i18n = $conf -> {i18n} -> {$_REQUEST {lang}};
-	
-	require_fresh ($_PACKAGE . 'Calendar');
-	
-	eval "our \$_CALENDAR = new ${_PACKAGE}Calendar (\\\%_REQUEST)";
-	
-	if ((!$_USER and $_REQUEST {type} ne 'logon' and $_REQUEST {type} ne '_static_files')) {
+
+	$number_format or our $number_format = Number::Format -> new (%{$conf -> {number_format}});
+
+	$conf -> {__filled_in} or fill_in ();
+
+   	$_REQUEST {__include_js} ||= [];
+   	push @{$_REQUEST {__include_js}}, @{$conf -> {include_js}} if $conf -> {include_js};
+
+   	$_REQUEST {__include_css} ||= [];
+   	push @{$_REQUEST {__include_css}}, @{$conf -> {include_css}} if $conf -> {include_css};
+						
+	if ((!$_USER -> {id} and $_REQUEST {type} ne 'logon' and $_REQUEST {type} ne '_boot')) {
 
 		delete $_REQUEST {sid};
 		delete $_REQUEST {salt};
@@ -117,10 +126,12 @@ EOH
 		delete $_REQUEST {__include_js};
 		delete $_REQUEST {__include_css};
 		
-		redirect ('/?type=logon&redirect_params=' . b64u_freeze (\%_REQUEST));
+		my $type = ($preconf -> {core_skip_boot} || $conf -> {core_skip_boot}) ? 'logon' : '_boot';
+		
+		redirect ("/?type=$type&redirect_params=" . b64u_freeze (\%_REQUEST));
 		
 	}
-	
+			
 	elsif (exists ($_USER -> {redirect})) {
 		
 		redirect (create_url ());
@@ -135,15 +146,47 @@ EOH
 	else {
 			
 		require_fresh ("${_PACKAGE}Content::menu");
-		require_fresh ("${_PACKAGE}Content::page");
 
-		$page = get_page ();
+		$_REQUEST {lang} ||= $_USER -> {lang} if $_USER;
+		$_REQUEST {lang} ||= $preconf -> {lang} || $conf -> {lang}; # According to NISO Z39.53	
+		our $i18n = $conf -> {i18n} -> {$_REQUEST {lang}};
+		
+		unless ($_CALENDAR) {
+			require_fresh ($_PACKAGE . 'Calendar');
+			eval "our \$_CALENDAR = new ${_PACKAGE}Calendar (\\\%_REQUEST)";
+		}
+		
+		my $page = {
+			menu => call_for_role ('select_menu') || call_for_role ('get_menu'),
+			type => $_REQUEST {type},
+		};
+		
+		if ($conf -> {core_extensible_menu} && $_USER -> {systems}) {
+			
+			foreach my $sys (sort grep {/\w/} split /\,/, $_USER -> {systems}) {
+				my @items = ();
+				eval {@items = &{"_${sys}_menu"}()};
+				push @{$page -> {menu}}, @items;
+			}
+
+		}
+
+		call_for_role ('get_page');
+
+		if (!$page -> {type} && @{$page -> {menu}} > 0) {
+			$page -> {type} = $page -> {menu} -> [0] -> {name};
+			$_REQUEST {type}= $page -> {type}; 
+		};
 	
 		unless ($page -> {type} =~ /^_/) {
 			require_fresh ("${_PACKAGE}Content::$$page{type}");
 			require_fresh ("${_PACKAGE}Presentation::$$page{type}");
 		};
 		
+		$_REQUEST {__last_last_query_string} ||= $_REQUEST {__last_query_string};
+
+		my $action = $_REQUEST {action};
+
 		if ($action) {
 			
 			undef $__last_insert_id;
@@ -156,8 +199,10 @@ EOH
 		
 			my $sub_name = "validate_${action}_$$page{type}";		
 			
-			my $error_code = call_for_role ($sub_name);
-			
+			my $error_code = undef;			
+			eval {	$error_code = call_for_role ($sub_name); };
+			$error_code = $@ if $@;
+						
 			if ($_USER -> {demo_level} > 0) {
 				($action =~ /^execute/ and $$page{type} eq 'logon') or $error_code ||= '»звините, вы работаете в демонстрационном режиме';
 			}
@@ -170,38 +215,59 @@ EOH
 			if ($_REQUEST {error}) {
 				out_html ({}, draw_page ($page));
 			}
-			else {
-			
-				delete $_REQUEST {__response_sent};
+			else {						
 				
-				eval {					
+				unless ($_REQUEST {__peer_server}) {
 				
-					delete_fakes () if $action eq 'create';
+					delete $_REQUEST {__response_sent};
+
+					eval {					
+
+						delete_fakes () if $action eq 'create';
+
+						call_for_role ("do_${action}_$$page{type}");
+
+						if (($action =~ /^execute/) and ($$page{type} eq 'logon') and $_REQUEST {redirect_params}) {
+
+							my $VAR1 = b64u_thaw ($_REQUEST {redirect_params});
+
+							foreach my $key (keys %$VAR1) {
+								$_REQUEST {$key} = $VAR1 -> {$key};
+							}					
+
+						} elsif ($conf -> {core_cache_html}) {
+							sql_do ("DELETE FROM cache_html");
+							my $cache_path = $r -> document_root . '/cache/*';
+							$^O eq 'MSWin32' or eval {`rm -rf $cache_path`};
+						}
+
+					};
 					
-					call_for_role ("do_${action}_$$page{type}");
-					
-					if (($action =~ /^execute/) and ($$page{type} eq 'logon') and $_REQUEST {redirect_params}) {
-					
-						my $VAR1 = b64u_thaw ($_REQUEST {redirect_params});
-						
-						while (my ($key, $value) = each %$VAR1) {
-							$_REQUEST {$key} = $value;
-						}					
-						
-					} elsif ($conf -> {core_cache_html}) {
-						sql_do ("DELETE FROM cache_html");
-						my $cache_path = $r -> document_root . '/cache/*';
-						$^O eq 'MSWin32' or eval {`rm -rf $cache_path`};
-					}
-					
-				};	
+					$_REQUEST {error} = $@ if $@;
+								
+				}
 				
-				if ($@) {
-					$_REQUEST {error} = $@;
+				if ($_REQUEST {error}) {
 					out_html ({}, draw_page ($page));
 				}
-				else {				
-					$_REQUEST {__response_sent} or redirect ({action => '', redirect_params => ''}, {kind => 'js', label => $_REQUEST {__redirect_alert}});
+				elsif (!$_REQUEST {__response_sent}) {
+								
+					if ($action eq 'delete' && $conf -> {core_auto_esc} == 2) {						
+						esc ({label => $_REQUEST {__redirect_alert}});
+					}
+					else {
+						redirect (
+							{
+								action => '', 
+								redirect_params => '',
+							}, 
+							{
+								kind => 'js', 
+								label => $_REQUEST {__redirect_alert},
+							}
+						);
+					}				
+				
 				}
 				
 			}
@@ -215,9 +281,41 @@ EOH
 
 		}
 		else {
+					
+#		   	sql_reconnect ();
 
+			if (
+				$conf -> {core_auto_esc} == 2 && 
+				$_REQUEST {sid} && 
+				(
+					$r -> header_in ('Referer') =~ /action=\w/ ||
+					$r -> header_in ('Referer') !~ /__last_query_string=$_REQUEST{__last_query_string}/ ||
+					$r -> header_in ('Referer') !~ /type=$_REQUEST{type}/
+				)
+			) {
+			
+				my ($method, $url) = split /\s+/, $r -> the_request;
+				
+				$url =~ s{\&?_?salt=[\d\.]+}{}gsm;
+				$url =~ s{\&?sid=\d+}{}gsm;
+
+				my $no = sql_select_scalar ('SELECT no FROM __access_log WHERE id_session = ? AND href = ?', $_REQUEST {sid}, $url);
+				
+				unless ($no) {
+					$no = 1 + sql_select_scalar ('SELECT MAX(no) FROM __access_log WHERE id_session = ?', $_REQUEST {sid});
+					sql_do ('INSERT INTO __access_log (id_session, no, href) VALUES (?, ?, ?)', $_REQUEST {sid}, $no, $url);
+				}
+
+				$_REQUEST {__last_query_string} = $no;
+				
+				$_REQUEST {__last_last_query_string} ||= $_REQUEST {__last_query_string};
+			
+			}
+				
+			$r -> header_out ('Expires' => '-1');
+				
 			out_html ({}, draw_page ($page));
-
+			
 		}   
 
 	}
@@ -238,71 +336,56 @@ sub out_html {
 	
 	return if $_REQUEST {__response_sent};
 	
-	if ($_REQUEST {dbf}) {
-		redirect ("/$html");
+	if ($conf -> {core_sweep_spaces}) {
+		$html =~ s{^\s+}{}gsm; 
+		$html =~ s{[ \t]+}{ }g;
 	}
+
+	unless ($preconf -> {core_no_morons}) {
+		$html =~ s{window\.open}{nope}gsm; 
+	}
+
+
+	$_REQUEST {__content_type} ||= 'text/html; charset=' . $i18n -> {_charset};
+
+	$r -> content_type ($_REQUEST {__content_type});
+	$r -> header_out ('X-Powered-By' => 'Zanas/' . $Zanas::VERSION);
+
+	if ($] > 5.007) {
+		require Encode;
+		$html = Encode::encode ('windows-1252', $html);
+	}
+
+	$preconf -> {core_mtu} ||= 1500;
 	
-	if ($_REQUEST {xls}) {
+	if (
+		($conf -> {core_gzip} or $preconf -> {core_gzip}) && 
+		400 + length $html > $preconf -> {core_mtu} &&
+		($r -> header_in ('Accept-Encoding') =~ /gzip/)
+	) {
+		$r -> content_encoding ('gzip');
+		unless ($_REQUEST {__is_gzipped}) {
+			$html = Compress::Zlib::memGzip ($html);
+		}
+	}
+
+	$r -> header_out ('Content-Length' => length $html);
+
+	if ($preconf -> {core_auth_cookie}) {
 	
-		my $fn_local = '/i/xls/' . time . "$$.xls";
-		my $fn = $r -> document_root . $fn_local;
-		open (O, ">$fn") or die "Can't write to $fn: $!";
-		print O $html;
-		close (O);
+		set_cookie (
+			-name    =>  'sid',
+			-value   =>  $_REQUEST {sid} || 0,
+			-expires =>  $preconf -> {core_auth_cookie},
+			-path    =>  '/',
+		)      
 		
-		download_file ({
-			path => $fn_local,
-			file_name => "file.xls",
-		});
-		
-		unlink $fn;
-		
-	}	
-	else {
+	}
+
+
+	$r -> send_http_header;
 	
-		if ($conf -> {core_sweep_spaces}) {
-			$html =~ s{^\s+}{}gsm; 
-			$html =~ s{[ \t]+}{ }g;
-		}
-
-		$_REQUEST {__content_type} ||= 'text/html; charset=' . $i18n -> {_charset};
-#		$_REQUEST {__content_type} ||= 'application/hta';
-
-		$r -> content_type ($_REQUEST {__content_type});
-		$r -> header_out ('X-Powered-By' => 'Zanas/' . $Zanas::VERSION);
-
-		if ($] > 5.007) {
-			require Encode;
-			$html = Encode::encode ('windows-1252', $html);
-		}
-
-		if (($conf -> {core_gzip} or $preconf -> {core_gzip}) && ($r -> header_in ('Accept-Encoding') =~ /gzip/)) {
-			$r -> content_encoding ('gzip');
-			unless ($_REQUEST {__is_gzipped}) {
-				$html = Compress::Zlib::memGzip ($html);
-			}
-		}		
-
-		$r -> header_out ('Content-Length' => length $html);
-#		$r -> header_out ('Set-Cookie' => "sid=$_REQUEST{sid};path=/;") if $_REQUEST{sid};
-
-		if ($preconf -> {core_auth_cookie}) {
-		
-			set_cookie (
-				-name    =>  'sid',
-				-value   =>  $_REQUEST {sid} || 0,
-				-expires =>  $preconf -> {core_auth_cookie},
-				-path    =>  '/',
-			)      
-			
-		}
-
-
-		$r -> send_http_header;
-		
-		$r -> header_only or print $html;
-		
-	}	
+	$r -> header_only or print $html;		
 
 }
 

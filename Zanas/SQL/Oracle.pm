@@ -27,21 +27,47 @@ sub sql_prepare {
 	
 #print STDERR "sql_prepare (pid=$$): $sql\n";
 	
-	unless (exists $sts {$sql}) {
-		
-		eval {$sts {$sql} = $db  -> prepare ($sql, {
-			ora_auto_lob => ($sql !~ /for\s+update\s*/ism),
-		})};
-		
-		if ($@) {
-			my $msg = "sql_prepare: $@ (SQL = $sql)\n";
-			print STDERR $msg;
-			die $msg;
-		}
+	my $qoute = '"';
+
+	if ($sql =~ /^(\s*SELECT.*FROM\s+)(.*)$/is) {
 	
+		my ($head, $tables_reference, $tail) = ($1, $2);
+		
+		if ($tables_reference =~ /^(.*)((WHERE|GROUP|ORDER).*)$/is) {
+			($tables_reference, $tail) = ($1, $2);
+		}
+#		print "head: $head\ntables_reference: $tables_reference\ntail: $tail\n\n";
+		my @table_names;
+		if ($tables_reference =~ s/^(_\w+)/$qoute$1$qoute/) {
+			push (@table_names, $1);
+		}
+		push (@table_names, $1) while ($tables_reference =~ s/,\s*(_\w+)/, $qoute$1$qoute/ig);
+		push (@table_names, $1) while ($tables_reference =~ s/JOIN\s*(_\w+)/JOIN $qoute$1$qoute/ig);
+		$sql = $head . $tables_reference . $tail;
+		foreach my $table_name (@table_names) {
+#			print "table_name: $table_name\n";
+			$sql =~ s/(\W)($table_name)\./$1$qoute$2$qoute\./g;
+		}
+	} 
+	
+	$sql =~ s/^(\s*UPDATE\s+)(_\w+)/$1$qoute$2$qoute/is;
+	$sql =~ s/^(\s*INSERT\s+INTO\s+)(_\w+)/$1$qoute$2$qoute/is;
+	$sql =~ s/^(\s*DELETE\s+FROM\s+)(_\w+)/$1$qoute$2$qoute/is;
+
+	my $st;
+
+	eval {$st = $db  -> prepare ($sql, {
+		ora_auto_lob => ($sql !~ /for\s+update\s*/ism),
+	})};
+	
+	if ($@) {
+		my $msg = "sql_prepare: $@ (SQL = $sql)\n";
+		print STDERR $msg;
+		die $msg;
 	}
 	
-	return $sts {$sql};
+	
+	return $st;
 
 }
 
@@ -77,7 +103,7 @@ sub sql_do {
 		$st -> execute (@params);
 		$st -> finish;	
 #	};
-	
+
 #	if ($@ && $@ =~ /ORA\-02292/) {	
 #		$_REQUEST {error} = 'Нарушено ограничение целостности. Операция недопустима.';	
 #	} 
@@ -93,8 +119,32 @@ sub sql_select_all_cnt {
 
 	my ($sql, @params) = @_;
 		
-	$sql =~ s{LIMIT\s+(\d+)\s*\,\s*(\d+).*}{}ism;
+
+	unless ($sql =~ s{LIMIT\s+(\d+)\s*\,\s*(\d+).*}{}ism) {
+		return sql_select_all ($sql, @params);
+	}
+
 	my ($start, $portion) = ($1, $2);
+
+	my $options = {};
+	if (@params > 0 and ref ($params [-1]) eq HASH) {
+		$options = pop @params;
+	}
+	
+	if ($options -> {fake}) {
+	
+		my $where = 'WHERE ';
+		my $fake  = $_REQUEST {fake} || 0;
+	
+		foreach my $table (split /\,/, $options -> {fake}) {
+			$where .= "$table.fake IN ($fake) AND ";
+		}	
+		
+		$sql =~ s{where}{$where}i;
+			
+	}
+
+
 	
 	my $st = sql_prepare ($sql);
 	$st -> execute (@params);
@@ -127,6 +177,25 @@ sub sql_select_all_cnt {
 sub sql_select_all {
 
 	my ($sql, @params) = @_;
+
+	my $options = {};
+	if (@params > 0 and ref ($params [-1]) eq HASH) {
+		$options = pop @params;
+	}
+	
+	if ($options -> {fake}) {
+	
+		my $where = 'WHERE ';
+		my $fake  = $_REQUEST {fake} || 0;
+	
+		foreach my $table (split /\,/, $options -> {fake}) {
+			$where .= "$table.fake IN ($fake) AND ";
+		}	
+		
+		$sql =~ s{where}{$where}i;
+			
+	}
+
 	my $st = sql_prepare ($sql);
 	$st -> execute (@params);
 	my $result = $st -> fetchall_arrayref ({});	
@@ -145,14 +214,39 @@ sub sql_select_all {
 sub sql_select_col {
 
 	my ($sql, @params) = @_;
-	
+
 	my @result = ();
-	my $st = sql_prepare ($sql);
-	$st -> execute (@params);
-	while (my @r = $st -> fetchrow_array ()) {
-		push @result, @r;
+	
+	if ($sql =~ s{LIMIT\s+(\d+)\s*\,\s*(\d+).*}{}ism) {
+		my ($start, $portion) = ($1, $2);
+		($start, $portion) = (0, $start) unless ($portion);
+	
+		my $st = sql_prepare ($sql);
+		$st -> execute (@params);
+		my $cnt = 0;	
+ 	
+		while (my @r = $st -> fetchrow_array ()) {
+	
+			$cnt++;
+		
+			$cnt > $start or next;
+			$cnt <= $start + $portion or last;
+			
+			push @result, @r;
+	
+		}
+	
+		$st -> finish;
+
+	} else {
+
+		my $st = sql_prepare ($sql);
+		$st -> execute (@params);
+		while (my @r = $st -> fetchrow_array ()) {
+			push @result, @r;
+		}
+		$st -> finish;
 	}
-	$st -> finish;
 	
 	return @result;
 
@@ -178,12 +272,20 @@ sub sql_select_hash {
 
 	my ($sql_or_table_name, @params) = @_;
 	
-	if (@params == 0 and $sql_or_table_name !~ /^\s*SELECT/i) {
+	if ($sql_or_table_name !~ /^\s*SELECT/i) {
 	
-		return sql_select_hash ("SELECT * FROM $sql_or_table_name WHERE id = ?", $_REQUEST {id});
+		my $id = $_REQUEST {id};
 		
-	}
+		if (@params) {
+			$id = ref $params [0] eq HASH ? $params [0] -> {id} : $params [0];
+		}
 	
+		@params = ({}) if (@params == 0);
+		
+		return sql_select_hash ("SELECT * FROM $sql_or_table_name WHERE id = ?", $id);
+		
+	}	
+
 	my $st = sql_prepare ($sql_or_table_name);
 	$st -> execute (@params);
 	my $result = $st -> fetchrow_hashref ();
@@ -212,10 +314,38 @@ sub sql_select_array {
 sub sql_select_scalar {
 
 	my ($sql, @params) = @_;
-	my $st = sql_prepare ($sql);
-	$st -> execute (@params);
-	my @result = $st -> fetchrow_array ();
-	$st -> finish;
+
+	my @result;
+
+	if ($sql =~ s{LIMIT\s+(\d+)\s*\,?\s*(\d+)?.*}{}ism) {
+		my ($start, $portion) = ($1, $2);
+		($start, $portion) = (0, $start) unless ($portion);
+	
+		my $st = sql_prepare ($sql);
+		$st -> execute (@params);
+		my $cnt = 0;	
+	
+		while (my @r = $st -> fetchrow_array ()) {
+	
+			$cnt++;
+		
+			$cnt > $start or next;
+			$cnt <= $start + $portion or last;
+			
+			push @result, @r;
+			last;
+	
+		}
+	
+		$st -> finish;
+
+	} else {
+
+		my $st = sql_prepare ($sql);
+		$st -> execute (@params);
+		@result = $st -> fetchrow_array ();
+		$st -> finish;
+	}
 	
 	return $result [0];
 
@@ -311,7 +441,7 @@ sub sql_do_update {
 	
 	foreach my $lob_field (@{$options -> {lobs}}) {
 	
-#print STDERR "Going to write a LOB in ${table_name}.${lob_field}, id = $$options{id}...\n";
+print STDERR "Going to write a LOB in ${table_name}.${lob_field}, id = $$options{id}...\n";
 	
 #		$db -> {AutoCommit} = 0;
 	
@@ -319,7 +449,13 @@ sub sql_do_update {
 		my $lob_locator;
 		$st -> execute ($options -> {id});
 		($lob_locator) = $st -> fetchrow_array;
-	
+
+		unless ($lob_locator) {
+			sql_do ("UPDATE $table_name SET $lob_field = empty_clob() WHERE id = ? ", $options -> {id});
+			$st -> execute ($options -> {id});
+			($lob_locator) = $st -> fetchrow_array;
+		}
+
 		$db -> ora_lob_trim   ($lob_locator, 0);
 		
 		my $value = $_REQUEST {$lob_field} || $_REQUEST {"_$lob_field"};
@@ -353,11 +489,11 @@ sub sql_do_insert {
 
 	$pairs -> {fake} = $_REQUEST {sid} unless exists $pairs -> {fake};
 
-	while (my ($field, $value) = each %$pairs) {	
+	foreach my $field (keys %$pairs) { 
 		my $comma = @params ? ', ' : '';	
 		$fields .= "$comma $field";
 		$args   .= "$comma ?";
-		push @params, $value;	
+		push @params, $pairs -> {$field};	
 	}
 	
 	sql_do ("INSERT INTO $table_name ($fields) VALUES ($args)", @params);	
@@ -383,8 +519,8 @@ sub sql_do_delete {
 	our %_OLD_REQUEST = %_REQUEST;	
 	eval {
 		my $item = sql_select_hash ($table_name);
-		while (my ($key, $value) = each %$item) {
-			$_OLD_REQUEST {'_' . $key} = $value;
+		foreach my $key (keys %$item) {
+			$_OLD_REQUEST {'_' . $key} = $item -> {$key};
 		}
 	};
 	

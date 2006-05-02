@@ -1,7 +1,7 @@
 BEGIN {
 
 	use File::Spec;
-	use DBIx::ModelUpdate;
+#	use DBIx::ModelUpdate;
 
 	$| = 1;
 
@@ -11,6 +11,7 @@ BEGIN {
 
 	$fn = readlink $fn while -l $fn;
 	$fn =~ s{/lib/.*}{};
+	$fn =~ s{\\lib\\.*}{};
 	
 	$PACKAGE_ROOT = [$fn . '/lib/' . __PACKAGE__ . '/'];
 	
@@ -26,20 +27,23 @@ BEGIN {
 
 	$conf =~ s{.*<perl>}{}gsm;
 	$conf =~ s{</perl>.*}{}gsm;
+	
 	eval "\$^W = 0; $conf";
 	
 	require Zanas;
-
-#	require Zanas::Presentation::MSIE_5;
-#	require Zanas::Content;
-#	require Zanas::Presentation;
-#	require Zanas::SQL;
 	
 	sql_reconnect ();
 	
 	do $config_path;
 	
 	our $number_format = Number::Format -> new (%{$conf -> {number_format}});
+
+	our $_SKIN = 'Zanas::Presentation::Skins::' . get_skin_name ();	
+	*{$_SKIN . '::_REQUEST'} = *{$_PACKAGE . '_REQUEST'};
+	*{$_SKIN . '::conf'}     = *{$_PACKAGE . 'conf'};
+	*{$_SKIN . '::preconf'}  = *{$_PACKAGE . 'preconf'};
+	*{$_SKIN . '::r'}        = *{$_PACKAGE . 'r'};
+	*{$_SKIN . '::i18n'}     = *{$_PACKAGE . 'i18n'};
 
 }
 

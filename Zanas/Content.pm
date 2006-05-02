@@ -2,6 +2,206 @@ no warnings;
 
 ################################################################################
 
+sub peer_name {
+
+	$preconf -> {peer_name} or die "Peer name not defined\n";
+
+	return $preconf -> {peer_name};
+
+}
+
+################################################################################
+
+sub peer_reconnect {
+
+	unless ($UA) {
+	
+		our $UA = LWP::UserAgent -> new (
+			agent                 => "Zanas/$Zanas_VERSION (" . peer_name () . ")",
+			requests_redirectable => ['GET', 'HEAD', 'POST'],
+		);
+		
+		$HTTP::Request::Common::DYNAMIC_FILE_UPLOAD = 1;
+		
+	}
+		
+}
+
+################################################################################
+
+sub peer_proxy {
+
+	my ($peer_server, $params) = @_;
+	
+	my $url = $preconf -> {peer_servers} -> {$peer_server} or die "Peer server '$peer_server' not defined\n";
+	
+	$_REQUEST {__peer_server} = $peer_server;
+	
+	peer_reconnect ();
+		
+	$url .= '?sid=';
+	$url .= $_REQUEST {sid};
+	
+	my @keys = keys %$params;
+
+	foreach my $k (@keys) {
+		$url .= '&';
+		$url .= $k;
+		$url .= '=';
+		$url .= uri_escape ($params -> {$k});
+	}		
+		
+	$request = HTTP::Request -> new ('GET', $url);
+	
+	my $virgin = 1;
+		
+	my $response = $UA -> request ($request,
+				
+		sub { 
+			
+			if ($virgin) {
+				$r -> print ($r -> protocol);
+				$r -> print (" 200OK\015\012");
+				$r -> print ($_[1] -> headers_as_string);
+				$r -> print ("\015\012");
+				$virgin = 0;
+			}
+		
+			$r -> print ($_[0]);
+		},
+		
+	);
+		
+	$_REQUEST {__response_sent} = 1;
+
+}
+
+################################################################################
+
+sub peer_query {
+
+	my ($peer_server, $params, $options) = @_;
+	
+	my $url = $preconf -> {peer_servers} -> {$peer_server} or die "Peer server '$peer_server' not defined\n";
+	
+	peer_reconnect ();
+	
+	foreach my $k (keys %_REQUEST) {
+		next if $k =~ /^__/;
+		next if exists $params -> {$k};
+		$params -> {$k} = $_REQUEST {$k};
+	}
+	
+	$params -> {__d} = 1;
+	
+	my @headers = (Accept_Encoding => 'gzip');
+
+	$options -> {files} = [$options -> {file}] if $options -> {file};
+	if (ref $options -> {files} eq ARRAY) {
+		
+		foreach my $name (@{$options -> {files}}) {
+			my $file = upload_file ({ name => $name, dir => 'upload/images'});
+			$params -> {'_' . $name} = [$file -> {real_path}, $params -> {'_' . $name}];
+		}
+		
+		push @headers, (Content_Type => 'form-data');
+		
+	}
+		
+	my $response = $UA -> request (POST $url,
+		@headers,
+		Content         => [ %$params ],
+	);
+	
+	foreach my $k (keys %$params) {
+		my $v = $params -> {$k};
+		ref $v eq ARRAY or next;
+		unlink $v -> [0];
+	}		
+	
+	while (1) {
+		
+		$response -> is_success or die ($response -> status_line);
+		
+		my $dump = $response -> content;
+	
+		if ($response -> headers -> header ('Content-Encoding') eq 'gzip') {
+			$dump = Compress::Zlib::memGunzip ($dump);
+		}
+		
+		eval $dump;
+		
+		my ($root, $data) = (%$VAR1);
+		
+		undef $VAR1;
+			
+		$_REQUEST {__peer_server} = $peer_server;
+					
+		if ($root eq 'data') {			
+			return $data;
+		}
+		
+		if ($root eq 'redirect') {
+		
+			$response = $UA -> request (GET $url . $data -> {url} . '&__d=1',
+				Accept_Encoding => 'gzip',
+			);
+		
+		}
+		elsif ($root eq 'error') {
+		
+			$data -> {message} = '#' . $data -> {field} . '#:' . $data -> {message} if ($data -> {field});
+			
+			$_REQUEST {error} = $data -> {message};
+			$_REQUEST {error} = '#' . $data -> {field} . '#:' . $_REQUEST {error} if $data -> {field};
+			
+			return $_REQUEST {error};
+			
+		}
+		else {
+			die ("Invalid root tag: $root\n");
+		}
+			
+	}
+
+}
+
+
+#############################################################################
+
+sub get_skin_name {
+
+	return
+		$_REQUEST {xls} ? 'XL' :
+		$_REQUEST {__dump} || $_REQUEST {__d} ? 'Dumper' :
+		$_REQUEST {__proto} ? 'XMLProto' :
+		$_REQUEST {__x} ? 'XMLDumper' :
+		'Classic';
+
+}
+
+#############################################################################
+
+sub is_off {
+	
+	my ($options, $value) = @_;
+	
+	return 0 unless $options -> {off};
+	
+	if ($options -> {off} eq 'if zero') {
+		return ($value == 0);
+	}
+	elsif ($options -> {off} eq 'if not') {
+		return !$value;
+	}
+	else {
+		return $options -> {off};
+	}
+
+}
+
+################################################################################
+
 sub async ($@) {
 
 	my ($sub, @args) = @_;
@@ -38,7 +238,7 @@ sub send_mail {
 
 	my ($options) = @_;
 	
-print STDERR "send_mail: " . Dumper ($options);
+	warn "send_mail: " . Dumper ($options);
 	
 	my $to = $options -> {to};
 	
@@ -61,10 +261,20 @@ print STDERR "send_mail: " . Dumper ($options);
 		$to = sql_select_hash ('SELECT label, mail FROM users WHERE id = ?', $to);
 	}
 
+	if ($preconf -> {mail} -> {to}) {
+		$options -> {text} .= Dumper ($to);
+		$to = $preconf -> {mail} -> {to};
+	}
+
 	my $real_to = $to;	
 	if (ref $to eq HASH) {
 		$real_to = $to -> {mail};
 		$to = encode_mail_header ($to -> {label}, $options -> {header_charset}) . "<$real_to>";
+	}
+	
+	unless ($real_to =~ /\@/) {
+		warn "send_mail: INVALID MAIL ADDRESS '$real_to'\n";
+		return;
 	}
 	
 		##### From address
@@ -91,9 +301,13 @@ print STDERR "send_mail: " . Dumper ($options);
 		$options -> {text} .= "\n\n" . $options -> {href};
 	}
 #	my $text = encode_qp ($options -> {text});
-	my $text = $options -> {text};
+	my $text = encode_base64 ($options -> {text});
 	
-	
+	unless ($^O eq 'MSWin32') {
+		defined (my $child_pid = fork) or die "Cannot fork: $!\n";
+		return $child_pid if $child_pid;
+	}
+		
 		##### connecting...
 
 	my $smtp = Net::SMTP -> new ($preconf -> {mail} -> {host});
@@ -113,7 +327,7 @@ Content-Disposition: inline
 
 --0__=4CBBE500DFA7329E8f9e8a93df938690918c4CBBE500DFA7329E
 Content-Type: $$options{content_type}; charset="$$options{body_charset}"
-Content-Transfer-Encoding: 8bit
+Content-Transfer-Encoding: base64
 
 $text
 EOT
@@ -154,7 +368,10 @@ EOT
 
 	$smtp -> dataend ();
 	$smtp -> quit;
-
+		
+	unless ($^O eq 'MSWin32') {
+		CORE::exit (0);
+	}
 
 }
 
@@ -228,6 +445,8 @@ sub b64u_decode {
 sub require_fresh {
 
 	my ($module_name, $fatal) = @_;	
+
+#warn ("require_fresh ('$module_name') called...\n");
 	
 	my $file_name = $module_name;
 	$file_name =~ s{(::)+}{\/}g;
@@ -237,55 +456,144 @@ sub require_fresh {
 	$file_name =~ s{^(.+?)\/}{\/};
 	
 	my $found = 0;
+	my $the_path = '';
+	
 	foreach my $path (reverse (@$PACKAGE_ROOT)) {
 		my $local_file_name = $path . $file_name . '.pm';
 		-f $local_file_name or next;
 		$file_name = $local_file_name;
 		$found = 1;
+		$the_path = $path;
 		last;
 	}
 
 	$found or return "File not found: $file_name\n";
 	
-#	$file_name = $PACKAGE_ROOT . $file_name . '.pm';
-
-#print STDERR "require_fresh: \$file_name = $file_name\n";
+	my $need_refresh = $preconf -> {core_spy_modules} || !$INC {$inc_key};
 	
-#	-f $file_name or return "File not found: $file_name\n";
-		
-	my $need_refresh = $conf -> {core_spy_modules} || $preconf -> {core_spy_modules} || !$INC {$inc_key};
-
-#print STDERR "require_fresh: \$need_refresh = $need_refresh (1)\n";
-	
+	my ($dev, $ino, $mode, $nlink, $uid, $gid, $rdev, $size, $atime, $last_modified, $ctime, $blksize, $blocks);
 	if ($need_refresh) {
-		my ($dev, $ino, $mode, $nlink, $uid, $gid, $rdev, $size, $atime, $last_modified, $ctime, $blksize, $blocks) = stat ($file_name);
+		($dev, $ino, $mode, $nlink, $uid, $gid, $rdev, $size, $atime, $last_modified, $ctime, $blksize, $blocks) = stat ($file_name);
 		my $last_load = $INC_FRESH {$module_name} + 0;
 		$need_refresh &&= $last_load < $last_modified;
 	}
-
-#print STDERR "require_fresh: \$need_refresh = $need_refresh (2)\n";
 		
 	if ($need_refresh) {
 	
-#print STDERR "require_fresh: \$_OLD_PACKAGE = $_OLD_PACKAGE\n";
-
 		if ($_OLD_PACKAGE) {
 			open (S, $file_name);
 			my $src = join '', (<S>);
 			close (S);
-#			$src =~ s{$_OLD_PACKAGE}{$_NEW_PACKAGE}g;
 			$src =~ s{package\s+$_OLD_PACKAGE}{package $_NEW_PACKAGE}g;
 			$src =~ s{$_OLD_PACKAGE\:\:}{$_NEW_PACKAGE\:\:}g;
-
-#print STDERR "require_fresh: \$src = $src\n";
-
 			eval $src;
 		}
 		else {
 			do $file_name;
 		}
+
+		die $@ if $@;
+
+		if (
+			$file_name =~ /Config\.pm$/
+			&& $DB_MODEL
+		) {
+			sql_weave_model ($DB_MODEL);
+		}
+
+		if (
+			$file_name =~ /Config\.pm$/
+			&& $db
+			&& $last_modified > 0 + sql_select_scalar ('SELECT unix_ts FROM __required_files WHERE file_name = ?', $module_name)
+		) {
+		
+			my $unix_ts = 0 + sql_select_scalar ('SELECT unix_ts FROM __required_files WHERE file_name = ?', $module_name);
+		
+			if ($DB_MODEL) {
+
+				open  (CONFIG, $file_name) || die "can't open $file_name: $!";
+				flock (CONFIG, LOCK_EX);
+				$model_update -> assert (%$DB_MODEL);
+				flock (CONFIG, LOCK_UN);
+				close (CONFIG);
+
+			}
+
+			if (-d "$the_path/Updates") {
+
+				open  (CONFIG, $file_name) || die "can't open $file_name: $!";
+				flock (CONFIG, LOCK_EX);
+
+				eval {
+
+					opendir (DIR, "$the_path/Updates") || die "can't opendir $the_path/Updates: $!";
+					my @scripts = readdir (DIR);
+					closedir DIR;
+
+					foreach my $script (@scripts) {
+
+						$script =~ /\.p[lm]$/ or next;
+
+						my $script_path = "$the_path/Updates/$script";
+
+print STDERR "\nfound update script: '$script_path'... ";
+
+						my $md5 = Digest::MD5 -> new;
+						open (SCRIPT, $script_path) || die "can't open $script_path: $!";
+						$md5 -> addfile (*SCRIPT);
+						close   (SCRIPT);
+
+						my $digest = $md5 -> b64digest;
+						my $old_digest = sql_select_scalar ('SELECT checksum FROM _script_checksums WHERE name = ?', $script);
+
+						unless ($digest eq $old_digest) {
+
+print STDERR "it's new...";
+
+							my $result = do $script_path;
+
+							unless (defined $result) {
+								die $! || $@ || "$script_path didn't return any true value\n";
+							}
+
+							if ($old_digest) {
+								sql_do ('UPDATE _script_checksums SET checksum = ? WHERE name = ?', $digest, $script);
+							}
+							else {
+								sql_do ('INSERT INTO _script_checksums (name, checksum) VALUES (?, ?)', $script, $digest);
+							}
+
+print STDERR "ok\n";
+
+
+						}
+						else {
+
+print STDERR "already executed.\n";
+
+						}
+
+
+					}
+
+				};
+
+				flock (CONFIG, LOCK_UN);
+				close (CONFIG);
+
+				die $@ if $@;
+
+			}
+		
+		};
+		
+		if ($db && $db -> ping) {
+			sql_do ('DELETE FROM __required_files WHERE file_name = ?', $module_name);
+			sql_do ('INSERT INTO __required_files (file_name, unix_ts) VALUES (?, ?)', $module_name, time);
+		}
 	
-		$INC_FRESH {$module_name} = time;
+		$INC_FRESH {$module_name} = $last_modified;
+		
 	}
 
         if ($@) {
@@ -306,7 +614,7 @@ sub add_totals {
 	
 	foreach my $r (@$ar) {
 		
-		while (my ($key, $value) = each %$r) {
+		foreach my $key (keys %$r) {
 			
 			next if $key =~ /^id|label$/;
 			
@@ -324,17 +632,84 @@ sub add_totals {
 	
 }
 
+
+################################################################################
+
+sub do_add_DEFAULT {
+	
+	sql_do_relink ($_REQUEST {type}, [get_ids ('clone')] => $_REQUEST {id});
+
+}
+
+################################################################################
+
+sub do_create_DEFAULT {
+
+	my $default_values = {};
+	
+	while (my ($k, $v) = each %_REQUEST) {
+	
+		next if $k =~ /^_/;
+		next if $k eq 'sid';
+		next if $k eq 'salt';
+		next if $k eq 'select';
+		next if $k eq 'type';
+		next if $k eq 'action';
+		next if $k eq 'lang';
+		next if $k eq 'error';
+				
+		$default_values -> {$k} = $v;
+	
+	}
+	
+	$_REQUEST {id} = sql_do_insert ($_REQUEST {type}, $default_values);
+
+}
+
+################################################################################
+
+sub do_update_DEFAULT {
+	
+	sql_do_update ($_REQUEST {type}, [map { substr $_, 1 } grep { /^_[^_]/ && $_ ne '_id_log' } keys %_REQUEST]);
+
+}
+
+################################################################################
+
+sub do_delete_DEFAULT {
+
+	sql_do ("UPDATE $_REQUEST{type} SET fake = -1 WHERE id = ?", $_REQUEST{id});
+
+}
+
+################################################################################
+
+sub do_undelete_DEFAULT {
+
+	sql_do ("UPDATE $_REQUEST{type} SET fake =  0 WHERE id = ?", $_REQUEST{id});
+	sql_undo_relink ($_REQUEST{type}, $_REQUEST{id});
+
+}
+
 ################################################################################
 
 sub call_for_role {
 
 	my $sub_name = shift;
+
 	my $time = $preconf -> {core_debug_profiling} == 1 ? time : undef;
+
 	my $role = $_USER ? $_USER -> {role} : '';	
+
 	my $full_sub_name = $sub_name . '_for_' . $role;
+
+	my $default_sub_name = $sub_name;
+	$default_sub_name =~ s{_$_REQUEST{type}$}{_DEFAULT};
+	
 	my $name_to_call = 
-		exists $$_PACKAGE {$full_sub_name} ? $full_sub_name : 
-		exists $$_PACKAGE {$sub_name} ? $sub_name : 
+		exists $$_PACKAGE {$full_sub_name}    ? $full_sub_name : 
+		exists $$_PACKAGE {$sub_name}         ? $sub_name : 
+		exists $$_PACKAGE {$default_sub_name} ? $default_sub_name : 
 		undef;
 	
 	if ($name_to_call) {
@@ -343,7 +718,10 @@ sub call_for_role {
 		return $result;
 	}
 	else {
-		$sub_name =~ '^validate_' or print STDERR "call_for_role: callback procedure not found: \$sub_name = $sub_name, \$role = $role \n";
+		$sub_name    =~ /^validate_/ 
+		or $sub_name eq 'get_menu'
+		or $sub_name eq 'select_menu'
+		or print STDERR "call_for_role: callback procedure not found: \$sub_name = $sub_name, \$role = $role \n";
 	}
 
 	return $name_to_call ? &$name_to_call (@_) : undef;
@@ -358,29 +736,74 @@ sub get_user {
 		
 	sql_do_refresh_sessions ();
 
-#	sql_do ("DELETE FROM sessions WHERE ts < now() - INTERVAL ? MINUTE", $conf -> {session_timeout});
-#	sql_do ("UPDATE sessions SET ts = NULL WHERE id = ? ", $_REQUEST {sid});
-
-#	my $user = sql_select_hash (<<EOS, $_REQUEST {sid});
-#		SELECT
-#			users.*
-#			, roles.name AS role
-#			, sessions.id_role AS session_role
-#			, session_roles.name AS session_role_name
-#		FROM
-#			sessions
-#			INNER JOIN users ON sessions.id_user = users.id
-#			INNER JOIN roles ON users.id_role = roles.id
-#			LEFT JOIN roles as session_roles ON sessions.id_role = session_roles.id
-#		WHERE
-#			sessions.id = ?
-#EOS
-
 	my $user = undef;
 	
 	if ($_REQUEST {__login}) {
 		$user = sql_select_hash ('SELECT * FROM users WHERE login = ? AND password = PASSWORD(?)', $_REQUEST {__login}, $_REQUEST {__password});
 		$user -> {id} or undef $user;
+	}
+	
+	my $peer_server = undef;
+	
+	if ($r -> header_in ('User-Agent') =~ m{^Zanas/.*? \((.*?)\)}) {
+	
+		$peer_server = $1;
+					
+		my $local_sid = sql_select_scalar ('SELECT id FROM sessions WHERE peer_id = ? AND peer_server = ?', $_REQUEST {sid}, $peer_server);
+		
+		unless ($local_sid) {
+		
+			my $user = peer_query ($peer_server, {__whois => $_REQUEST {sid}});
+			
+			my $role = $conf -> {peer_roles} -> {$peer_server} -> {$user -> {role}} || $conf -> {peer_roles} -> {$peer_server} -> {''};
+			
+			$role or die ("Peer role $$user{role} is undefined for the server $peer_server\n");
+			
+			my $id_role = sql_select_scalar ('SELECT id FROM roles WHERE name = ?', $role);
+
+			$id_role or die ("Role not found: $role\n");
+
+			my $id_user = 
+			
+				sql_select_scalar ('SELECT id FROM users WHERE peer_id = ? AND peer_server = ?', $user -> {id}, $peer_server) ||
+				
+				sql_do_insert ('users', {
+					fake        => -128,
+					peer_id     => $user -> {id},
+					peer_server => $peer_server,
+				});
+				
+			sql_do ('UPDATE users SET label = ?, id_role = ?, mail = ?  WHERE id = ?', $user -> {label}, $id_role, $user -> {mail}, $id_user);
+			
+			while (1) {
+				$local_sid = int (time * rand);
+				last if 0 == sql_select_scalar ('SELECT COUNT(*) FROM sessions WHERE id = ?', $local_sid);
+			}
+
+			sql_do ("DELETE FROM sessions WHERE id_user = ?", $id_user);
+			
+			sql_do ("INSERT INTO sessions (id, id_user, peer_id, peer_server) VALUES (?, ?, ?, ?)", $local_sid, $id_user, $_REQUEST {sid}, $peer_server);
+					
+		}
+		
+		$_REQUEST {sid} = $local_sid;
+		
+	}
+	
+	my $session = sql_select_hash ('sessions', $_REQUEST {sid});
+	
+	if ($session -> {ip}) {	
+		$session -> {ip}    eq $ENV {REMOTE_ADDR}          or return undef;
+		$session -> {ip_fw} eq $ENV {HTTP_X_FORWARDED_FOR} or return undef;	
+		ip => $ENV {REMOTE_ADDR}, 
+		ip_fw => $ENV {HTTP_X_FORWARDED_FOR},	
+	}
+	else {
+		sql_do (
+			'UPDATE sessions SET ip = ?, ip_fw = ? WHERE id = ?',
+			$ENV {REMOTE_ADDR},
+			$ENV {HTTP_X_FORWARDED_FOR}, $_REQUEST {sid},
+		);
 	}
 
 	$user ||= sql_select_hash (<<EOS, $_REQUEST {sid});
@@ -445,6 +868,8 @@ EOS
 	}
 
 	$user -> {label} ||= $user -> {name} if $user;
+	
+	$user -> {peer_server} = $peer_server;
 		
 	return $user -> {id} ? $user : undef;
 
@@ -459,12 +884,12 @@ sub delete_fakes {
 	my $sids = join ', ', @sids;
 
 	if ($conf -> {core_recycle_ids}) {
-		$__last_insert_id = sql_select_scalar ("SELECT MIN(id) FROM $table_name WHERE fake NOT IN ($sids) ORDER BY id");
+		$__last_insert_id = sql_select_scalar ("SELECT MIN(id) FROM $table_name WHERE fake NOT IN ($sids) AND fake > 0 ORDER BY id");
 		sql_do ("DELETE FROM $table_name WHERE id = ?", $__last_insert_id);
 		sql_do ("UPDATE $table_name SET fake = ? WHERE id = ?", $_REQUEST {sid}, $__last_insert_id);
 	}
 	else {
-		sql_do ("DELETE FROM $table_name WHERE fake NOT IN ($sids)");
+		sql_do ("DELETE FROM $table_name WHERE fake NOT IN ($sids) AND fake > 0");
 	}
 	
 	
@@ -490,6 +915,18 @@ sub get_filehandle {
 
 ################################################################################
 
+sub esc {
+
+	my ($options) = @_;
+	
+	$options -> {kind} = 'js';
+
+	redirect (esc_href (), $options);
+
+}
+
+################################################################################
+
 sub redirect {
 
 	my ($url, $options) = @_;
@@ -503,21 +940,15 @@ sub redirect {
 	}
 	
 	$options ||= {};
-	$options -> {kind} ||= 'internal';
-	
-#	$url =~ m{^http://} or $url = 'http://' . $ENV{HTTP_HOST} . $url;
-#	my $http_host = $ENV {HTTP_X_FORWARDED_HOST} || $preconf -> {http_host};
-#	if ($http_host) {
-#		substr ($url, index ($url, $ENV{HTTP_HOST}), length ($ENV{HTTP_HOST})) = $http_host;
-#	}
-	
-	if ($options -> {kind} eq 'internal') {
-		$r -> internal_redirect ($url);
-		$_REQUEST {__response_sent} = 1;
-		return;
-	}
+	$options -> {kind} ||= 'internal';	
 
-	if ($options -> {kind} eq 'http') {		
+#	if ($options -> {kind} eq 'internal') {
+#		$r -> internal_redirect ($url);
+#		$_REQUEST {__response_sent} = 1;
+#		return;
+#	}
+
+	if ($options -> {kind} eq 'http' || $options -> {kind} eq 'internal') {
 	
 		$r -> status ($options -> {status} || 302);
 			
@@ -536,7 +967,48 @@ sub redirect {
 	
 		my $target = $options -> {target} ? "'$$options{target}'" : "(window.name == 'invisible' ? '_parent' : '_self')";
 
-		out_html ({}, qq {<body onLoad="$$options{before}; window.open ('$url&salt=' + Math.random (), $target)"></body>});
+
+		my $static_salt = $Zanas_VERSION_NAME;
+		$static_salt .= '_00000';
+		if ($_REQUEST {sid}) {
+			$static_salt .= $_REQUEST {sid};
+		}
+		else {
+			$static_salt .= $$ . time ();
+			$static_salt =~ s{\.}{}g;
+		}
+
+		my $root = $_REQUEST{__uri};
+				
+		if ($_REQUEST {__x}) {
+								
+			out_html ({}, XML::Simple::XMLout ({
+				url   => $url,
+			}, 
+				RootName => 'redirect',
+				XMLDecl  => '<?xml version="1.0" encoding="windows-1251"?>',
+			));
+					
+		}
+		elsif ($_REQUEST {__d}) {
+			out_html ({}, Dumper ({redirect => {url   => $url}}));
+		}
+		else {
+
+			out_html ({}, <<EOH);
+<html>
+	<head>
+		<script src="${root}navigation_${static_salt}.js">
+		</script>
+	</head>
+	<body onLoad="$$options{before}; nope ('$url&salt=' + Math.random (), $target)">
+	</body>
+</html>
+EOH
+
+		}
+		
+
 		$_REQUEST {__response_sent} = 1;
 		return;
 		
@@ -592,33 +1064,49 @@ sub delete_file {
 
 ################################################################################
 
+sub select__boot {
+
+	return {};
+
+}
+
+################################################################################
+
 sub select__static_files {
 
 	$ENV{PATH_INFO} =~ /\w+\.\w+/ or $r -> filename =~ /\w+\.\w+/ or $ENV {REQUEST_URI} =~ /\w+\.\w+/;
 	
 	my $filename = $&;
-
-#print STDERR "\$filename = '$filename' (1)\n";
 	
 	my $v = '_' . $Zanas_VERSION_NAME;
 	$filename =~ s{$v}{}i;
 
 	$filename =~ s{_00000\d+(\.[a-z]{2,3})$}{$1};
 
-#print STDERR "\$v = '$v'\n";
-#print STDERR "\$filename = '$filename' (2)\n";
-	
 	my $content_type = 
 		$filename =~ /\.js/ ? 'application/x-javascript' :
 		$filename =~ /\.css/ ? 'text/css' :
 		$filename =~ /\.htm/ ? 'text/html' :
 		'application/octet-stream';
 
-	my $path = $STATIC_ROOT . $filename . '.gz.pm';
-	(-f $path and $r -> header_in ('Accept-Encoding') =~ /gzip/) or $path = $STATIC_ROOT . $filename . '.pm';
+	my $path = $_SKIN -> static_path ($filename);
+	my $gzip = 0;
+
+#warn ("select__static_files (1): \$path = '$path'\n");
+
+	if (-f "$path.gz.pm" && $r -> header_in ('Accept-Encoding') =~ /gzip/) {
+		$path .= '.gz';
+		$path .= '.pm';
+		$gzip = 1;
+	}
+	else {
+		$path .= '.pm';
+	}
+	
+#warn ("select__static_files (2): \$path = '$path'\n");
 	
 	$r -> content_type ($content_type);
-	$r -> content_encoding ('gzip') if $path =~ /\.gz/;
+	$r -> content_encoding ('gzip') if $gzip;
 	$r -> header_out ('Content-Length' => -s $path);
 	$r -> header_out ('Cache-Control' => 'max-age=' . 24 * 60 * 60);
 	
@@ -643,7 +1131,7 @@ sub download_file {
 	$options -> {file_name} =~ s{.*\\}{};
 		
 	my $type = 
-		$options -> {charset} ? '; charset=' . $options -> {charset} :
+		$options -> {charset} ? $options -> {'ty' . "pe"} . '; charset=' . $options -> {charset} :
 		$options -> {'ty' . "pe"};
 
 	$type ||= 'application/octet-stream';
@@ -764,7 +1252,8 @@ sub set_cookie {
 ################################################################################
 
 sub select__logout {
-	sql_do ('DELETE FROM sessions WHERE id = ?', $_REQUEST {sid});	
+	sql_do ('DELETE FROM __access_log WHERE id_session = ?', $_REQUEST {sid}) if ($conf -> {core_auto_esc} == 2);
+	sql_do ('DELETE FROM sessions WHERE id = ?', $_REQUEST {sid});
 	redirect ('/?type=logon', {kind => 'js', label => $i18n -> {session_terminated}});
 }
 
@@ -875,13 +1364,68 @@ sub select__info {
 
 ################################################################################
 
+sub get_item_of__object_info {
+
+	$_REQUEST {__read_only} = 1;
+
+	my $item = sql_select_hash ($_REQUEST {object_type});
+
+	$item -> {last_create} = sql_select_hash ("SELECT * FROM log WHERE type = ? AND action = 'create' AND id_object = ? ORDER BY id DESC LIMIT 1", $_REQUEST {object_type}, $_REQUEST {id});
+	$item -> {last_create} -> {dt} =~ s{(\d+)\-(\d+)\-(\d+)}{$3.$2.$1};
+	$item -> {last_create} -> {user} = sql_select_hash ('users', $item -> {last_create} -> {id_user}); 
+	
+	$item -> {last_update} = sql_select_hash ("SELECT * FROM log WHERE type = ? AND action = 'update' AND id_object = ? ORDER BY id DESC LIMIT 1", $_REQUEST {object_type}, $_REQUEST {id});
+	$item -> {last_update} -> {dt} =~ s{(\d+)\-(\d+)\-(\d+)}{$3.$2.$1};
+	$item -> {last_update} -> {user} = sql_select_hash ('users', $item -> {last_update} -> {id_user}); 
+	
+	my @references = ();
+	
+	foreach my $reference ( sort {$a -> {table_name} . ' ' . $a -> {name} cmp $b -> {table_name} . ' ' . $b -> {name}} @{$DB_MODEL -> {tables} -> {$_REQUEST {object_type}} -> {references}}) {
+
+		my $where = ' WHERE fake = 0 AND ' . $reference -> {name};
+
+		if ($reference -> {TYPE_NAME} =~ /int/) {
+			$where .= " = $_REQUEST{id}";
+		}
+		else {
+			$where .= " LIKE '\%,$_REQUEST{id},\%'";
+		}
+		
+		my $cnt = sql_select_scalar ("SELECT COUNT(*) FROM " . $reference -> {table_name} . $where) or next;
+
+		push @references, {
+			table_name => $reference -> {table_name},
+			name => $reference -> {name},
+			cnt => $cnt,
+		};
+		
+		if ($_REQUEST {table_name} eq $reference -> {table_name} && $_REQUEST {name} eq $reference -> {name}) {
+
+			my $start = $_REQUEST {start} + 0;
+
+			($item -> {records}, $item -> {cnt}) = sql_select_all_cnt ('SELECT * FROM ' . $reference -> {table_name} . $where . " ORDER BY id DESC LIMIT $start, 15");
+
+		}
+		
+	}
+	
+	$item -> {references} = \@references;
+		
+	return $item;
+	
+}
+
+################################################################################
+
 sub get_mac {
 
 	my ($ip) = @_;	
 	$ip ||= $ENV {REMOTE_ADDR};
 
+	my $cmd = $^O eq 'MSWin32' ? 'arp -a' : 'arp -an';
 	my $arp = '';
-	eval {$arp = lc `arp -a`};
+	
+	eval {$arp = lc `$cmd`};
 	$arp or return '';
 	
 	foreach my $line (split /\n/, $arp) {
@@ -891,6 +1435,7 @@ sub get_mac {
 		if ($line =~ /[0-9a-f]{2}\:[0-9a-f]{2}\:[0-9a-f]{2}\:[0-9a-f]{2}\:[0-9a-f]{2}\:[0-9a-f]{2}/) {
 			return $&;
 		}
+		
 	}
 	
 	return '';
@@ -962,6 +1507,9 @@ sub fill_in {
    	
    	fill_in_i18n ('RUS', {
    		_charset                 => 'windows-1251',
+   		_calendar_lang           => 'ru',
+   		_format_d		 => '%d.%m.%Y',
+   		_format_dt		 => '%d.%m.%Y  %k:%M',
 		Exit                     => 'Âûõîä',
 		toolbar_pager_empty_list => 'ñïèñîê ïóñò',		
 		toolbar_pager_of         => ' èç ',
@@ -987,10 +1535,14 @@ sub fill_in {
 		session_terminated       => 'Ñåññèÿ çàâåðøåíà',
 		save_or_cancel           => 'Ïîæàëóéñòà, ñíà÷àëà ñîõðàíèòå äàííûå (Ctrl-Enter) èëè îòìåíèòå ââîä (Esc)',
 		infty                    => '&infin;', 
+		voc                      => ' ñïðàâî÷íèê...',
    	});
    	
    	fill_in_i18n ('ENG', {
    		_charset                 => 'windows-1252',
+   		_calendar_lang           => 'en',
+   		_format_d		 => '%d.%m.%Y',
+   		_format_dt		 => '%d.%m.%Y  %k:%M',
 		Exit                     => 'Exit',
 		toolbar_pager_empty_list => 'empty list',		
 		toolbar_pager_of         => ' of ',
@@ -1016,11 +1568,15 @@ sub fill_in {
 		session_terminated       => 'Logged off',
 		save_or_cancel           => 'Please save your data (Ctrl-Enter) or cancel pending input (Esc)',
 		infty                    => '&infin;', 
+		voc                      => ' vocabulary...',
    	});
 	
    	fill_in_i18n ('FRE', {
    		_charset                 => 'windows-1252',
-		Exit                     => 'Quitter',
+   		_calendar_lang           => 'fr',
+   		_format_d		 => '%d/%m/%Y',
+   		_format_dt		 => '%d/%m/%Y  %k:%M',
+		Exit                     => 'Déconnexion',
 		toolbar_pager_empty_list => 'liste vide',
 		toolbar_pager_of         => ' de ',
 		confirm_ok               => 'Sauver des changements?',
@@ -1042,10 +1598,13 @@ sub fill_in {
 		no                       => 'Non', 
 		confirm_open_vocabulary  => 'Ouvrir le vocabulaire?',
 		confirm_close_vocabulary => 'Vous avez choisi',
-		session_terminated       => 'Déconnetcé',
-		save_or_cancel           => "Veuillez sauvegarder vos données (Ctrl-Enter) ou bien alluler l'opération (Esc)",
+		session_terminated       => 'Déconnecté',
+		save_or_cancel           => "Veuillez sauvegarder vos données (Ctrl-Enter) ou bien annuler l\\'opération (Esc)",
 		infty                    => '&infin;', 
-   	});   	
+		voc                      => ' vocabulaire...',
+   	}); 
+   	
+   	$conf -> {__filled_in} = 1;
 
 }
 
@@ -1102,5 +1661,17 @@ sub get_ids {
 	return @ids;	
 
 }
+
+################################################################################
+
+sub is_recording {
+
+	return $preconf -> {core_recording} || $_REQUEST {sid} =~ /^0[1-9]/;
+	
+}
+
+################################################################################
+
+sub get_page {}
 
 1;

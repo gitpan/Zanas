@@ -5,6 +5,12 @@ use Data::Dumper;
 
 ################################################################################
 
+sub print {
+	print @_;
+}
+
+################################################################################
+
 sub new {
 
 	my $proto = shift;
@@ -20,16 +26,6 @@ sub new {
 	undef @CGI::QUERY_PARAM;
 	$self -> {Q} = new CGI;
 	
-#	if ($ENV{PATH_TRANSLATED} =~ /$ENV{DOCUMENT_ROOT}\/+index\.html/) {
-#		$self -> {Filename} = '';
-#	} else {
-#		$ENV{PATH_TRANSLATED} =~ /$ENV{DOCUMENT_ROOT}\/+(.*)/;
-#		$self -> {Filename} = $1;
-#	}
-
-#	$self -> {Filename} = $self -> {Q} -> script_name;
-#	$self -> {Filename} = '/' if $self -> {Filename} =~ /index\.pl/;
-
 	$self -> {Filename} = $ENV{PATH_INFO};
 	$self -> {Filename} = '/' if $self -> {Filename} =~ /index\./;
 	
@@ -39,6 +35,7 @@ sub new {
 	bless ($self, $class);
 
 	return $self;
+	
 }
 
 ################################################################################
@@ -256,6 +253,28 @@ sub header_only {
 	my $self = shift;
 	return $self -> {Q} -> request_method () eq 'HEAD';
 }
+
+################################################################################
+
+sub the_request {
+
+        my $self = shift;
+        my $q = $self -> {Q};
+	my @names = $q -> param;
+        my %vars = $q -> Vars;
+	my $url;
+	
+	foreach my $name (@names) {
+		my @values = split ("\0", $vars{$name});
+		$url .= '&' . (@values > 0 ? join ('&', (map {"$name=$_"} @values)) : "$name=");
+	}
+	
+	$url =~ s/^\&//;
+
+        return "$ENV{REQUEST_METHOD} $self->{Filename}?$url $ENV{SERVER_PROTOCOL}";
+
+}
+
 
 ################################################################################
 

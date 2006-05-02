@@ -3,6 +3,147 @@ no warnings;
 
 ################################################################################
 
+sub sql_do_relink {
+
+	my ($table_name, $old_ids, $new_id) = @_;
+	
+	ref $old_ids eq ARRAY or $old_ids = [$old_ids];
+	
+	my $column_name = '';
+	$column_name = 'is_merged_to' if $DB_MODEL -> {tables} -> {$table_name} -> {columns} -> {is_merged_to};
+	$column_name = 'id_merged_to' if $DB_MODEL -> {tables} -> {$table_name} -> {columns} -> {id_merged_to};
+	
+	my $record = sql_select_hash ($table_name, $new_id);
+	my @empty_fields = ();
+	foreach my $key (keys %$record) {
+		next if $record -> {$key} . '' ne '';
+		next if $key eq 'id';
+		next if $key eq 'fake';
+		next if $key eq 'is_merged_to';
+		next if $key eq 'id_merged_to';
+		push @empty_fields, $key;
+	}
+		
+warn Dumper ($DB_MODEL -> {tables} -> {$table_name});
+warn Dumper ($DB_MODEL -> {tables} -> {$table_name} -> {references});
+
+	foreach my $old_id (@$old_ids) {
+	
+warn "relink $table_name: $old_id -> $new_id";
+
+		my $record = sql_select_hash ($table_name, $old_id);
+		
+		foreach my $empty_field (@empty_fields) {
+			$_REQUEST {'_' . $empty_field} ||= $record -> {$empty_field};
+		}
+
+		foreach my $column_def (@{$DB_MODEL -> {tables} -> {$table_name} -> {references}}) {
+
+warn "relink $$column_def{table_name} ($$column_def{name}): $old_id -> $new_id";
+
+			if ($column_def -> {TYPE_NAME} =~ /int/) {
+			
+				sql_do (<<EOS, $old_id);
+					INSERT INTO __moved_links
+						(table_name, column_name, id_from, id_to)
+					SELECT
+						'$$column_def{table_name}' AS table_name,
+						'$$column_def{name}' AS column_name,
+						id AS id_from,
+						$old_id AS id_to
+					FROM
+						$$column_def{table_name}
+					WHERE
+						$$column_def{name} = ?
+EOS
+
+				sql_do ("UPDATE $$column_def{table_name} SET $$column_def{name} = ? WHERE $$column_def{name} = ?", $new_id, $old_id);
+				
+			}
+			else {
+			
+				$old_id = ',' . $old_id . ',';
+				$new_id = ',' . $new_id . ',';
+			
+				sql_do (<<EOS, '%' . $old_id . '%');
+					INSERT INTO __moved_links
+						(table_name, column_name, id_from, id_to)
+					SELECT
+						'$$column_def{table_name}' AS table_name,
+						'$$column_def{name}' AS column_name,
+						id AS id_from,
+						$old_id AS id_to
+					FROM
+						$$column_def{table_name}
+					WHERE
+						$$column_def{name} LIKE ?
+EOS
+
+				sql_do ("UPDATE $$column_def{table_name} SET $$column_def{name} = REPLACE($$column_def{name}, ?, ?) WHERE $$column_def{name} LIKE ?", $old_id, $new_id, '%' . $old_id . '%');
+
+			}
+
+		}
+		
+		if ($column_name) {
+			sql_do ("UPDATE $table_name SET fake = -1, $column_name = ? WHERE id = ?", $new_id, $old_id);
+		}
+
+	}
+	
+	sql_do_update ($table_name, \@empty_fields) if @empty_fields > 0;
+
+}
+
+################################################################################
+
+sub sql_undo_relink {
+
+	my ($table_name, $old_ids) = @_;
+	
+	ref $old_ids eq ARRAY or $old_ids = [$old_ids];
+			
+warn Dumper ($DB_MODEL -> {tables} -> {$table_name});
+warn Dumper ($DB_MODEL -> {tables} -> {$table_name} -> {references});
+
+	foreach my $old_id (@$old_ids) {
+	
+warn "undo relink $table_name: $old_id";
+
+		my $record = sql_select_hash ($table_name, $old_id);
+		
+		foreach my $column_def (@{$DB_MODEL -> {tables} -> {$table_name} -> {references}}) {
+
+			my $from = <<EOS;
+				FROM
+					__moved_links
+				WHERE
+					table_name = '$$column_def{table_name}'
+					AND column_name = '$$column_def{name}'
+					AND id_to = $old_id
+EOS
+
+			my $ids = sql_select_ids ("SELECT id_from $from");
+			sql_do ("DELETE $from");
+
+warn "undo relink $$column_def{table_name} ($$column_def{name}): $old_id";
+
+			if ($column_def -> {TYPE_NAME} =~ /int/) {
+				sql_do ("UPDATE $$column_def{table_name} SET $$column_def{name} = ? WHERE id IN ($ids)", $old_id);
+			}
+			else {			
+				$old_id = $old_id . ',';
+				sql_do ("UPDATE $$column_def{table_name} SET $$column_def{name} = CONCAT($$column_def{name}, ?) WHERE id IN ($ids)", $old_id);
+			}
+
+		}
+		
+	}
+	
+}
+
+################################################################################
+
 sub sql_version {
 
 	my $version = {	string => 'MySQL ' . sql_select_scalar ('SELECT VERSION()') };
@@ -28,17 +169,16 @@ sub sql_do_refresh_sessions {
 			1;
 	}
 
-	sql_do ("DELETE FROM sessions WHERE ts < now() - INTERVAL ? MINUTE", $timeout);
+	my $ids = sql_select_ids ('SELECT id FROM sessions WHERE ts < now() - INTERVAL ? MINUTE');
+	
+	sql_do ("DELETE FROM sessions     WHERE id IN ($ids)");
+
+	$ids = sql_select_ids ('SELECT id FROM sessions');
+
+	sql_do ("DELETE FROM __access_log WHERE id_session NOT IN ($ids)");
+	
 	sql_do ("UPDATE sessions SET ts = NULL WHERE id = ? ", $_REQUEST {sid});
-}
-
-################################################################################
-
-sub sql_select_ids {
-	my ($sql, @params) = @_;
-	my @ids = sql_select_col ($sql, @params);
-	push @ids, -1;
-	return join ',', @ids;
+	
 }
 
 ################################################################################
@@ -127,6 +267,30 @@ sub sql_select_all_cnt {
 
 	my ($sql, @params) = @_;
 	
+	my $options = {};
+	if (@params > 0 and ref ($params [-1]) eq HASH) {
+		$options = pop @params;
+	}
+	
+	if ($options -> {fake}) {
+	
+		my $where = 'WHERE ';
+		my $fake  = $_REQUEST {fake} || 0;
+	
+		foreach my $table (split /\,/, $options -> {fake}) {
+			$where .= "$table.fake IN ($fake) AND ";
+		}	
+		
+		$sql =~ s{where}{$where}i;
+			
+	}
+
+	if ($_REQUEST {xls} && $conf -> {core_unlimit_xls} && !$_REQUEST {__limit_xls}) {
+		$sql =~ s{LIMIT.*}{}ism;
+		my $result = sql_select_all ($sql, @params, $options);
+		my $cnt = ref $result eq ARRAY ? 0 + @$result : -1;
+		return ($result, $cnt);
+	}
 
 	if ((!$conf -> {core_infty} && $_REQUEST {__infty}) || ($conf -> {core_infty} && !$_REQUEST {__no_infty})) {
 		
@@ -134,10 +298,11 @@ sub sql_select_all_cnt {
 		
 		my ($start, $portion) = ($1, $2);
 				
-		my $result = sql_select_all ($sql, @params);
+		my $result = sql_select_all ($sql, @params, $options);
+		my $cnt = ref $result eq ARRAY ? 0 + @$result : 0;
 				
 		if (0 + @$result <= $portion) {
-			return ($result, $start + @$result);
+			return ($result, $start + $cnt);
 		}
 		else {
 			pop @$result;
@@ -146,12 +311,6 @@ sub sql_select_all_cnt {
 		
 		
 	}
-
-	if ($_REQUEST {xls} && $conf -> {core_unlimit_xls} && !$_REQUEST {__limit_xls}) {
-		$sql =~ s{LIMIT.*}{}ism;
-		my $result = sql_select_all ($sql, @params);
-		return ($result, 0 + @$result);
-	}
 	
 	if ($SQL_VERSION -> {number_tokens} -> [0] > 3) {	
 		$sql =~ s{SELECT}{SELECT SQL_CALC_FOUND_ROWS}i;
@@ -159,6 +318,9 @@ sub sql_select_all_cnt {
 	
 	my $st = $db -> prepare ($sql);
 	$st -> execute (@params);
+	
+	return $st if $options -> {no_buffering};
+	
 	my $result = $st -> fetchall_arrayref ({});	
 	$st -> finish;
 
@@ -196,9 +358,70 @@ sub sql_select_all_cnt {
 sub sql_select_all {
 
 	my ($sql, @params) = @_;
+		
+	my $options = {};
+	if (@params > 0 and ref ($params [-1]) eq HASH) {
+		$options = pop @params;
+	}
+	
+	if ($options -> {fake}) {
+	
+		my $where = 'WHERE ';
+		my $fake  = $_REQUEST {fake} || 0;
+	
+		foreach my $table (split /\,/, $options -> {fake}) {
+			$where .= "$table.fake IN ($fake) AND ";
+		}	
+		
+		$sql =~ s{where}{$where}i;
+			
+	}
+	
 	my $st = $db -> prepare ($sql);
 	$st -> execute (@params);
+
+	return $st if $options -> {no_buffering};
+
 	my $result = $st -> fetchall_arrayref ({});	
+	$st -> finish;
+	
+	return $result;
+
+}
+
+################################################################################
+
+sub sql_select_all_hash {
+
+	my ($sql, @params) = @_;
+		
+	my $options = {};
+	if (@params > 0 and ref ($params [-1]) eq HASH) {
+		$options = pop @params;
+	}
+	
+	if ($options -> {fake}) {
+	
+		my $where = 'WHERE ';
+		my $fake  = $_REQUEST {fake} || 0;
+	
+		foreach my $table (split /\,/, $options -> {fake}) {
+			$where .= "$table.fake IN ($fake) AND ";
+		}	
+		
+		$sql =~ s{where}{$where}i;
+			
+	}
+	
+	my $result = {};
+	
+	my $st = $db -> prepare ($sql);
+	$st -> execute (@params);
+	
+	while (my $r = $st -> fetchrow_hashref) {
+		$result -> {$r -> {id}} = $r;
+	}
+	
 	$st -> finish;
 	
 	return $result;
@@ -230,12 +453,20 @@ sub sql_select_col {
 sub sql_select_hash {
 
 	my ($sql_or_table_name, @params) = @_;
-	
-	if (@params == 0 and $sql_or_table_name !~ /^\s*SELECT/i) {
-	
-		return sql_select_hash ("SELECT * FROM $sql_or_table_name WHERE id = ?", $_REQUEST {id});
 		
-	}
+	if ($sql_or_table_name !~ /^\s*SELECT/i) {
+	
+		my $id = $_REQUEST {id};
+		
+		if (@params) {
+			$id = ref $params [0] eq HASH ? $params [0] -> {id} : $params [0];
+		}
+	
+		@params = ({}) if (@params == 0);
+		
+		return sql_select_hash ("SELECT * FROM $sql_or_table_name WHERE id = ?", $id);
+		
+	}	
 	
 	my $st = $db -> prepare ($sql_or_table_name);
 	$st -> execute (@params);
@@ -351,10 +582,12 @@ sub sql_do_update {
 		id        => $_REQUEST {id},
 	};
 
-	my $sql = join ', ', map {"$_ = ?"} @$field_list;
-	$options -> {stay_fake} or $sql .= ', fake = 0';
-	$sql = "UPDATE $table_name SET $sql WHERE id = ?";	
-	my @params = @_REQUEST {(map {"_$_"} @$field_list)};	
+	my $have_fake_param;
+	my $sql = join ', ', map {$have_fake_param ||= ($_ eq 'fake'); "$_ = ?"} @$field_list;
+	$options -> {stay_fake} or $have_fake_param or $sql .= ', fake = 0';
+
+	$sql = "UPDATE $table_name SET $sql WHERE id = ?";
+	my @params = @_REQUEST {(map {"_$_"} @$field_list)};
 	push @params, $options -> {id};
 
 	sql_do ($sql, @params);
@@ -373,12 +606,13 @@ sub sql_do_insert {
 
 	$pairs -> {fake} = $_REQUEST {sid} unless exists $pairs -> {fake};
 	
-	if ($conf -> {core_recycle_ids} && __last_insert_id) {
+	if ($conf -> {core_recycle_ids} && $__last_insert_id) {
 		sql_do ("DELETE FROM $table_name WHERE id = ?", $__last_insert_id);
 		$pairs -> {id} = $__last_insert_id;
 	}
 
-	while (my ($field, $value) = each %$pairs) {
+	foreach my $field (keys %$pairs) {
+		my $value = $pairs -> {$field};
 		my $comma = @params ? ', ' : '';
 		$fields .= "$comma $field";
 		$args   .= "$comma ?";
@@ -406,8 +640,8 @@ sub sql_do_delete {
 	our %_OLD_REQUEST = %_REQUEST;	
 	eval {
 		my $item = sql_select_hash ($table_name);
-		while (my ($key, $value) = each %$item) {
-			$_OLD_REQUEST {'_' . $key} = $value;
+		foreach my $key (keys %$item) {
+			$_OLD_REQUEST {'_' . $key} = $item -> {$key};
 		}
 	};
 	

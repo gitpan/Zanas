@@ -3,6 +3,7 @@ MANIFEST
 Makefile.PL
 Zanas.pm
 Zanas/Apache.pm
+Zanas/Auth/NTLM.pm
 Zanas/Content.pm
 Zanas/Presentation.pm
 Zanas/Presentation/MSIE_5.pm

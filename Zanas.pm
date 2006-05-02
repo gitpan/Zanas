@@ -3,11 +3,21 @@ no warnings;
 use Carp;
 use Data::Dumper;
 use DBI;
+use Digest::MD5;
+use Fcntl ':flock';
 use HTTP::Date;
+use HTTP::Request::Common;
+use LWP::UserAgent;
 use MIME::Base64;
 use Number::Format;
 use Time::HiRes 'time';
 use URI::Escape;
+
+#use Zanas::Presentation::Skins::Classic;
+#use Zanas::Presentation::Skins::Dumper;
+#use Zanas::Presentation::Skins::XMLDumper;
+#use Zanas::Presentation::Skins::XMLProto;
+#use Zanas::Presentation::Skins::XL;
 
 use constant OK => 200;
 
@@ -15,17 +25,19 @@ use constant OK => 200;
 
 BEGIN {	
 
-	$Zanas_VERSION = $Zanas::VERSION = '5.5.16';
-	$Zanas_VERSION_NAME = $Zanas::VERSION_NAME = 'Excess';
+	$Data::Dumper::Sortkeys = 1;
+
+	$Zanas_VERSION      = $Zanas::VERSION      = '6.05.02';
+	$Zanas_VERSION_NAME = $Zanas::VERSION_NAME = 'EcorchE';
 	
 	eval {
 		require Storable;
 	};
 	
 	unless ($preconf -> {core_path}) {
-		require Zanas::Presentation::MSIE_5;
 		require Zanas::Apache;
 		require Zanas::Content;
+		require Zanas::Validators;
 		require Zanas::InternalRequest;
 		require Zanas::Presentation;
 		require Zanas::Request;
@@ -34,7 +46,6 @@ BEGIN {
 		$preconf -> {core_path} = __FILE__;
 	}
 	
-
 	$| = 1;
 
 	$SIG {__DIE__} = \&Carp::confess;
@@ -46,7 +57,9 @@ BEGIN {
 		$PACKAGE_ROOT = [$PACKAGE_ROOT];
 	}
 
-	my $pkg_banner = '[' . (join ',', @$PACKAGE_ROOT) . '] => ' . ($_NEW_PACKAGE ? $_NEW_PACKAGE : __PACKAGE__);
+	my $_PACKAGE = $_NEW_PACKAGE ? $_NEW_PACKAGE : __PACKAGE__;
+
+	my $pkg_banner = '[' . (join ',', @$PACKAGE_ROOT) . '] => ' . $_PACKAGE;
 
 	print STDERR "\nZanas $Zanas_VERSION [$Zanas_VERSION_NAME]: loading $pkg_banner...";
 	
@@ -66,8 +79,8 @@ BEGIN {
 
 	$INC {'Apache/Request.pm'} or eval 'require Zanas::Request';
 
-	our $STATIC_ROOT = __FILE__;
-	$STATIC_ROOT =~ s{\.pm}{/static/};
+#	our $STATIC_ROOT = __FILE__;
+#	$STATIC_ROOT =~ s{\.pm}{/static/};
 
 	eval 'require Compress::Zlib';
 	if ($@) {
@@ -83,35 +96,61 @@ BEGIN {
 	$conf = {%$conf, %$preconf};
 	if ($conf -> {core_load_modules}) {
 	
-		foreach my $path (reverse (@$PACKAGE_ROOT)) {
-
-			opendir (DIR, "$path/Content") || die "can't opendir $PACKAGE_ROOT/Content: $!";
-			my @files = grep {/\.pm$/} map { "Content/$_" } readdir(DIR);
-			closedir DIR;	
-
-			opendir (DIR, "$path/Presentation") || die "can't opendir $PACKAGE_ROOT/Presentation: $!";
-			push @files, grep {/\.pm$/} map { "Presentation/$_" } readdir(DIR);
-			closedir DIR;	
-
-			foreach my $file (@files) {
-				$file =~ s{\.pm$}{};
-				$file =~ s{\/}{\:\:};
-				require_fresh (__PACKAGE__ . "::$file");
+		foreach my $module (qw(Config Calendar Content::menu Content::logon Presentation::logon)) {
+			require_fresh ($_PACKAGE . '::' . $module);
+		}	
+			
+		if ($conf -> {auto_load}) {
+			
+			foreach my $type (@{$conf -> {auto_load}}) {				
+				push @files, "${_PACKAGE}/Content/$type.pm";
+				push @files, "${_PACKAGE}/Presentation/$type.pm";
 			}
+			
+			eval {
+				my $auto_load_expiry = $preconf -> {auto_load_expiry} || 5 * 24;
+				sql_do ('DELETE FROM __required_files WHERE unix_ts < ?', time - $auto_load_expiry * 60 * 60);
+				push @files, sql_select_col ('SELECT file_name FROM __required_files');
+			};						
+			
+		}
+		else {
+		
+			foreach my $path (reverse (@$PACKAGE_ROOT)) {
 
+				opendir (DIR, "$path/Content") || die "can't opendir $PACKAGE_ROOT/Content: $!";
+				push @files, grep {/\.pm$/} map { "${_PACKAGE}/Content/$_" } readdir (DIR);
+				closedir DIR;	
+
+				opendir (DIR, "$path/Presentation") || die "can't opendir $PACKAGE_ROOT/Presentation: $!";
+				push @files, grep {/\.pm$/} map { "${_PACKAGE}/Presentation/$_" } readdir (DIR);
+				closedir DIR;	
+
+			}
+						
 		}
 
+		foreach my $file (@files) {
+			$file =~ s{\.pm$}{};
+			$file =~ s{\/}{\:\:}g;
+			require_fresh ($file);
+		}
+				
+	}
+	
+	$conf -> {skins} ||= ['Classic', 'Dumper', 'XL'];
+	foreach my $skin (@{$conf -> {skins}}) {
+		eval "require Zanas::Presentation::Skins::$skin"
+	}
+
+	if ($Apache::VERSION) {
+		Apache -> push_handlers (PerlChildInitHandler => \&sql_reconnect );
+		Apache -> push_handlers (PerlChildExitHandler => \&sql_disconnect);
 	}
 
 	if ($conf -> {db_dsn}) {
-
-		eval {
-			Apache -> push_handlers (
-				PerlChildInitHandler => \&sql_reconnect,
-				PerlChildExitHandler => \&sql_disconnect,
-			)
-		};
-
+		eval {	sql_disconnect;	};
+		warn $@ if $@;
 	}
 
 	print STDERR "\rZanas $Zanas_VERSION [$Zanas_VERSION_NAME]: loading $pkg_banner ok.\n";
